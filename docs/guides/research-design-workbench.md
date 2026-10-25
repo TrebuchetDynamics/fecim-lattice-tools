@@ -115,7 +115,7 @@ Evidence levels distinguish `literature-backed`, `experiment-calibrated`, `simul
 
 ## Trust Boundary
 
-The evaluator composes existing system and peripheral models using documented defaults and scaling approximations. Its results support exploratory comparison only, not measured hardware claims or foundry sign-off. The literature P–E suite includes provisional model-generated curves and a directly digitized BTO curve with uncertainty-relaxed thresholds; a green suite is not held-out validation of the HZO workbench evaluator. Quantitative design claims require device- and circuit-specific calibration against suitable experimental data and independent validation.
+The evaluator composes existing system and peripheral models using documented defaults and scaling approximations. Its results support exploratory comparison only, not measured hardware claims or foundry sign-off. The P–E suite includes provisional references and the explicitly synthetic `park2015_synthetic_shape.csv`; the disputed BTO extraction is quarantined and excluded, not smoothed. A green regression suite is not held-out validation of the HZO workbench evaluator. See the [dated correction audit](../research/validation/park-reference-correction.md). Quantitative design claims require device- and circuit-specific calibration against suitable experimental data and independent validation.
 
 Input files must remain inside the project directory, pass their declared SHA-256 hash, and use recognized evidence labels. YAML rejects unknown fields and non-finite physical values.
 

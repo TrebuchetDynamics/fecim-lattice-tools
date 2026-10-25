@@ -41,12 +41,12 @@ jobs:
       - name: Architecture check
         run: make arch-check
 
-      - name: Literature P-E loop validation (RG-PHY-OBS-01)
+      - name: P-E reference regression (RG-PHY-OBS-01)
         env:
           FECIM_LITERATURE_JSON_DIR: ${{ github.workspace }}/output/validation/literature
         run: |
           mkdir -p output/validation/literature
-          go test -v -count=1 ./validation/literature/... -run TestModule1_PELoop_LiteratureBacked
+          go test -v -count=1 ./validation/literature/... -run TestModule1_PELoop_ReferenceRegression
 
       - name: Full literature validation suite
         env:
@@ -69,9 +69,6 @@ jobs:
           mkdir -p output/write_stats
           go test -v -count=1 ./validation/... -run TestM1_WriteVerifyStats_Regression
 
-      - name: Race detection (core physics + shared)
-        run: go test -race -short ./module1-hysteresis/... ./shared/physics/... ./shared/crossbar/...
-
       - name: Upload validation artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -81,4 +78,46 @@ jobs:
             output/validation/
             output/montecarlo/
             output/write_stats/
+          if-no-files-found: warn
+
+  physics-race:
+    name: Full physics race detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    env:
+      DISPLAY: ''
+      WAYLAND_DISPLAY: ''
+      FECIM_CI_GATE: nightly
+      FECIM_GIT_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GUI build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Run broad physics race suite without short-mode exclusions
+        shell: bash
+        timeout-minutes: 75
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/physics-race
+          go test -race -count=1 -timeout=60m ./shared/physics/... ./module1-hysteresis/... ./shared/crossbar/... 2>&1 | tee artifacts/physics-race/go-test.log
+
+      - name: Upload physics race log even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: physics-race-${{ github.run_id }}
+          path: artifacts/physics-race/
           if-no-files-found: warn

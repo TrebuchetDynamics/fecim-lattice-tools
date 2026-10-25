@@ -364,7 +364,7 @@ This simulator helps imagine the destination and plan the journey!
 
 ### In This Repository
 
-- **Project Status:** [status.md](../../status.md)
+- **Project Status:** [internal status history](../internals/status.md)
 - **Accuracy Audit:** [docs/research/honesty-audit.md](../research/honesty-audit.md)
 - **Development Guide:** [docs/internals/api-reference.md](../internals/api-reference.md)
 

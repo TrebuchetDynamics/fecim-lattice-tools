@@ -11,7 +11,7 @@ Rules:
 
 Expected future files:
 
-- `park2015_hysteresis.csv`
+- Future independently extracted measurement CSV (not the current synthetic Park-context fixture)
 - `validation_results.json`
 - `module2_kcl_conservation.json`
 

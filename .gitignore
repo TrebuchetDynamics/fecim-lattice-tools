@@ -97,7 +97,11 @@ MODULE5_DEEP_CRITIQUE*.md
 RIJU_ACTION_PLAN*.md
 full-test.md
 
-# AI session/folder-refactor state (never track)
+# Local editor and agent state (never track).
+# Required generated adapters in .claude/, .codex/, and .opencode/ remain tracked.
+.vscode/
+.pi-subagents/
+.pytest_cache/
 .pi/
 .refactorignore
 

@@ -8,10 +8,10 @@ import (
 	"fecim-lattice-tools/shared/testutil"
 )
 
-// TestCalibratePreisachToData_Park2015 loads the Park 2015 HZO digitized P-E
+// TestCalibratePreisachToData_ParkSyntheticShape loads the synthetic Park-context P-E
 // loop, runs the golden-section calibration, and verifies RMSE < 5% of Ps.
-func TestCalibratePreisachToData_Park2015(t *testing.T) {
-	csvPath := filepath.Join("..", "..", "validation", "literature", "data", "park2015_fig2a_hzo_10nm.csv")
+func TestCalibratePreisachToData_ParkSyntheticShape(t *testing.T) {
+	csvPath := filepath.Join("..", "..", "validation", "literature", "data", "park2015_synthetic_shape.csv")
 	data, err := LoadPELoopCSV(csvPath)
 	if err != nil {
 		t.Fatalf("LoadPELoopCSV: %v", err)
@@ -46,7 +46,7 @@ func TestCalibratePreisachToData_Park2015(t *testing.T) {
 	if result.Delta <= 0 {
 		t.Errorf("Delta should be positive, got %e", result.Delta)
 	}
-	// Ec should be in the ballpark of 1 MV/cm for Park 2015 HZO.
+	// Ec should be in the ballpark of 1 MV/cm for the synthetic shape target.
 	ecMVcm := result.Ec / 1e8
 	if ecMVcm < 0.5 || ecMVcm > 2.0 {
 		t.Errorf("Ec = %.3f MV/cm outside expected [0.5, 2.0] range", ecMVcm)
@@ -124,9 +124,9 @@ func TestCalibratePreisachToData_SyntheticRoundTrip(t *testing.T) {
 	}
 }
 
-// TestLoadPELoopCSV_Park2015 validates the CSV loader with the actual data file.
-func TestLoadPELoopCSV_Park2015(t *testing.T) {
-	csvPath := filepath.Join("..", "..", "validation", "literature", "data", "park2015_fig2a_hzo_10nm.csv")
+// TestLoadPELoopCSV_ParkSyntheticShape validates the CSV loader with the synthetic regression fixture.
+func TestLoadPELoopCSV_ParkSyntheticShape(t *testing.T) {
+	csvPath := filepath.Join("..", "..", "validation", "literature", "data", "park2015_synthetic_shape.csv")
 	data, err := LoadPELoopCSV(csvPath)
 	if err != nil {
 		t.Fatalf("LoadPELoopCSV: %v", err)

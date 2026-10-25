@@ -38,7 +38,7 @@ Every public paper claim must have at least one of:
 
 - [ ] Promote Module 2 KCL report into paper data.
 - [ ] Generate KCL residual plot from artifact JSON.
-- [ ] Generate Park 2015 hysteresis overlay from documented provenance.
+- [ ] Independently digitize and verify Park measurements before any experimental overlay; do not use the synthetic regression fixture.
 - [ ] Add SPICE/ngspice comparison only when the artifact is reproducible.
 - [ ] Add MNIST result only when the full training/inference artifact and confusion matrix are reproducible.
 

@@ -58,6 +58,9 @@ func writeLiteratureLoopCSV(out string, mat *sharedphysics.HZOMaterial, emax flo
 		}
 	}()
 
+	if _, err := fmt.Fprintf(f, "# SYNTHETIC model-generated reference; not experimental data.\n# Generator: cmd/gen-literature-loops; NewPreisachModel(%s), Reset, -%g..%g..-%g MV/cm.\n# 31 ascending + 30 descending samples; P=model.Update(E*1e8)*1e2 uC/cm2.\n", mat.Name, emax, emax, emax); err != nil {
+		return fmt.Errorf("write provenance header to %q: %w", out, err)
+	}
 	w := csv.NewWriter(f)
 	if err := w.Write([]string{"E_MV_cm", "P_uC_cm2"}); err != nil {
 		return fmt.Errorf("write header to %q: %w", out, err)

@@ -1,24 +1,19 @@
 package physics
 
-// Calibrated presets for literature validation.
-//
-// IMPORTANT: These presets are explicitly calibrated to match DOI-backed
-// digitized loop metrics (Pr, Ec) and to provide a stable reference curve for
-// regression. They should be cited as "calibrated to <DOI>/<figure>" and not
-// mistaken for a first-principles prediction.
-//
-// CalibratedPark2015HZO is Preisach-calibrated (Ps, Ec, Delta fitted via
-// golden-section RMSE minimization against the full P-E loop trace).
+// Reference presets support regression and fitting workflows; they do not
+// establish experimental validation. Source DOI context alone is insufficient
+// provenance. In particular, the Park-named shape is synthetic, and the BTO
+// pixel-extraction candidate is excluded pending re-digitization.
 
-// Park2015Fig2aHZO10nm returns a preset calibrated to:
-// Park et al., Adv. Mater. (2015), doi:10.1002/adma.201404531, Fig. 2a (10 nm HZO).
+// Park2015Fig2aHZO10nm retains its historical API name for compatibility.
+// It returns a synthetic model-shape preset, not a fit to verified Park measurements.
 func Park2015Fig2aHZO10nm() *HZOMaterial {
 	m := DefaultHZO()
-	m.Name = "HZO (Park 2015 Fig 2a, calibrated)"
-	// Targets from digitized metrics used in validation suite.
+	m.Name = "HZO (Park-context synthetic shape, regression only)"
+	// Historical synthetic-shape targets; no experimental extraction provenance.
 	m.Pr = 15.8e-2 // 15.8 uC/cm2
 	m.Ps = 19.4e-2 // 19.4 uC/cm2
-	m.Ec = 0.93e8  // 0.93 MV/cm (digitized Ec)
+	m.Ec = 0.93e8  // 0.93 MV/cm (synthetic-shape target)
 	m.Thickness = 10e-9
 	return m
 }
@@ -110,8 +105,9 @@ func Crystals2021FigFerroelectricBTOTrilayer() *HZOMaterial {
 	return m
 }
 
-// Crystals2021FigFerroelectricBTODigitized returns a BTO preset calibrated for
-// the direct pixel-digitized Figure 7 trace variant.
+// Crystals2021FigFerroelectricBTODigitized retains the legacy candidate preset.
+// The corresponding extraction is excluded from validation because of branch
+// jumps. These parameters are not validated measurement-derived calibration.
 func Crystals2021FigFerroelectricBTODigitized() *HZOMaterial {
 	m := BTO()
 	m.Name = "BTO (Crystals 2021 fig7, pixel-digitized calibrated)"
@@ -122,48 +118,42 @@ func Crystals2021FigFerroelectricBTODigitized() *HZOMaterial {
 	return m
 }
 
-// CalibratedPark2015HZO returns a preset with Preisach TanhEverett parameters
-// (Ps, Ec, Delta) fitted by golden-section RMSE minimization against the
-// digitized P-E loop from:
-//
-//	Park et al., Adv. Mater. 27, 1811 (2015), doi:10.1002/adma.201404531, Fig. 2a
-//	10 nm Hf0.5Zr0.5O2, 1 kHz, 300 K.
-//
-// The fitted values below are derived from validation/literature/data/
-// park2015_fig2a_hzo_10nm.csv (61-point full-loop trace). They satisfy
-// RMSE < 5% of Ps when evaluated by CalibratePreisachToData.
+// CalibratedPark2015HZO retains its historical API name. It returns parameters
+// fitted to validation/literature/data/park2015_synthetic_shape.csv, a 61-point
+// synthetic shape fixture. A small fitting residual demonstrates numerical fit
+// quality only, not agreement with Park 2015 measurements.
 //
 // These are TanhEverett parameters (for use with NewPreisachStack), not
 // simply Pr/Ec overrides. The Delta parameter controls loop squareness and
 // is the key calibration output that the generic DefaultHZO() lacks.
 func CalibratedPark2015HZO() *HZOMaterial {
 	m := DefaultHZO()
-	m.Name = "HZO (Park 2015 Fig 2a, Preisach-calibrated)"
+	m.Name = "HZO (Park-context synthetic shape, Preisach regression fit)"
 	// Calibrated TanhEverett Preisach parameters (SI units):
-	//   Ps    = 19.38 uC/cm^2  = 0.1938 C/m^2  (max |P| from digitized data)
+	//   Ps    = 19.38 uC/cm^2  = 0.1938 C/m^2  (max |P| from synthetic fixture)
 	//   Ec    = 1.00 MV/cm     = 1.00e8 V/m     (ascending zero-crossing)
 	//   Delta = fitted via golden-section search (see preisach_calibration.go)
 	//
 	// The Pr/Ps/Ec fields on the HZOMaterial struct are used by the material
 	// system for general characterization; the TanhEverett Ps/Ec/Delta triple
 	// is used when constructing the Preisach stack.
-	m.Pr = 15.80e-2 // 15.80 uC/cm^2 (digitized Pr at E=0 descending)
+	m.Pr = 15.80e-2 // 15.80 uC/cm^2 (synthetic Pr at E=0 descending)
 	m.Ps = 19.38e-2 // 19.38 uC/cm^2 (max |P| from data)
 	m.Ec = 0.931e8  // 0.931 MV/cm (ascending zero-crossing interpolation)
 	m.Thickness = 10e-9
 	return m
 }
 
-// Park2015PreisachEverett returns a TanhEverett configured with parameters
-// calibrated to the Park 2015 HZO Fig 2a digitized P-E loop.
+// Park2015PreisachEverett retains its historical API name. Its parameters fit
+// the synthetic reference, not a measured Park 2015 P-E loop.
 //
-// This is the recommended way to create a Preisach stack for Park 2015 data:
+// Example synthetic regression stack:
 //
 //	ev := Park2015PreisachEverett()
 //	stack := NewPreisachStack(3e8, ev)  // 3 MV/cm saturation field
 func Park2015PreisachEverett() *TanhEverett {
-	// Ps and Ec from digitized data; Delta from golden-section RMSE fit.
-	// Calibration result: RMSE/Ps < 5% against 61-point digitized loop.
+	// Ps and Ec from synthetic fixture; Delta from golden-section RMSE fit.
+	// Regression fit only; no experimental validation is implied.
 	return &TanhEverett{
 		Ps:    19.38e-2, // C/m^2 (19.38 uC/cm^2)
 		Ec:    0.931e8,  // V/m   (0.931 MV/cm, from ascending zero-crossing)

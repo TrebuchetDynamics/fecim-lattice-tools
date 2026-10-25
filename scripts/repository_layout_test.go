@@ -2,6 +2,7 @@ package scripts_test
 
 import (
 	"debug/elf"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,14 +15,19 @@ func TestRepositoryRootKeepsCollateralUnderPurposeDirectories(t *testing.T) {
 
 	tracked := trackedPaths(t, root)
 	forbiddenRoots := map[string]string{
-		"agent-test-loop.sh":  "scripts/agent-test-loop.sh",
-		"commit-push.sh":      "scripts/commit-push.sh",
-		"crucible":            "tools/crucible",
-		"opensource":          "tools/opensource",
-		"paper":               "docs/research/paper",
-		"presenter-script.md": "docs/guides/presentations/presenter-script.md",
-		"prompts":             "tools/prompts",
-		"screenshots":         "docs/guides/assets/",
+		"agent-test-loop.sh":      "scripts/agent-test-loop.sh",
+		"commit-push.sh":          "scripts/commit-push.sh",
+		"crucible":                "tools/crucible",
+		"opensource":              "tools/opensource",
+		"paper":                   "docs/research/paper",
+		"presenter-script.md":     "docs/guides/presentations/presenter-script.md",
+		"prompts":                 "tools/prompts",
+		"screenshots":             "docs/guides/assets/",
+		"CONTEXT.md":              "docs/internals/CONTEXT.md",
+		"TODO.md":                 "docs/internals/TODO.md",
+		"status.md":               "docs/internals/status.md",
+		"shared-refactor-plan.md": "docs/internals/architecture/shared-refactor-plan.md",
+		"fyne-guide":              "docs/internals/gui/fyne-guide/",
 	}
 
 	for path := range tracked {
@@ -93,6 +99,59 @@ func TestGoSourceUsesCanonicalCollateralPaths(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// Parse the ingestion manifests without importing Cognee or making network calls.
+// A relocation must not silently turn these documents into skipped input.
+func TestKnowledgeIngestionIncludesRelocatedInternalNotes(t *testing.T) {
+	root := repoRoot(t)
+	python, err := exec.LookPath("python3")
+	if err != nil {
+		t.Skip("python3 is required to inspect optional Cognee manifests")
+	}
+	for _, tc := range []struct {
+		script, variable string
+		want             []string
+	}{
+		{"cognee-ingest.py", "DOCS", []string{"docs/internals/status.md"}},
+		{"cognee-ingest-full.py", "DOCS_ROOT", []string{"docs/internals/TODO.md", "docs/internals/status.md"}},
+	} {
+		t.Run(tc.script, func(t *testing.T) {
+			cmd := exec.Command(python, "-c", `
+import ast, json, pathlib, sys
+tree = ast.parse(pathlib.Path(sys.argv[1]).read_text())
+for node in tree.body:
+    if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == sys.argv[2] for t in node.targets):
+        print(json.dumps(ast.literal_eval(node.value)))
+        break
+else:
+    raise SystemExit("manifest not found")
+`, filepath.Join(root, "scripts", tc.script), tc.variable)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatalf("parse manifest: %v: %s", err, out)
+			}
+			var paths []string
+			if err := json.Unmarshal(out, &paths); err != nil {
+				t.Fatal(err)
+			}
+			for _, want := range tc.want {
+				found := false
+				for _, path := range paths {
+					if path == "TODO.md" || path == "status.md" {
+						t.Errorf("manifest still references relocated root note %s", path)
+					}
+					found = found || path == want
+				}
+				if !found {
+					t.Errorf("manifest missing %s", want)
+				}
+				if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(want))); err != nil {
+					t.Errorf("ingestion input unavailable: %v", err)
+				}
+			}
+		})
 	}
 }
 

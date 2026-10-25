@@ -196,7 +196,7 @@ This register is authoritative for scope. For completed items, the original evid
 ### TR-METRIC-01 — Evidence-based health reporting
 
 - **Priority / status / owner:** P3 / Queued / maintainers and release owners.
-- **Evidence:** historical completion/test-count summaries in `TODO.md`; external validation can currently skip or no-op.
+- **Evidence:** historical completion/test-count summaries in `docs/internals/TODO.md`; external validation can currently skip or no-op.
 - **Dependencies:** TR-VAL-01 and agreed release gates.
 - **Acceptance gate:** Health reports list trust surfaces, exact commands/tools, passes, failures, and skips; raw test count is contextual only.
 - **Non-goals:** Removing useful coverage metrics or inventing a single composite quality score.
@@ -215,7 +215,7 @@ Actions:
 - Require RED/GREEN/final-verification receipts for every production recovery item.
 - Preserve the current dirty owner work; recovery changes must not absorb unrelated README, screenshotter, asset, or race-test edits.
 
-**Exit gate:** roadmap and implementation plan are linked from `TODO.md` and the developer documentation index.
+**Exit gate:** roadmap and implementation plan are linked from `docs/internals/TODO.md` and the developer documentation index.
 
 ### Phase 1 — Critical correctness and trust hardening — Complete
 
@@ -437,4 +437,4 @@ Revisit this roadmap when any of the following changes:
 - `ModulePort`, `EmbeddedApp`, or default Fyne shell ownership;
 - generated-log defaults or research asset retention policy.
 
-Update `TODO.md` status and this roadmap in the same change when a phase gate opens or closes.
+Update `docs/internals/TODO.md` status and this roadmap in the same change when a phase gate opens or closes.

@@ -1,5 +1,7 @@
 # Module 1 Automated Testing Plan (Execution-Grade)
 
+> Evidence correction (2026-10-25): this historical testing plan does not establish independent experimental validation. The Park-context shape and derived targets are synthetic regression fixtures, and the disputed BTO extraction is excluded. See [the correction inventory](../../research/validation/park-reference-correction.md) before interpreting historical DOI-backed-data or green-gate language.
+
 Scope: `module1-hysteresis` physics/controller validation in headless CI.
 
 ## Current Implementation Status (2026-02-18)
@@ -105,7 +107,7 @@ export WAYLAND_DISPLAY=
 make ci                                        # fmt + vet + test-short + arch-check + research tests/audit
 FECIM_CI_GATE=pr go test -v -count=1 \
   ./validation/literature/... \
-  -run TestModule1_PELoop_LiteratureBacked     # RG-PHY-OBS-01 with artifact emission
+  -run TestModule1_PELoop_ReferenceRegression     # RG-PHY-OBS-01 with artifact emission
 ```
 
 **Pass requires**

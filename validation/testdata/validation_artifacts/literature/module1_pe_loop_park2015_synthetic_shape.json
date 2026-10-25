@@ -1,15 +1,18 @@
 {
+  "comparison_kind": "synthetic-regression",
+  "evidence": "simulation-default",
+  "experimental_validation": false,
   "schema_version": "v1",
   "timestamp_utc": "1970-01-01T00:00:00Z",
   "commit": "reproducible-build",
   "gate": "pr",
   "test_id": "RG-PHY-OBS-01",
   "verdict": "pass",
-  "material_id": "park2015_hzo_10nm",
-  "material": "HZO (Park 2015 Fig 2a, calibrated)",
+  "material_id": "park2015_synthetic_shape",
+  "material": "HZO (Park-context synthetic shape, regression only)",
   "engine": "preisach",
   "doi": "10.1002/adma.201404531",
-  "dataset": "Park2015_Fig2a_HZO_10nm",
+  "dataset": "Park2015_SyntheticShape",
   "generated_at": "1970-01-01T00:00:00Z",
   "pr_data_uC_cm2": 15.8,
   "pr_sim_uC_cm2": 17.7395921640898,
@@ -30,8 +33,8 @@
     "loop_area_err_pct": 0.10798510598299658
   },
   "uncertainty": {
-    "method": "analytical",
-    "confidence": 1,
+    "method": "regression-tolerance; not measurement uncertainty",
+    "confidence": 0,
     "sample_size": 61
   },
   "thresholds": {

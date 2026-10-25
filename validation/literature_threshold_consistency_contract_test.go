@@ -35,8 +35,8 @@ func TestLiteraturePELoop_ThresholdConsistencyContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("glob pe loop artifacts: %v", err)
 	}
-	if len(paths) != 9 {
-		t.Fatalf("expected 9 pe-loop artifacts, got %d", len(paths))
+	if len(paths) != 8 {
+		t.Fatalf("expected 8 reference artifacts after BTO exclusion, got %d", len(paths))
 	}
 
 	for _, p := range paths {

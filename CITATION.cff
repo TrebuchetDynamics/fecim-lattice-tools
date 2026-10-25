@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: >-
+  If you use FeCIM Lattice Tools, cite this software and record the exact
+  Git commit and study artifacts used. Release and DOI metadata will be
+  added only after publication.
+type: software
+title: FeCIM Lattice Tools
+abstract: >-
+  A simulation-only research and design workbench for ferroelectric
+  compute-in-memory systems, with deterministic parameter sweeps,
+  provenance-aware results, and local desktop workspaces.
+authors:
+  - family-names: Tamez
+    given-names: Juan
+    affiliation: Trebuchet Dynamics
+repository-code: https://github.com/TrebuchetDynamics/fecim-lattice-tools
+url: https://github.com/TrebuchetDynamics/fecim-lattice-tools
+license: MIT
+keywords:
+  - ferroelectric compute-in-memory
+  - simulation
+  - reproducibility
+  - pre-silicon design

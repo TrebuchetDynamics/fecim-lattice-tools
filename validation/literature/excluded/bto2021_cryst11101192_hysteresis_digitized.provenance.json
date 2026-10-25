@@ -1,7 +1,12 @@
 {
   "dataset_id": "bto2021_cryst11101192_hysteresis_digitized",
-  "status": "pixel_digitized_curve",
-  "tier": "candidate_tier1",
+  "status": "excluded_pending_redigitization",
+  "tier": "excluded",
+  "experimental_validation": false,
+  "exclusion_date": "2026-10-25",
+  "exclusion_reason": "Large within-branch discontinuities; preserve original samples, re-digitize independently before reuse. Do not smooth.",
+  "original_status": "pixel_digitized_curve",
+  "original_tier": "candidate_tier1",
   "reference": {
     "doi": "10.3390/cryst11101192"
   },

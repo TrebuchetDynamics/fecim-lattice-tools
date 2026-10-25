@@ -27,7 +27,7 @@ REPO = Path(__file__).resolve().parent.parent
 # Key docs to ingest (non-archive, high-value)
 DOCS = [
     "CLAUDE.md",
-    "status.md",
+    "docs/internals/status.md",
     # Research
     "docs/4-research/honesty-audit.md",
     # Literature reviews

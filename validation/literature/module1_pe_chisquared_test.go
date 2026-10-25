@@ -1,9 +1,9 @@
 package literature
 
 // TestPELoopChiSquaredFit performs chi-squared goodness-of-fit tests between
-// simulated P-E loops and digitized experimental CSV data.
+// simulated P-E loops and reference CSV fixtures, including synthetic shapes.
 //
-// Unlike TestModule1_PELoop_LiteratureBacked (which checks Pr/Ec/RMSE),
+// Unlike TestModule1_PELoop_ReferenceRegression (which checks Pr/Ec/RMSE),
 // this test:
 //   1. Computes chi-squared (χ²) on the full P(E) curve
 //   2. Reports reduced chi-squared χ²_r = χ²/dof and p-value via Python/scipy
@@ -11,9 +11,9 @@ package literature
 //   4. Tests for systematic bias (mean residual should be ~0)
 //   5. Checks residuals have no significant autocorrelation (Durbin-Watson test)
 //
-// A physically correct model should give χ²_r ≈ 1-3 (model agrees with data
-// within experimental uncertainty). χ²_r >> 10 means the model is wrong.
-// χ²_r << 1 means uncertainty is overestimated.
+// These residual diagnostics do not establish experimental agreement.
+// synthetic reference has no measured uncertainty; chi-squared is diagnostic only.
+// A small residual against a model-derived fixture is not independent validation.
 
 import (
 	"encoding/csv"
@@ -81,14 +81,14 @@ type chiPEDataset struct {
 	Material string
 	CSV      string
 	DOI      string
-	EcField  float64 // known Ec from paper (MV/cm) for preset selection
+	EcField  float64 // reference Ec (MV/cm), not necessarily a measurement
 	Preset   func() *ferroelectric.HZOMaterial
 }
 
 var chiPEDatasets = []chiPEDataset{
 	{
-		Material: "park2015_hzo_10nm",
-		CSV:      "park2015_fig2a_hzo_10nm.csv",
+		Material: "park2015_synthetic_shape",
+		CSV:      "park2015_synthetic_shape.csv",
 		DOI:      "10.1002/adma.201404531",
 		EcField:  1.0,
 		Preset:   sharedphysics.Park2015Fig2aHZO10nm,
@@ -143,17 +143,20 @@ func TestPELoopChiSquaredFit(t *testing.T) {
 	}
 
 	type chiResult struct {
-		Material  string  `json:"material"`
-		DOI       string  `json:"doi"`
-		NPoints   int     `json:"n_points"`
-		Chi2      float64 `json:"chi2"`
-		Chi2r     float64 `json:"chi2_r"`
-		PValue    float64 `json:"p_value"`
-		MeanResid float64 `json:"mean_resid_uC_cm2"`
-		StdResid  float64 `json:"std_resid_uC_cm2"`
-		DWStat    float64 `json:"durbin_watson"`
-		SWp       float64 `json:"shapiro_wilk_p"`
-		Pass      bool    `json:"pass"`
+		Material               string  `json:"material"`
+		DOI                    string  `json:"doi"`
+		NPoints                int     `json:"n_points"`
+		Chi2                   float64 `json:"chi2"`
+		Chi2r                  float64 `json:"chi2_r"`
+		PValue                 float64 `json:"p_value"`
+		MeanResid              float64 `json:"mean_resid_uC_cm2"`
+		StdResid               float64 `json:"std_resid_uC_cm2"`
+		DWStat                 float64 `json:"durbin_watson"`
+		SWp                    float64 `json:"shapiro_wilk_p"`
+		Pass                   bool    `json:"pass"`
+		ComparisonKind         string  `json:"comparison_kind"`
+		Evidence               string  `json:"evidence"`
+		ExperimentalValidation bool    `json:"experimental_validation"`
 	}
 
 	var results []chiResult
@@ -165,7 +168,7 @@ func TestPELoopChiSquaredFit(t *testing.T) {
 				t.Skipf("Material preset nil for %s", ds.Material)
 			}
 
-			// Load experimental CSV
+			// Load reference CSV (Park is explicitly synthetic)
 			csvPath := filepath.Join("data", ds.CSV)
 			expE, expP, err := loadPECSV(csvPath)
 			if err != nil {
@@ -188,8 +191,8 @@ func TestPELoopChiSquaredFit(t *testing.T) {
 				residuals[i] = simP[i] - expP[i]
 			}
 
-			// Estimate experimental uncertainty: ±2% of saturation polarization
-			// (typical for digitized P-E data from figures)
+			// Fixed residual diagnostic scale: 2% of saturation polarization
+			// This is not measured experimental uncertainty.
 			sigma := mat.Ps * 1e2 * 0.02 // C/m² to μC/cm², then 2%
 
 			t.Logf("%s: n_points=%d, sigma_est=%.2f μC/cm²",
@@ -213,14 +216,21 @@ func TestPELoopChiSquaredFit(t *testing.T) {
 			passchi := chi2rSimple < 20
 			passbias := math.Abs(meanResid) < 5.0
 
+			kind, evidence := "reference-regression", "unverified"
+			if ds.Material == "park2015_synthetic_shape" {
+				kind, evidence = "synthetic-regression", "simulation-default"
+			}
 			r := chiResult{
-				Material:  ds.Material,
-				DOI:       ds.DOI,
-				NPoints:   len(residuals),
-				Chi2:      chi2Simple,
-				Chi2r:     chi2rSimple,
-				MeanResid: meanResid,
-				Pass:      passchi && passbias,
+				ComparisonKind:         kind,
+				Evidence:               evidence,
+				ExperimentalValidation: false,
+				Material:               ds.Material,
+				DOI:                    ds.DOI,
+				NPoints:                len(residuals),
+				Chi2:                   chi2Simple,
+				Chi2r:                  chi2rSimple,
+				MeanResid:              meanResid,
+				Pass:                   passchi && passbias,
 			}
 
 			if !hasPython || !hasScipy {
@@ -272,8 +282,8 @@ func TestPELoopChiSquaredFit(t *testing.T) {
 				ds.Material, r.Chi2r, r.MeanResid, r.Pass)
 
 			// Chi-squared is informational: chi2_r >> 1 is EXPECTED for Preisach model
-			// because we're fitting against experimental data with ~2% digitization noise.
-			// The hard validation is in TestModule1_PELoop_LiteratureBacked (Pr/Ec/RMSE).
+			// because these are reference fixtures, including synthetic model shapes.
+			// The companion reference-regression test checks Pr/Ec/RMSE, not independent validation.
 			// Report diagnostics but don't fail on chi2_r alone.
 			if false && !passbias { // informational only - bias check
 				t.Errorf("FAIL mean_resid=%.3f μC/cm² > 5 μC/cm² for %s (systematic offset)", math.Abs(r.MeanResid), ds.Material)
@@ -287,8 +297,8 @@ func TestPELoopChiSquaredFit(t *testing.T) {
 	dir := filepath.Join("..", "..", "output", "validation", "literature")
 	os.MkdirAll(dir, 0755)
 	artifact := map[string]interface{}{
-		"description": "Chi-squared goodness-of-fit: Preisach model vs experimental P-E data",
-		"sigma_rule":  "2% of Ps (digitization uncertainty)",
+		"description": "Reference residual diagnostics including synthetic fixtures; not experimental validation",
+		"sigma_rule":  "2% of Ps diagnostic scale; not measured uncertainty",
 		"chi2r_pass":  "<20 (generous for educational Preisach model)",
 		"results":     results,
 	}
@@ -303,6 +313,7 @@ func loadPECSV(path string) (E, P []float64, err error) {
 	}
 	defer f.Close()
 	r := csv.NewReader(f)
+	r.Comment = '#'
 	rows, err := r.ReadAll()
 	if err != nil {
 		return nil, nil, err

@@ -9,7 +9,7 @@
 | Verified citation records | 0 (citations/papers/ empty, refs.bib empty) |
 | Catalogued papers | 167+ (in paper_metadata.json, unprocessed) |
 | Experimental datasets | 3 JSON files (2 P-E loops + 1 switching kinetics) |
-| Material presets | 7 calibrated (Park, Materlik, Cheema, Kim, Jaiswal, Bi, AlScN) |
+| Material presets | Historical count of 7 reference presets; Park-context fitting is synthetic, and the disputed BTO extraction is excluded |
 | Physics files | 119 (shared/physics/) |
 | Crossbar interop tests | Stub only (CrossSim not executed) |
 | EDA tapeout readiness | Educational only (SKY130 behavioral, no compact model) |
@@ -84,7 +84,7 @@ Currently only `hzo/pe-loops/` and `hzo/switching-time/` have data. All other di
 
 ### 2.1 Complete Material Preset Coverage
 
-Current: 7 calibrated presets (HZO-family, AlScN, BTO, PZT).
+Historical baseline: 7 reference presets (HZO-family, AlScN, BTO, PZT). Correction 2026-10-25: Park-context calibration is synthetic regression; BTO extraction is quarantined, not accepted experimental validation.
 Target: 12+ presets. Missing:
 
 | Material | Key paper | Parameters needed |

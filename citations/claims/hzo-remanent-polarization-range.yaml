@@ -1,6 +1,6 @@
 id: hzo-remanent-polarization-range
-claim: Park 2015 Fig. 2a reports Pr near 24 µC/cm² and Ec near 1.0 MV/cm for a 10 nm Hf0.5Zr0.5O2 film at 300 K and 1 kHz; the repository uses broader Pr=15–34 µC/cm² and Ec=0.8–1.5 MV/cm values as project-level simulation-validation bounds compiled from literature notes, not as a range attributed to Fig. 2a, a single device, or independently validated measurements.
-status: literature-backed
+claim: The repository uses Pr=15–34 µC/cm² and Ec=0.8–1.5 MV/cm as literature-context simulation plausibility bounds, not independently validated measurements. Corrected 2026-10-25 — the Park-context loop fixture is synthetic; figure-specific scalar extraction is unverified and quarantined. Neither fixture establishes measured agreement with Park 2015.
+status: not-validated
 sources:
   - park2015_advmat_hzo
 used_in:

@@ -1,13 +1,18 @@
 {
   "version": "1.0.0",
-  "description": "Representative P-E loop data for HZO based on Park et al., Adv. Mater. 27, 1811 (2015)",
+  "description": "Illustrative synthetic regression shape with unverified historical origin; not measured Park data and not the separate 61-point CSV.",
+  "comparison_kind": "synthetic-regression",
+  "experimental_validation": false,
+  "evidence": "simulation-default",
+  "generation": {"historical_revision": "unknown", "method": "Retained historical illustrative shape; no verified extraction or original generation method. Used only for numerical tanh-fit regression."},
+  "correction_date": "2026-10-25",
   "reference": {
     "doi": "10.1002/adma.201404531",
     "authors": "Park et al.",
     "year": 2015,
     "title": "Ferroelectricity and Antiferroelectricity of Doped Thin HfO2-Based Films",
     "journal": "Advanced Materials",
-    "figure": "2a"
+    "role": "background context only; former Figure 2a extraction attribution unverified"
   },
   "conditions": {
     "temperature_K": 300,
@@ -32,7 +37,7 @@
       15.8, 12.5, 8.0, 3.5, 1.0, 0.0, -1.0, -3.5, -8.0, -12.5,
       -15.8, -17.5, -18.5, -19.0, -19.3, -19.4, -19.3, -19.2, -19.0, -18.8, -18.5
     ],
-    "uncertainty_P": [
+    "legacy_uncertainty_weights_not_measurements": [
       1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.4,
       1.3, 1.0, 0.8, 0.5, 0.3, 0.2, 0.3, 0.5, 0.8, 1.0,
       1.3, 1.4, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5,
@@ -42,7 +47,7 @@
     ]
   },
   "derived_values": {
-    "Pr_uC_cm2": 15.8,
+    "normalization_scale_uC_cm2": 15.8,
     "Pr_uncertainty": 1.3,
     "Ec_MV_cm": 1.0,
     "Ec_uncertainty": 0.1,
