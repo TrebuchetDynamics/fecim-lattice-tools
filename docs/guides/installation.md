@@ -9,7 +9,7 @@ This document lists required prerequisites and optional dependencies for specifi
 - **Go 1.25+** — https://go.dev/dl/
 - **Git** — For cloning the repository
 
-The default Fyne app requires Go and Git only; no CGO, C compiler, or OpenGL headers are required.
+The Fyne desktop app requires **CGO enabled**, a C compiler, and the platform's graphics development dependencies listed below. A non-CGO build supports headless subcommands, not desktop startup: [`fyne_nocgo.go:16–20`](../../cmd/fecim-lattice-tools/fyne_nocgo.go) returns an explicit error when a desktop workspace is requested. The desktop implementation is selected by the `cgo` build constraint in [`fyne_app.go:1–18`](../../cmd/fecim-lattice-tools/fyne_app.go).
 
 ## Optional Dependencies
 
@@ -17,30 +17,9 @@ The default Fyne app requires Go and Git only; no CGO, C compiler, or OpenGL hea
 - **Graphviz** — For Yosys circuit schematic visualization
 - **LaTeX + dvisvgm** — For regenerating equation SVG assets (Frankestein equation)
 
-### Linux (Ubuntu/Debian)
+## Desktop Build Dependencies
 
-```bash
-sudo apt-get update
-sudo apt-get install -y git
-# Optional: for Module 6 Yosys schematic visualization
-sudo apt-get install -y graphviz
-```
-
-### Linux (Fedora/RHEL)
-
-```bash
-sudo dnf install -y git
-```
-
-### macOS
-
-Install Go from https://go.dev/dl/ and Git via Xcode Command Line Tools or your package manager.
-
-### Windows
-
-Install Go from https://go.dev/dl/ and Git for Windows.
-
-
+Install Go and Git first. These additional dependencies are needed for the Fyne desktop build; headless-only builds can use `CGO_ENABLED=0`.
 
 ### Linux (Ubuntu/Debian)
 
@@ -68,6 +47,26 @@ xcode-select --install
 
 1. Install MSYS2 from https://www.msys2.org/ or a supported MinGW-w64 toolchain.
 2. Ensure `gcc` is in your PATH.
+
+## Build and Run
+
+From the repository root, after installing the desktop dependencies:
+
+```bash
+CGO_ENABLED=1 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools
+```
+
+For a headless-only installation:
+
+```bash
+CGO_ENABLED=0 go build -o fecim-lattice-tools-cli ./cmd/fecim-lattice-tools
+./fecim-lattice-tools-cli --help
+```
+
+Use that binary with the [workbench guide's](research-design-workbench.md) `project validate`, `experiment run`, and `report generate` subcommands. Running it without a headless subcommand requests the desktop and fails.
+
+**Launcher limitation:** [`launch.sh:29`](../../launch.sh) currently forces `CGO_ENABLED=0`, so it cannot launch the desktop. Use the explicit desktop build above instead. Recheck this guidance when the launcher or the CGO entry points change.
 
 ## Equation SVG (Optional, Ubuntu/Debian)
 

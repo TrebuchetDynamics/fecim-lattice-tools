@@ -67,7 +67,7 @@ The repository exposes both a local CLI workbench and a Fyne desktop shell. Use 
 ### Prerequisites
 
 - Go 1.25 or newer
-- A CGO-capable desktop toolchain only when running the Fyne interface
+- CGO enabled and a native desktop toolchain when building the Fyne interface; see [desktop dependencies](./docs/guides/installation.md#desktop-build-dependencies)
 - No API keys, cloud services, database, or daemon
 
 ### 1. Copy the reproducible example

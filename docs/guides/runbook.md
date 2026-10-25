@@ -9,31 +9,24 @@
 ### Standard Build
 
 ```bash
-# Build unified visualizer
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
-
-# Or use launch script (builds and runs)
-./launch.sh
+# Build the Fyne desktop app (requires native build dependencies)
+CGO_ENABLED=1 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools
 ```
+
+See [Installation](installation.md#desktop-build-dependencies) for native prerequisites. Do not use `./launch.sh` for desktop startup while it forces `CGO_ENABLED=0` ([source, line 29](../../launch.sh)); the [non-CGO entry point, lines 16–20](../../cmd/fecim-lattice-tools/fyne_nocgo.go) refuses desktop requests.
 
 ### Release Build
 
 ```bash
-# Optimized binary (smaller, faster)
-go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+# Native desktop release (build on the target platform)
+CGO_ENABLED=1 go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
-# Cross-compile for Linux (from any OS)
-GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools-linux ./cmd/fecim-lattice-tools
-
-# Cross-compile for macOS (Intel)
-GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools-mac ./cmd/fecim-lattice-tools
-
-# Cross-compile for macOS (Apple Silicon)
-GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o fecim-lattice-tools-mac-arm ./cmd/fecim-lattice-tools
-
-# Cross-compile for Windows
-GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools.exe ./cmd/fecim-lattice-tools
+# Example headless-only cross-build; this binary cannot open desktop workspaces
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o fecim-lattice-tools-cli-linux ./cmd/fecim-lattice-tools
 ```
+
+Desktop cross-compilation additionally needs a target C toolchain and graphics libraries; setting `GOOS` and `GOARCH` alone is not a desktop packaging procedure. The headless example above is a build recipe, not evidence that the binary was tested on the target OS.
 
 ### Pre-Deployment Checklist
 
@@ -79,10 +72,10 @@ go build -o latex-svg ./cmd/latex-svg
 | Trace | `--verbosity 3` | Deep debugging |
 
 ```bash
-./fecim-lattice-tools --verbosity 2  # Debug mode
+./fecim-lattice-tools --logger --verbosity 2  # Enable debug file logging
 ```
 
-**Log files are written to:** `logs/` directory with datetime stamps.
+**File logging is opt-in:** `--verbosity` alone does not enable it. With `--logger`, files are written under `logs/`. See [`main.go:51–53, 111–120`](../../cmd/fecim-lattice-tools/main.go); logging is disabled on the other branch.
 
 ### Runtime Profiling
 
@@ -231,7 +224,7 @@ export GDK_DPI_SCALE=1
 **Diagnosis:**
 ```bash
 # Run with debug logging
-./fecim-lattice-tools --verbosity 3 2>&1 | tee debug.log
+./fecim-lattice-tools --logger --verbosity 3 2>&1 | tee debug.log
 
 # Look for initialization errors
 grep -i "error\|panic\|fail" debug.log
