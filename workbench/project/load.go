@@ -46,18 +46,26 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 // owns both handles; nil citations skips citation existence checks. Bundle.Root
 // is descriptive metadata, not authority for subsequent filesystem access.
 func LoadRoot(root, citations *os.Root) (Bundle, error) {
+	return loadConfigurationRoot(root, citations, nil)
+}
+
+// A nonnil overlay supplies only the three fixed configuration documents.
+// Input/citation reads retain the supplied root authority and the same validator.
+func loadConfigurationRoot(root, citations *os.Root, overlay *ConfigurationSnapshot) (Bundle, error) {
 	if root == nil {
 		return Bundle{}, errors.New("project root is required")
 	}
 	bundle := Bundle{Root: root.Name()}
-	if err := decodeRoot(root, "project.yaml", &bundle.Project); err != nil {
-		return Bundle{}, fmt.Errorf("project.yaml: %w", err)
-	}
-	if err := decodeRoot(root, "design.yaml", &bundle.Design); err != nil {
-		return Bundle{}, fmt.Errorf("design.yaml: %w", err)
-	}
-	if err := decodeRoot(root, "sweep.yaml", &bundle.Sweep); err != nil {
-		return Bundle{}, fmt.Errorf("sweep.yaml: %w", err)
+	for i, dst := range []any{&bundle.Project, &bundle.Design, &bundle.Sweep} {
+		var err error
+		if overlay == nil {
+			err = decodeRoot(root, configurationDocuments[i], dst)
+		} else {
+			err = decodeStrict(strings.NewReader(overlay.documents[i]), dst)
+		}
+		if err != nil {
+			return Bundle{}, fmt.Errorf("%s: %w", configurationDocuments[i], err)
+		}
 	}
 	if bundle.Project.SchemaVersion != 1 || bundle.Design.SchemaVersion != 1 || bundle.Sweep.SchemaVersion != 1 {
 		return Bundle{}, errors.New("all schema_version values must be 1")
@@ -113,6 +121,11 @@ func LoadRoot(root, citations *os.Root) (Bundle, error) {
 		return Bundle{}, err
 	}
 	bundle.Inputs = inputs
+	if overlay != nil {
+		if err := preflightConfigurationSweep(bundle.Sweep); err != nil {
+			return Bundle{}, fmt.Errorf("sweep: %w", err)
+		}
+	}
 	if _, err := Expand(bundle); err != nil {
 		return Bundle{}, fmt.Errorf("sweep: %w", err)
 	}

@@ -92,6 +92,25 @@ circuit.tia_gain_ohm
 
 `max_points` prevents accidental unbounded expansion. Every point receives a deterministic recorded seed.
 
+### Go configuration preparation
+
+[`project.ReadConfiguration(root)`](../../workbench/project/configuration.go) captures the original bytes of `project.yaml`, `design.yaml`, and `sweep.yaml` through a caller-owned `*os.Root`. It rejects links and nonregular configuration files and enforces the 1 MiB per-file limit. `ConfigurationSnapshot.Revision()` returns a quoted strong `cfg-v1` ETag over the exact bytes of all three files; comments and line endings affect it. Reading a snapshot does not establish semantic validity.
+
+`project.PrepareConfiguration(root, citations, snapshot, document, changes)` prepares an in-memory candidate without writing files. Each `FieldChange{Path, Value}` targets an existing scalar with a slash path and literal input text, not a YAML fragment. The initial allowlist covers project name/hypothesis and constraint value/operator; design device/array/circuit scalars; and sweep seed/max-points, existing values and range start/stop/count. Identity, schema/model version, objectives, citations, input hashes, constraint metric/unit and sweep parameter paths remain read-only. Collection insertion, deletion and reordering are unsupported.
+
+A patch permits at most 64 changes, with each scalar input limited to 4096 UTF-8 bytes. Go parses base-10 integers with overflow checks, finite float64 values and literal strings. It rejects unsupported or duplicate targets and ambiguous duplicate keys; nonempty patches also reject alias/merge-bearing documents. The full candidate passes the shared strict loader, input-hash/citation checks and sweep validation, with editor-only range/value-count preflight before expansion allocation. Both root handles remain caller-owned; nil citations skips existence checks as with `LoadRoot`.
+
+`PreparedConfiguration.Changed()` is false for empty or semantically unchanged patches. These retain the original bytes and revision without encoding, including CRLF, quotes/comments and a missing final newline. Changed candidates preserve comments, ordering and unexposed supported values through YAML nodes; only the edited document may normalize layout. The other two documents remain byte-identical.
+
+This is a Go preparation primitive, not a saver, CLI/GUI editor or browser API. It does not check a revision against later disk changes or provide atomic persistence/concurrency protection. It adds no confinement claim for runs, reports or exports and no native screen-reader qualification.
+
+The table-driven `workbench/project/configuration_test.go::TestPrepareConfiguration` covers preparation, preservation and rejection cases. Focused offline regression checks are:
+
+```bash
+CGO_ENABLED=0 go test ./workbench/project -run 'TestPrepareConfiguration|TestLoad' -count=1
+go test -race ./workbench/project -run 'TestPrepareConfiguration|TestLoadRootConfinement' -count=1
+```
+
 ## Run Identity and Reuse
 
 A run ID is a SHA-256 hash of its resolved design, seed, project model version, evaluator version, schema version, and input hashes. Bump `model_version` when a study's model assumptions change and bump the evaluator version when evaluator behavior changes. Identical behavior-affecting inputs produce the same ID regardless of worker count.
