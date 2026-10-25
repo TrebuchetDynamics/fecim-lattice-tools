@@ -22,7 +22,15 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualiz
 
 > Historical note: some conference material informed early exploration, but the simulator is documented against literature-backed sources and clearly labeled educational where evidence is limited.
 
+## UI Direction and Compatibility
+
+React web is the primary UI target for new work; Fyne is deprecated compatibility. React is not an already-shipped client. Follow the [approved browser workbench design](docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#architecture-and-scope): React handles presentation and interaction across a planned thin local Go API; Go retains scientific computation, values, evidence and identities. Preserve the Go core and CLI.
+
+The current executable and `launch.sh` still open legacy Fyne by default. Keep existing entry points, default-build GUI packages and regression guards working until replacements pass the approved behavioral and accessibility gates. Do not add `legacy_fyne` gates or change launch defaults as part of this policy. Legacy widget mutations from goroutines must still use `fyne.Do(func() { ... })`.
+
 ## Build & Run
+
+These commands launch the current legacy Fyne executable, not a React client:
 
 ```bash
 CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
@@ -39,11 +47,11 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fec
 - If a change cannot reasonably be test-first, stop and explain the blocker before coding. Documentation-only, comments-only, formatting-only, generated files, and release metadata may use `TDD: N/A` with a short reason.
 
 ### Do
+- Direct new UI features/demos to the approved React/Go boundary with testable core state; no new Fyne GUI path is required
 - Quantize to 30 levels: `crossbar.QuantizeTo30Levels(value)`
 - Run `go test ./...` before committing
 
 ### Don't
-- Add demos without exposing a Fyne GUI path and testable core state
 - Use blocking operations on the Fyne main UI thread
 - Commit binaries
 
