@@ -2,9 +2,13 @@ package study
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"fecim-lattice-tools/workbench/experiment"
 )
 
 func TestRunAndGenerateReportUseStructuredStudyOutcome(t *testing.T) {
@@ -29,6 +33,87 @@ func TestRunAndGenerateReportUseStructuredStudyOutcome(t *testing.T) {
 	}
 	if len(analysis.Runs) != 2 {
 		t.Fatalf("generated report analysis runs=%d, want 2", len(analysis.Runs))
+	}
+}
+
+func TestRunForwardsProgress(t *testing.T) {
+	for _, state := range []struct {
+		name string
+		want experiment.ProgressSnapshot
+		err  error
+	}{
+		{"success", experiment.ProgressSnapshot{Total: 2, Completed: 2}, nil},
+		{"reused", experiment.ProgressSnapshot{Total: 2, Completed: 2, Reused: 2}, nil},
+		{"model failure", experiment.ProgressSnapshot{Total: 2, Completed: 2, Failed: 2}, nil},
+		{"cancelled", experiment.ProgressSnapshot{Total: 2, Cancelled: 2}, context.Canceled},
+		{"invalid cache", experiment.ProgressSnapshot{Total: 2}, experiment.ErrUnverifiableRun},
+	} {
+		for _, observer := range []string{"buffered", "nil", "full", "unread"} {
+			t.Run(state.name+"/"+observer, func(t *testing.T) {
+				root := writeProjectFixture(t)
+				if state.name == "model failure" {
+					path := filepath.Join(root, "design.yaml")
+					data, err := os.ReadFile(path)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if err := os.WriteFile(path, []byte(strings.Replace(string(data), "material: HZO", "material: BTO", 1)), 0o600); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if state.name == "reused" || state.name == "invalid cache" {
+					outcome, err := Run(context.Background(), root, RunOptions{Workers: 2})
+					if err != nil {
+						t.Fatal(err)
+					}
+					if state.name == "invalid cache" {
+						path := filepath.Join(root, "runs", outcome.Summary.Runs[0].Manifest.RunID, "manifest.json")
+						if err := os.Remove(path); err != nil {
+							t.Fatal(err)
+						}
+					}
+				}
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				if state.name == "cancelled" {
+					cancel()
+				}
+				var progress chan experiment.ProgressSnapshot
+				sentinel := experiment.ProgressSnapshot{Total: 99}
+				switch observer {
+				case "buffered":
+					progress = make(chan experiment.ProgressSnapshot, 8)
+				case "full":
+					progress = make(chan experiment.ProgressSnapshot, 1)
+					progress <- sentinel
+				case "unread":
+					progress = make(chan experiment.ProgressSnapshot)
+				}
+				outcome, err := Run(ctx, root, RunOptions{Workers: 2, Progress: progress})
+				if !errors.Is(err, state.err) {
+					t.Fatalf("error = %v, want %v", err, state.err)
+				}
+				if err == nil && (len(outcome.Summary.Runs) != 2 || len(outcome.Analysis.Runs) != 2) {
+					t.Fatalf("outcome runs summary=%d analysis=%d, want 2/2", len(outcome.Summary.Runs), len(outcome.Analysis.Runs))
+				}
+				if progress != nil {
+					close(progress) // The caller still owns the channel after Run.
+				}
+				if observer == "buffered" {
+					var last experiment.ProgressSnapshot
+					for snapshot := range progress {
+						last = snapshot
+					}
+					if last != state.want {
+						t.Fatalf("last progress = %+v, want %+v", last, state.want)
+					}
+				} else if observer == "full" {
+					if got := <-progress; got != sentinel {
+						t.Fatalf("full observer changed: %+v", got)
+					}
+				}
+			})
+		}
 	}
 }
 

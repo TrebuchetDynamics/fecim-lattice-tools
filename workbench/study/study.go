@@ -32,6 +32,12 @@ type RunOptions struct {
 	Workers            int
 	CitationDir        string
 	RepositoryRevision string
+
+	// Progress forwards best-effort, nonblocking experiment count snapshots.
+	// Nil disables notifications; even the final snapshot may be dropped.
+	// The caller owns the channel and must not close it during Run; Run never
+	// closes it. The returned outcome/error and committed runs are authoritative.
+	Progress chan<- experiment.ProgressSnapshot
 }
 
 type RunOutcome struct {
@@ -194,6 +200,7 @@ func Run(ctx context.Context, root string, opts RunOptions) (RunOutcome, error) 
 		EvaluatorVersion:   fecim.EvaluatorVersion,
 		Workers:            opts.Workers,
 		RepositoryRevision: opts.RepositoryRevision,
+		Progress:           opts.Progress,
 	})
 	if err != nil {
 		return RunOutcome{}, err
