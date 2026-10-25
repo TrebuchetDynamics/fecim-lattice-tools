@@ -3,7 +3,7 @@ schema = 1
 id = "HZO-REF-4"
 title = "Compare HZO data with the unchanged model baseline"
 short = "Compare data with the unfitted model"
-status = "open"
+status = "done"
 goal = "HZO-REF"
 section = "Now"
 rank = 5000
@@ -16,6 +16,8 @@ scope = "Implement Sample, ReadSamples, Compare and SimulateBaseline at the inte
 acceptance = ["Given hand-computable matched branch samples, when Compare runs, then per-branch/pooled errors, counts and labelled observed normalizer are exact; TestCompareMatchedBranches proves the numerical contract.", "Given empty/nonfinite or mismatched branch/index/field samples, when compared, then reject without interpolation or cross-branch matching; zero observed normalization has an unavailable normalized metric rather than NaN/Inf; TestCompareMatchedBranches proves these cases.", "Given repeated inputs and reference P changed without changing fields, when SimulateBaseline runs, then simulation remains deterministic and unaffected by measured P, leaves the source preset unchanged and records the fixed constructor/conditioning settings; TestBaselineUsesUnchangedPreset proves this."]
 checks = ["go test ./validation/peloop -run '^(TestCompareMatchedBranches|TestBaselineUsesUnchangedPreset)$' -count=1"]
 exclusions = ["No changes to existing model equations, coefficients, presets, synthetic/quarantined fixtures or legacy validation counts.", "No unrelated staged/unstaged edits, commits without owner diff approval, dispatch, publication, deployment, credentials, new dependencies, manifests or CI changes."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/HZO-REF-4.toml"
 +++
 Sources: docs/research/validation/landing-page-figure-readiness.md#experimental-hzo-evidence-frontier
 
