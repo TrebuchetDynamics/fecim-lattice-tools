@@ -52,6 +52,31 @@ output/validation/module2/ngspice_comparison/*.sp
 
 External tool checks are optional by design. If `ngspice`, Yosys, OpenLane, or Python scientific packages are not installed, those tests skip the external execution while keeping structural checks active.
 
+## Offline P-E Pixel Conversion
+
+`validation/peloop.Digitize` and `cmd/pe-reference` convert selected original-raster pixels using the qualified source profile's independent affine axes, including inverted y. They do not fetch source images or access the internet.
+
+From the repository root, with a locally prepared pixel CSV:
+
+```bash
+go run ./cmd/pe-reference digitize \
+  --profile validation/literature/data/experimental/kim2020_fig3a_ref_digitized/source.provenance.json \
+  --pixels /path/to/pixels.csv --out /path/to/new-physical.csv
+```
+
+Input header: `branch,point_index,x_px,y_px`. Coordinates use the original image's zero-based top-left origin, with y increasing downwards. Use `ascending` or `descending` labels and contiguous indices starting at zero within each supplied branch. Input rows may be interleaved; output is ordered ascending then descending, by index, with header `branch,point_index,field_MV_cm,polarization_uC_cm2`.
+
+The converter rejects malformed/nonfinite points, points outside the calibrated tick ranges, invalid profiles or axes, missing/repeated indices, duplicate fields within a branch, empty data, more than 10000 data rows, or more than 2MiB of pixel CSV including its header. The same field on opposite branches is permitted. It never smooths, extrapolates, fills missing samples, or adjusts values to match a model. The command refuses existing output paths; invalid input exits nonzero without creating output or writing success text to stdout.
+
+Focused offline checks:
+
+```bash
+go test ./validation/peloop -run '^TestDigitizeCalibratedPixels$' -count=1
+go test ./cmd/pe-reference -run '^TestDigitizeCommand$' -count=1
+```
+
+These tests use hand-computable synthetic pixels and verify conversion and rejection behavior, not experimental trace fidelity. Conversion does not verify source-image bytes, certify selected markers, or establish model agreement; independent source and visual review remain necessary.
+
 ## Module 2 Crossbar Gates
 
 `validation/module2/kcl_conservation_test.go` checks the Module 2 parasitic crossbar solver against Kirchhoff's Current Law.
