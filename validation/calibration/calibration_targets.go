@@ -29,7 +29,7 @@ func DefaultTargets() CalibrationTargets {
 	return CalibrationTargets{
 		FrequencySweep: []FrequencySweepTarget{
 			{FrequencyHz: 1, Pr_uCcm2: 23.0, Ec_MVcm: 0.92, Citation: "Materlik et al., J. Appl. Phys. 117, 134109 (2015), DOI:10.1063/1.4916707; source: experimental-data/hzo/pe-loops/materlik2015_jap_hfzro2_temperature_lk.json"},
-			{FrequencyHz: 1e3, Pr_uCcm2: 21.0, Ec_MVcm: 1.02, Citation: "Park et al., Adv. Mater. 27(11) (2015), DOI:10.1002/adma.201404531 (Fig. 2a 10 nm Hf0.5Zr0.5O2); source: experimental-data/hzo/pe-loops/park2015_advmat_hzo_10nm_fig2a.json"},
+			{FrequencyHz: 1e3, Pr_uCcm2: 21.0, Ec_MVcm: 1.02, Citation: "simulation-default frequency target (21.0 uC/cm2, 1.02 MV/cm); not extracted Park measurements. Former figure-metrics JSON is quarantined in validation/literature/excluded/park2015_unverified_metrics.json"},
 			{FrequencyHz: 1e6, Pr_uCcm2: 16.5, Ec_MVcm: 1.22, Citation: "Materlik et al., J. Appl. Phys. 117, 134109 (2015), DOI:10.1063/1.4916707 (high-frequency dispersion trend); source: experimental-data/hzo/pe-loops/materlik2015_jap_hfzro2_temperature_lk.json"},
 		},
 		SwitchingTime: []SwitchingTimeTarget{

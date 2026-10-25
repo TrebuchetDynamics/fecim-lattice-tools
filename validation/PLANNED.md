@@ -13,7 +13,7 @@ This file tracks validation work that should be visible to collaborators without
 
 | Module | Work | Target Evidence |
 |---|---|---|
-| Module 1 hysteresis | Improve Park 2015 HZO overlay report and public plot export | RMSE table, source provenance, side-by-side P-E plot |
+| Module 1 hysteresis | Independently extract and verify Park measurements before any experimental overlay | Traceable extraction, source/uncertainty audit, held-out comparison; current synthetic fixture is ineligible |
 | Module 2 crossbar | Execute ngspice comparison report on a host with ngspice installed | `output/validation/module2/ngspice_comparison.json` and `.svg` with `comparison_executed=true`, `claim_supported=true`, and max relative error ≤1% for small arrays |
 | Module 3 MNIST | Publish inference artifact | accuracy, per-digit metrics, confusion matrix, quantization settings |
 | Module 4 peripherals | Add DAC/ADC/TIA validation report | INL/DNL, quantization error, SNR, and TIA transfer sweep |

@@ -36,14 +36,18 @@
     }
   ],
   "metadata": {
-    "dataset_type": "pe_loop_metrics",
+    "dataset_type": "excluded_unverified_metrics",
+    "status": "excluded_unverified_extraction",
+    "experimental_validation": false,
+    "correction_date": "2026-10-25",
+    "notes": "Historical scalar values retained without endorsement. Extraction provenance and figure attribution unverified; not the 61-point synthetic CSV.",
     "material": "Hf0.5Zr0.5O2",
     "metrics": {
       "1": "Pr_uC_cm2",
       "2": "Ec_MV_cm"
     },
-    "extraction_method": "Figure-derived extraction from Figure 2a for 10 nm Hf0.5Zr0.5O2, 1 kHz loop.",
+    "extraction_method": "Unverified historical claim of Figure 2a extraction; no reproducible source-pixel record.",
     "uncertainty_basis": "Axis-resolution + manual digitization uncertainty envelope.",
-    "source_path": "experimental-data/hzo/pe-loops/park2015_advmat_hzo_10nm_fig2a.json"
+    "source_path": "validation/literature/excluded/park2015_unverified_metrics.json"
   }
 }

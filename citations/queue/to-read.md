@@ -4,8 +4,8 @@ Move records here after a paper file exists but before it has been read.
 
 ## Core Verification (read first)
 
-- [ ] park2015_advmat_hzo — verify Pr=24, Ec=1.0 from Fig 2a against digitized data
-  - Evidence match: `experimental-data/hzo/pe-loops/park2015_advmat_hzo_10nm_fig2a.json`
+- [ ] park2015_advmat_hzo — verify figure-specific Pr/Ec directly against the original paper; existing shape fixture is synthetic
+  - Unsupported historical scalar extraction quarantined at `validation/literature/excluded/park2015_unverified_metrics.json`; not an evidence match.
 - [ ] materlik2015_jap_hfo2_origin — verify β=-6.72e8, γ=1.95e10 from Table I
   - Evidence match: LKSolver defaults in `shared/physics/landau.go`
 - [ ] guo2018_apl_nls — verify NLSSigma=1.5, TauInf=100ps

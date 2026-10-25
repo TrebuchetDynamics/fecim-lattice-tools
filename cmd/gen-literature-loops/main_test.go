@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -14,6 +15,21 @@ func TestMaterialForPreset(t *testing.T) {
 	}
 	if _, _, err := materialForPreset("bad"); err == nil {
 		t.Fatal("expected error for unknown preset")
+	}
+}
+
+func TestGeneratedReferenceDeclaresSyntheticOrigin(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "shape.csv")
+	var stdout, stderr bytes.Buffer
+	if code := runGenLiteratureLoops([]string{"-preset", "park", "-out", path}, &stdout, &stderr); code != 0 {
+		t.Fatalf("exit=%d: %s", code, stderr.String())
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(body), "# SYNTHETIC") || !strings.Contains(string(body), "not experimental") || !strings.Contains(string(body), "NewPreisachModel") {
+		t.Fatalf("generated reference missing provenance header: %s", body)
 	}
 }
 

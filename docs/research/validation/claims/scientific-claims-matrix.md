@@ -78,7 +78,7 @@ Use them to validate simulator accuracy relative to the state of the art.
 - VK-1: Simulator uses heuristic C2C/D2D variation, not device-calibrated
 - VK-2: Energy model uses estimates, not measured per-MAC values
 - VK-3: No fabricated device data — all validation is simulation-internal
-- L07: Preisach calibration uses Park 2015 data only (no 2024-2026 datasets)
+- L07 corrected 2026-10-25: the Park-context fitting fixture is synthetic; fit error is numerical regression evidence, not experimental validation. The separate unsupported figure-metrics JSON and disputed BTO extraction are excluded.
 - L08: No FTJ (tunnel junction) device model — only FeFET conductance
 - L09: No 2D ferroelectric (MoS2/In2Se3) device-specific calibration
 - L10: MNIST accuracy gap between sim (~60% CIM) and literature (96%+) unexplained

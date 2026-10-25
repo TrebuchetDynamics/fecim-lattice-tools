@@ -8,9 +8,9 @@ import (
 	"testing"
 )
 
-func TestBTO2021_DigitizedDatasetIntegrity(t *testing.T) {
-	base := filepath.Join("data", "bto2021_cryst11101192_hysteresis_digitized.csv")
-	provPath := filepath.Join("data", "bto2021_cryst11101192_hysteresis_digitized.provenance.json")
+func TestBTO2021_ExcludedTraceIsPreserved(t *testing.T) {
+	base := filepath.Join("excluded", "bto2021_cryst11101192_hysteresis_digitized.csv")
+	provPath := filepath.Join("excluded", "bto2021_cryst11101192_hysteresis_digitized.provenance.json")
 
 	f, err := os.Open(base)
 	if err != nil {
@@ -49,10 +49,10 @@ func TestBTO2021_DigitizedDatasetIntegrity(t *testing.T) {
 	if prov.DatasetID != "bto2021_cryst11101192_hysteresis_digitized" {
 		t.Fatalf("dataset_id mismatch: %q", prov.DatasetID)
 	}
-	if prov.Status != "pixel_digitized_curve" {
+	if prov.Status != "excluded_pending_redigitization" {
 		t.Fatalf("status mismatch: %q", prov.Status)
 	}
-	if prov.Tier != "candidate_tier1" {
+	if prov.Tier != "excluded" {
 		t.Fatalf("tier mismatch: %q", prov.Tier)
 	}
 	if prov.Units.FieldDatasetUnit != "MV/cm" || prov.Units.PolarizationDatasetUnit != "uC/cm2" {
@@ -62,7 +62,7 @@ func TestBTO2021_DigitizedDatasetIntegrity(t *testing.T) {
 		t.Fatalf("point_count too small: %d", prov.Digitization.PointCount)
 	}
 	if prov.Digitization.IsPlaceholderForRefinement {
-		t.Fatal("digitized dataset must not be placeholder")
+		t.Fatal("original extraction metadata must be preserved; quarantine does not repair the trace")
 	}
 	if len(prov.Uncertainty) == 0 {
 		t.Fatal("uncertainty block missing")

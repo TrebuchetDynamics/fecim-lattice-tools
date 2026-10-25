@@ -9,16 +9,19 @@ import (
 )
 
 type literaturePELoopArtifact struct {
-	SchemaVersion string `json:"schema_version"`
-	TimestampUTC  string `json:"timestamp_utc"`
-	Commit        string `json:"commit"`
-	Gate          string `json:"gate"`
-	TestID        string `json:"test_id"`
-	Verdict       string `json:"verdict"`
-	GeneratedAt   string `json:"generated_at"`
-	Dataset       string `json:"dataset"`
-	DOI           string `json:"doi"`
-	Pass          bool   `json:"pass"`
+	SchemaVersion          string `json:"schema_version"`
+	TimestampUTC           string `json:"timestamp_utc"`
+	Commit                 string `json:"commit"`
+	Gate                   string `json:"gate"`
+	TestID                 string `json:"test_id"`
+	Verdict                string `json:"verdict"`
+	GeneratedAt            string `json:"generated_at"`
+	Dataset                string `json:"dataset"`
+	DOI                    string `json:"doi"`
+	Pass                   bool   `json:"pass"`
+	ComparisonKind         string `json:"comparison_kind"`
+	Evidence               string `json:"evidence"`
+	ExperimentalValidation *bool  `json:"experimental_validation"`
 }
 
 func TestLiteraturePELoopArtifactFamily_Contract(t *testing.T) {
@@ -28,8 +31,8 @@ func TestLiteraturePELoopArtifactFamily_Contract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("glob %s: %v", glob, err)
 	}
-	if len(paths) != 9 {
-		t.Fatalf("expected exactly 9 module1_pe_loop artifacts, got %d", len(paths))
+	if len(paths) != 8 {
+		t.Fatalf("expected exactly 8 reference-regression artifacts after BTO exclusion, got %d", len(paths))
 	}
 
 	for _, p := range paths {
@@ -52,6 +55,14 @@ func TestLiteraturePELoopArtifactFamily_Contract(t *testing.T) {
 		}
 		if rec.DOI == "" || !strings.HasPrefix(strings.ToLower(rec.DOI), "10.") {
 			t.Fatalf("%s invalid doi=%q", p, rec.DOI)
+		}
+		if strings.Contains(filepath.Base(p), "bto2021_cryst11101192_hysteresis_digitized") {
+			t.Fatalf("excluded BTO extraction still counted: %s", p)
+		}
+		if strings.Contains(filepath.Base(p), "park2015") {
+			if !strings.Contains(filepath.Base(p), "synthetic_shape") || rec.ComparisonKind != "synthetic-regression" || rec.Evidence != "simulation-default" || rec.ExperimentalValidation == nil || *rec.ExperimentalValidation {
+				t.Fatalf("Park synthetic regression promoted to experimental evidence: %+v", rec)
+			}
 		}
 		if !rec.Pass {
 			t.Fatalf("%s pass=false", p)

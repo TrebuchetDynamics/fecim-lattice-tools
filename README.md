@@ -193,7 +193,7 @@ Concurrency-sensitive workbench code also runs under the race detector:
 go test -race ./workbench/...
 ```
 
-Validation includes physics golden data, literature range checks, crossbar Kirchhoff-law checks, GUI integration tests, deterministic report checks, and CI on `main`. Passing validation does not promote a simulation default into measured evidence.
+Validation includes physics golden data, literature range checks, crossbar Kirchhoff-law checks, GUI integration tests, deterministic report checks, and CI on `main`. Passing validation does not promote a simulation default into measured evidence. Some literature-loop fixtures are provisional or model-generated; they are not independent experimental validation of the HZO workbench evaluator. See the [validation-figure evidence review](./docs/research/validation/landing-page-figure-readiness.md) for why a measured-versus-simulated headline plot is not yet presented.
 
 ## Project map
 
@@ -223,7 +223,7 @@ web/                    separate static Astro project site
 
 ## Citing this software
 
-Citation metadata is provided in [`CITATION.cff`](./CITATION.cff). Until an archived release is published, record the exact Git commit alongside your project bundle and reports. No software DOI or JOSS acceptance is claimed.
+Citation metadata is provided in [`CITATION.cff`](./CITATION.cff). Until an archived release is published, record the exact Git commit alongside your project bundle and reports. No software DOI or JOSS acceptance is claimed. Release and submission preparation is tracked in the [readiness checklist](./docs/internals/release/research-software-readiness.md).
 
 ## Contributing
 

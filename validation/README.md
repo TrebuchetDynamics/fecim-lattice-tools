@@ -43,7 +43,7 @@ output/validation/module2/ngspice_comparison/*.sp
 
 | Area | Evidence | Command |
 |---|---|---|
-| Module 1 hysteresis | Literature-backed P-E loop checks against digitized datasets, including Park 2015 HZO | `go test -v ./validation/literature/...` |
+| Module 1 hysteresis | Reference-regression P-E checks; Park is synthetic, not measured validation; disputed BTO extraction excluded | `go test -v ./validation/literature/...` |
 | Module 2 crossbar | Kirchhoff current conservation, analytical-limit fixtures, and an optional ngspice comparison report for deterministic small-array resistive fixtures | `go test -v ./validation/module2/...` |
 | Module 2 external comparison | NumPy/SciPy and ngspice comparison harnesses where external tools are installed | `go test -v ./validation/external/...` |
 | Module 4 circuits | KCL/KVL and sense-chain regression checks | `go test -v ./validation/... -run 'Module4|SenseChain'` |
@@ -84,7 +84,7 @@ The ngspice comparison is optional. If ngspice is missing, the test writes a str
 
 | Path | Purpose |
 |---|---|
-| `literature/` | Digitized reference data and literature-backed physics validation |
+| `literature/` | Reference fixtures and physics checks with explicit evidence boundaries |
 | `module2/` | Public Module 2 conservation and crossbar validation gates |
 | `external/` | Optional external-tool comparisons, including ngspice and OpenLane checks |
 | `integration/` | Cross-module validation between physics, crossbar, inference, and EDA paths |
@@ -105,7 +105,7 @@ The repository is currently an educational simulation toolkit. A passing validat
 
 Known public-facing limits:
 
-- Some literature datasets are digitized from figures and carry digitization uncertainty.
+- Dataset provenance must be reviewed individually. `park2015_synthetic_shape.csv` is synthetic regression data; the BTO pixel-extraction candidate and unsupported Park scalar JSON are quarantined, not counted as experimental validation. See [the correction audit](../docs/research/validation/park-reference-correction.md).
 - External comparisons depend on installed local tools and versions.
 - MNIST results are pipeline demonstrations unless accompanied by a full training/inference artifact and confusion matrix.
 - EDA export validity is staged: syntax and smoke tests are not the same as a clean full physical implementation.
