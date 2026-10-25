@@ -3,6 +3,80 @@
 Status: **not ready for a headline measured-versus-simulated overlay**.
 Reviewed 25 October 2026. This is an evidence inventory, not new physics validation.
 
+## Reproducible local HZO comparison (implemented)
+
+The [offline command](../../../cmd/pe-reference/compare.go) now consumes the
+[independently extracted Kim Figure 3(a) markers](../../../validation/literature/data/experimental/kim2020_fig3a_ref_digitized/extraction.md)
+and the [unchanged unfitted baseline](../../../validation/peloop/README.md).
+This local export does **not** make a headline measured overlay ready, validate
+predictive physics, change the legacy experimental-validation count, or authorize
+publication/deployment. The planning/discovery receipts below describe their
+historical snapshots, not the current absence of extraction or report code.
+
+From a local Git source checkout on Linux, choose a **non-existing** output path
+whose parent exists (keep scratch under `$TMPDIR`):
+
+```sh
+go run ./cmd/pe-reference compare \
+  --profile validation/literature/data/experimental/kim2020_fig3a_ref_digitized/source.provenance.json \
+  --data validation/literature/data/experimental/kim2020_fig3a_ref_digitized/loop.csv \
+  --out-dir "$TMPDIR/kim2020-comparison"
+```
+
+- `metrics.json` records the full source profile/attribution, 12 ascending and 14
+  descending reference samples, simulated samples, branch/pooled counts and errors,
+  units, material snapshot and drive settings. RMSE/MAE use uC/cm2; normalized RMSE
+  is a fraction divided by the observed maximum absolute reference P (per branch
+  or pooled), **not measured Ps**. A zero denominator produces `null`.
+- `overlay.svg` shows reference markers and separate simulated branch lines, with
+  axes scaled to include both datasets and preserve mismatch. Its XML metadata
+  contains the same JSON record and its description contains the same caption.
+- `caption.txt` reports branch/pooled scientific values, conditions, settings,
+  attribution, hashes and limitations without promoting agreement to validity.
+  Every artifact retains `unfitted-baseline` and `experimental_validation=false`,
+  even for zero residuals. The command performs exact branch/index/field matching,
+  with no interpolation, smoothing, fitting, or residual pass threshold.
+- SHA-256 fingerprints cover the declared source image, actual profile/data bytes,
+  complete model parameters, current-checkout non-test Go package-root sources
+  (physics, ferroelectric adapter, peloop and command), and running executable.
+  Git HEAD **and dirty state** are recorded. Checkout-source hashes do not assert
+  that an externally built executable came from those sources; its separate hash
+  identifies the binary. Repeated runs with the same executable, input bytes and
+  checkout state produce byte-identical bundles; rebuilds can change the executable
+  fingerprint. No timestamps or output-directory names enter the evidence record.
+- All files are generated and closed in a sibling temporary directory before an
+  atomic Linux `renameat2(RENAME_NOREPLACE)` publishes the complete directory.
+  Existing files, empty directories and symlinks are never overwritten. Invalid
+  inputs and publication failures leave no newly published bundle or staging
+  debris. Linux/filesystem support for this operation is required; other systems
+  fail closed. This reuses the existing `x/sys` dependency without manifest changes.
+
+The source measurement temperature, waveform and exact device diameter remain
+**not reported**. The baseline's 300 K / 1 GPa constructor defaults are not inferred
+measurement conditions. Reset, initial minimum field, and two numerical conditioning
+cycles with 512 steps per half-cycle do not reproduce measured wake-up cycling;
+quasi-static `Update` does not model 10 kHz dynamics. Conventional geometric branch
+assignment is not a recovered time trace. Unresolved merged positive endpoints
+remain omitted. The extraction's isolated/overlapped marker selection bounds
+(+/-2 / +/-4 original pixels) and separate +/-2-pixel tick-anchor bound are not
+instrument uncertainties or statistical error bars. The command fingerprints
+caller-supplied data; it cannot certify measured origin, visual trace fidelity or
+source-image bytes. Independent review against the pinned original remains a
+separate prerequisite to public promotion.
+
+Offline checks (the full merged-tree gate belongs to the coordinator):
+
+```sh
+go test ./cmd/pe-reference -run '^TestCompareCommandEvidenceBoundary$' -count=1
+go test ./validation/peloop ./cmd/pe-reference -count=1
+go test -race ./validation/peloop ./cmd/pe-reference -count=1
+```
+
+`TestCompareCommandEvidenceBoundary` exercises the real command's deterministic
+three-file export, hashes/counts/units/residual consistency, zero-error claim
+boundary and nonzero rejection without changing pre-existing caller paths.
+It does not perform independent visual qualification or experimental validation.
+
 ## Park HZO fixture
 
 - [The generator](../../../cmd/gen-literature-loops/main.go#L1) explicitly writes **synthetic** P–E loops from built-in Park and Cheema presets.
