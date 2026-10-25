@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml"><img src="https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
-  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go" alt="Go 1.25 or newer"></a>
+  <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-1.26.10%2B-00ADD8?logo=go" alt="Go 1.26.10 or newer"></a>
   <a href="https://fyne.io"><img src="https://img.shields.io/badge/Desktop-Fyne-2F5D50" alt="Fyne desktop interface"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-3F8C78" alt="MIT license"></a>
 </p>
@@ -66,7 +66,7 @@ The repository exposes both a local CLI workbench and a Fyne desktop shell. Use 
 
 ### Prerequisites
 
-- Go 1.25 or newer
+- Go 1.26.10 or newer (patched toolchain; see `go.mod`)
 - A CGO-capable desktop toolchain only when running the Fyne interface
 - No API keys, cloud services, database, or daemon
 
