@@ -7,9 +7,81 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
+
+// TestScreenshotterFailureStopsAutomaticDisplay catches error exits that bypass
+// the deferred cleanup of the real Xvfb process owned by the command.
+func TestScreenshotterFailureStopsAutomaticDisplay(t *testing.T) {
+	xvfb, err := exec.LookPath("Xvfb")
+	if err != nil {
+		t.Skip("Xvfb is required")
+	}
+	binDir := t.TempDir()
+	binary := filepath.Join(binDir, "screenshotter")
+	if output, err := exec.Command("go", "build", "-o", binary, ".").CombinedOutput(); err != nil {
+		t.Fatalf("build: %v\n%s", err, output)
+	}
+	// Record the actual server PID without replacing its lifecycle behavior.
+	wrapper := "#!/bin/sh\nprintf '%s' \"$$\" > \"$FECIM_TEST_XVFB_PID\"\nexec \"$FECIM_TEST_REAL_XVFB\" \"$@\"\n"
+	if err := os.WriteFile(filepath.Join(binDir, "Xvfb"), []byte(wrapper), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"unknown-module", "invalid-output-directory", "single-capture-failure", "child-capture-failure"} {
+		t.Run(mode, func(t *testing.T) {
+			pidFile := filepath.Join(t.TempDir(), "server.pid")
+			outDir := t.TempDir()
+			only := "not-a-module"
+			wantExit := 2
+			if mode == "invalid-output-directory" {
+				outDir = filepath.Join(outDir, "file")
+				if err := os.WriteFile(outDir, nil, 0o600); err != nil {
+					t.Fatal(err)
+				}
+				only = "docs"
+			}
+			if mode == "single-capture-failure" || mode == "child-capture-failure" {
+				wantExit = 1
+				only = "docs"
+				module := "docs"
+				if mode == "child-capture-failure" {
+					only = ""
+					module = "hysteresis"
+				}
+				if err := os.Mkdir(filepath.Join(outDir, module+"_initial.png"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, binary, "-out", outDir, "-only", only)
+			cmd.Env = append(os.Environ(), "DISPLAY=", "WAYLAND_DISPLAY=", "PATH="+binDir+":"+os.Getenv("PATH"), "FECIM_TEST_XVFB_PID="+pidFile, "FECIM_TEST_REAL_XVFB="+xvfb)
+			output, err := cmd.CombinedOutput()
+			if ctx.Err() != nil {
+				t.Fatalf("command timed out: %s", output)
+			}
+			if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != wantExit {
+				t.Fatalf("want exit status %d, got %v: %s", wantExit, err, output)
+			}
+			data, err := os.ReadFile(pidFile)
+			if err != nil {
+				t.Fatalf("automatic display did not start: %v: %s", err, output)
+			}
+			pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
+			if err != nil || pid <= 0 {
+				t.Fatalf("invalid server PID %q", data)
+			}
+			if err := syscall.Kill(pid, 0); err != syscall.ESRCH {
+				_ = syscall.Kill(pid, syscall.SIGKILL)
+				t.Fatalf("automatic Xvfb process %d survived command failure (probe: %v)", pid, err)
+			}
+		})
+	}
+}
 
 // TestFullScreenshotterCapturesEveryModuleSequentially exercises the public
 // screenshot command instead of constructing modules one at a time in tests.
