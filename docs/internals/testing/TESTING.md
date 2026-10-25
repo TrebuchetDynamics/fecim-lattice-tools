@@ -41,6 +41,22 @@
 
 ## Running Tests
 
+The full screenshotter smoke test is **opt-in** with the `display` build tag. It is not selected by default `go test ./...`; the ordinary PNG unit test remains in the default suite. A source-selection contract checks both tag configurations.
+
+Run the full smoke test on a working X11 display with the native Fyne dependencies installed:
+
+```bash
+go test -tags=display ./cmd/fecim-screenshotter-fyne \
+  -run '^TestFullScreenshotterCapturesEveryModuleSequentially$' -count=1 -v
+
+# Isolated X11 display for headless CI or Sway/Wayland hosts (requires Xvfb):
+env -u WAYLAND_DISPLAY xvfb-run -a go test -tags=display \
+  ./cmd/fecim-screenshotter-fyne \
+  -run '^TestFullScreenshotterCapturesEveryModuleSequentially$' -count=1 -v
+```
+
+An explicitly requested display smoke test still fails on lifecycle/capture errors; the tag does not turn a failed capture into a skip or pass.
+
 ```bash
 # Run all tests
 go test ./...
