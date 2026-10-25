@@ -3,7 +3,6 @@ package physics
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -12,12 +11,9 @@ import (
 
 // TestAllConfigYAMLParse validates that every YAML under config/ parses cleanly.
 func TestAllConfigYAMLParse(t *testing.T) {
-	_, thisFile, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("runtime.Caller failed")
-	}
-
-	configDir := filepath.Clean(filepath.Join(filepath.Dir(thisFile), ".."))
+	// Go tests run in the package directory. Source paths from runtime.Caller
+	// are module-relative under -trimpath and cannot locate on-disk fixtures.
+	configDir := ".."
 
 	err := filepath.WalkDir(configDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
