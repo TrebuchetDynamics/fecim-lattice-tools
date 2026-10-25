@@ -76,6 +76,42 @@ func assertRejectedResult(t *testing.T, bundle project.Bundle, result Result, re
 	assertNoTempRuns(t, bundle.Root)
 }
 
+func TestLoadRunRecordForStudyReconciliation(t *testing.T) {
+	for _, status := range []Status{StatusSuccess, StatusFailed} {
+		t.Run(string(status), func(t *testing.T) {
+			bundle := runnerBundle(t, 1)
+			summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {
+				if status == StatusFailed {
+					return Result{Status: StatusFailed, Failure: &Failure{Kind: "domain", Message: "invalid design"}}, nil
+				}
+				return successResult(1), nil
+			}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			id := summary.Runs[0].Manifest.RunID
+			record, ok, err := LoadRunRecord(bundle.Root, id)
+			if err != nil || !ok || !reflect.DeepEqual(record, summary.Runs[0]) {
+				t.Fatalf("LoadRunRecord = %+v, %v, %v; want committed record", record, ok, err)
+			}
+			if status == StatusFailed {
+				if _, err := LoadRun(bundle.Root, id); err == nil {
+					t.Fatal("export loader accepted failed run")
+				}
+			}
+			if _, ok, err := LoadRunRecord(bundle.Root, strings.Repeat("0", 64)); err != nil || ok {
+				t.Fatalf("absent run = %v, %v", ok, err)
+			}
+			if err := os.WriteFile(filepath.Join(bundle.Root, "runs", id, "result.json"), []byte("tampered"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if _, ok, err := LoadRunRecord(bundle.Root, id); ok || !errors.Is(err, ErrUnverifiableRun) {
+				t.Fatalf("tampered run = %v, %v", ok, err)
+			}
+		})
+	}
+}
+
 func TestLoadRunRequiresVerifiedSuccessfulRun(t *testing.T) {
 	bundle := runnerBundle(t, 1)
 	summary, err := Run(context.Background(), bundle, deterministicRunOptions(func(context.Context, project.Design, int64) (Result, error) {

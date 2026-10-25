@@ -40,10 +40,22 @@ type RunOptions struct {
 	Progress chan<- experiment.ProgressSnapshot
 }
 
+// OutcomeResultsState describes collection completeness, independently of operation errors.
+// Consumers must treat zero and unknown values as unavailable.
+type OutcomeResultsState string
+
+const (
+	ResultsUnavailable OutcomeResultsState = "unavailable" // No trusted result set.
+	ResultsPartial     OutcomeResultsState = "partial"     // A trusted subset, possibly empty.
+	ResultsComplete    OutcomeResultsState = "complete"    // Every current-sweep point collected.
+)
+
 type RunOutcome struct {
-	Bundle   project.Bundle
-	Summary  experiment.Summary
-	Analysis experiment.Analysis
+	Bundle            project.Bundle
+	Summary           experiment.Summary
+	Analysis          experiment.Analysis
+	ResultsState      OutcomeResultsState
+	AnalysisAvailable bool // Partial analysis describes only the collected subset, not the full sweep.
 }
 
 func CreateStarterProject(root string, options StarterSweepOptions) error {
@@ -188,28 +200,96 @@ func ValidateProject(root, citationDir string) (project.Bundle, int, error) {
 }
 
 func Run(ctx context.Context, root string, opts RunOptions) (RunOutcome, error) {
+	return run(ctx, root, opts, fecim.Evaluate, report.Generate)
+}
+
+func run(ctx context.Context, root string, opts RunOptions, evaluate experiment.Evaluator, writeReport func(string, project.Bundle, experiment.Analysis) error) (RunOutcome, error) {
+	outcome := RunOutcome{ResultsState: ResultsUnavailable}
 	if opts.Workers < 1 {
-		return RunOutcome{}, errors.New("workers must be at least 1")
+		return outcome, errors.New("workers must be at least 1")
 	}
 	bundle, err := project.Load(root, project.LoadOptions{CitationDir: opts.CitationDir})
 	if err != nil {
-		return RunOutcome{}, err
+		return outcome, err
 	}
-	summary, err := experiment.Run(ctx, bundle, experiment.RunOptions{
-		Evaluator:          fecim.Evaluate,
+	outcome.Bundle = bundle
+	points, err := experiment.Expand(bundle)
+	if err != nil {
+		return outcome, err
+	}
+	// Snapshot only verified active-sweep IDs. Old or corrupt unrelated runs
+	// neither contribute results nor prevent collection of this study.
+	ids := make([]string, len(points))
+	reused := make(map[string]bool, len(points))
+	for i, point := range points {
+		id, err := experiment.ID(point, fecim.EvaluatorVersion, bundle.Inputs)
+		if err != nil {
+			return outcome, err
+		}
+		_, ok, err := experiment.LoadRunRecord(bundle.Root, id)
+		if err != nil {
+			// Preserve the runner's nonblocking total snapshot on preflight failure.
+			select {
+			case opts.Progress <- experiment.ProgressSnapshot{Total: len(points)}:
+			default:
+			}
+			return outcome, err
+		}
+		ids[i] = id
+		reused[id] = ok
+	}
+
+	summary, runErr := experiment.Run(ctx, bundle, experiment.RunOptions{
+		Evaluator:          evaluate,
 		EvaluatorVersion:   fecim.EvaluatorVersion,
 		Workers:            opts.Workers,
 		RepositoryRevision: opts.RepositoryRevision,
 		Progress:           opts.Progress,
 	})
-	if err != nil {
-		return RunOutcome{}, err
+	// Run has joined its workers. Its delivered records are independently
+	// trusted; reload expected IDs to recover commits lost during cancellation.
+	collected := make(map[string]experiment.RunRecord, len(summary.Runs))
+	for _, record := range summary.Runs {
+		if _, expected := reused[record.Manifest.RunID]; expected {
+			collected[record.Manifest.RunID] = record
+		}
 	}
-	analysis := experiment.Analyze(bundle, summary.Runs)
-	if err := report.Generate(bundle.Root, bundle, analysis); err != nil {
-		return RunOutcome{}, err
+	var reconciliationErr error
+	outcome.Summary.Runs = make([]experiment.RunRecord, 0, len(points))
+	for _, id := range ids {
+		record, ok, err := experiment.LoadRunRecord(bundle.Root, id)
+		if err != nil {
+			reconciliationErr = errors.Join(reconciliationErr, err)
+		} else if ok {
+			record.Reused = reused[id] || collected[id].Reused
+			collected[id] = record
+		}
+		if record, ok := collected[id]; ok {
+			record.Reused = record.Reused || reused[id]
+			outcome.Summary.Runs = append(outcome.Summary.Runs, record)
+		} else if runErr == nil && err == nil {
+			reconciliationErr = errors.Join(reconciliationErr, fmt.Errorf("%w: expected run %s is missing after execution", experiment.ErrUnverifiableRun, id))
+		}
 	}
-	return RunOutcome{Bundle: bundle, Summary: summary, Analysis: analysis}, nil
+	if reconciliationErr != nil {
+		if len(outcome.Summary.Runs) > 0 {
+			outcome.ResultsState = ResultsPartial
+		}
+		return outcome, errors.Join(runErr, reconciliationErr)
+	}
+	outcome.ResultsState = ResultsPartial
+	if len(outcome.Summary.Runs) == len(points) {
+		outcome.ResultsState = ResultsComplete
+	}
+	outcome.Analysis = experiment.Analyze(bundle, outcome.Summary.Runs)
+	outcome.AnalysisAvailable = true
+	if runErr != nil {
+		return outcome, runErr
+	}
+	if err := writeReport(bundle.Root, bundle, outcome.Analysis); err != nil {
+		return outcome, err
+	}
+	return outcome, nil
 }
 
 func GenerateReport(root, citationDir string) (experiment.Analysis, error) {
