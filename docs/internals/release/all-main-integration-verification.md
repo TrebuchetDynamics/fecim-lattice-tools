@@ -33,6 +33,14 @@ Implementation commits already contain scoped RED/GREEN evidence for the existin
 
 Local logs: `/tmp/fecim-all-main-*`. Before declaring delivery complete, verify every selected branch tip is an ancestor of public main and require green hosted PR/main CI. Merge-only ancestry commits may reuse these checks only when their resulting tree is byte-identical to the verified tree.
 
+## Hosted legacy-fixture follow-up
+
+The first PR #24 CI run (`40264618783`) passed `make ci` but failed the additional legacy Fyne target with a MNIST rich-text panic. A focused existing lifecycle selector reproduced data races within one MNIST instance: direct `fyne.Do` completion/heatmap callbacks bypassed the shared test UI lock and raced other status updates. Per-process isolation alone would not fix that.
+
+Correct only `embedded_module_lifecycle_test.go`: run each original module case in a timeout-bounded child using the same test binary (including race instrumentation), install a test app/driver adapter that routes **all** `DoFromGoroutine` callbacks through the existing re-entrant UI lock, and lock fixture construction/layout/close. Construct only the selected module and avoid `NewTempApp`'s unprotected global-cache reset. Keep the original real lifecycle calls and two-worker leak allowance; `Stop`, observation and leak polling remain outside the UI lock to avoid blocking workers that need it. Process exit contains allowed late workers; it is not evidence that production workers joined.
+
+RED: `xvfb-run -a go test -race ./cmd/fecim-lattice-tools -run '^TestEmbeddedModulesStartStopDoNotLeakWorkers$' -count=3 -timeout=3m` failed. GREEN with the corrected fixture: the same three complete lifecycle runs pass (`-timeout=5m` accommodates seven contained cases per run). Production MNIST lifecycle/dispatch, leak bounds, and application behavior are unchanged. Fresh full xvfb suite, `make test-next-ui`, and `make ci` all pass on this corrected tree. Independent read-only review found no blocker and independently passed the selected MNIST child under the race detector. This follow-up changes the previously frozen tree; the ancestry-only tree identity assertion is not reused for it.
+
 ## Scope and non-claims
 
 No release, DOI, JOSS submission, outreach or complete React client is created by this merge. Scientific display strings are not an Orca pass. The HZO comparison retains `experimental_validation=false`; no reference-runner experimental-validation count is promoted. Independent visual/source-rights confirmation remains a prerequisite to public scientific promotion.
