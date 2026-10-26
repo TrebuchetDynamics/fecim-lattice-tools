@@ -124,29 +124,37 @@ func TestTutorialControllerCallbacks(t *testing.T) {
 	}
 }
 
+// Regression for #22: progress is checked at a step boundary, not after a sleep.
 func TestTutorialControllerProgress(t *testing.T) {
+	secondStep := make(chan struct{})
+	releaseSecond := make(chan struct{})
 	steps := []TutorialStep{
-		{Title: "Step 1", Duration: 50 * time.Millisecond},
-		{Title: "Step 2", Duration: 50 * time.Millisecond},
-		{Title: "Step 3", Duration: 50 * time.Millisecond},
-		{Title: "Step 4", Duration: 50 * time.Millisecond},
+		{Title: "Step 1"},
+		{Title: "Step 2", Action: func() {
+			close(secondStep)
+			<-releaseSecond
+		}},
+		{Title: "Step 3"},
+		{Title: "Step 4"},
 	}
-
 	ctrl := NewTutorialController(steps)
-
-	if ctrl.GetProgress() != 0 {
-		t.Error("Progress should be 0 before start")
+	t.Cleanup(func() {
+		ctrl.Stop()
+		close(releaseSecond)
+	})
+	if progress := ctrl.GetProgress(); progress != 0 {
+		t.Fatalf("progress before start = %v, want 0", progress)
 	}
-
 	ctrl.Start()
-	time.Sleep(75 * time.Millisecond) // Should be past first step
-
-	progress := ctrl.GetProgress()
-	if progress < 0.2 || progress > 0.5 {
-		t.Errorf("Expected progress around 0.25, got %f", progress)
+	select {
+	case <-secondStep:
+		// The runner has completed step 1 and is held inside step 2.
+	case <-time.After(5 * time.Second):
+		t.Fatal("tutorial did not reach the second step")
 	}
-
-	ctrl.Stop()
+	if progress := ctrl.GetProgress(); progress != 0.25 {
+		t.Errorf("progress at second-step boundary = %v, want exactly 0.25", progress)
+	}
 }
 
 func TestTutorialControllerLevelFilter(t *testing.T) {

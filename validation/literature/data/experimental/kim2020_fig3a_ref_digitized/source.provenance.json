@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "dataset_id": "kim2020_fig3a_ref_digitized",
+  "doi": "10.3390/ma13132968",
+  "article": "A Comprehensive Study on the Effect of TiN Top and Bottom Electrodes on Atomic Layer Deposited Ferroelectric Hf0.5Zr0.5O2 Thin Films",
+  "article_url": "https://www.mdpi.com/1996-1944/13/13/2968",
+  "figure": "3(a)",
+  "trace": "LEFT red circular Ref. markers; RTA after TE dep.; After wake-up",
+  "license": {
+    "name": "CC BY 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "evidence_url": "https://api.crossref.org/works/10.3390/ma13132968",
+    "content_version": "vor",
+    "attribution": "Source: Si Joon Kim et al., Materials 13(13), 2968 (2020), DOI 10.3390/ma13132968, Figure 3(a), LEFT red Ref. markers. Copyright 2020 the authors; CC BY 4.0. Changes: original-raster tick-centre calibration and metadata transcription only; no polarization samples extracted in this profile."
+  },
+  "source_asset": {
+    "url": "https://pub.mdpi-res.com/materials/materials-13-02968/article_deploy/html/images/materials-13-02968-g003.png",
+    "sha256": "2016943b0e199bf68e4e56783d7edb42324762b442c816cc66b8c6b19046ddfa",
+    "width": 3629,
+    "height": 1210,
+    "bytes": 961494,
+    "acquisition": "Verified 2026-10-25. Fetch URL with ?download=1 and Cache-Control: no-transform (Accept: image/png) to bypass Cloudflare Polish. The bare URL returned an optimized 844940-byte PNG with SHA-256 09f2e0cdec0280a5b92b9dc1980fdbfad0a675b99f26956083f5d69cb07062a8; it was not used for calibration. Verify original SHA-256 before using any pixels. No original image/PDF is committed."
+  },
+  "conditions": {
+    "stack": "TiN 90 nm / Hf0.5Zr0.5O2 10 nm / TiN 90 nm",
+    "frequency_hz": 10000,
+    "wake_up_cycles": 100000,
+    "wake_up_field_MV_cm": 2.5,
+    "anneal": {
+      "temperature_C": 400,
+      "duration_s": 60,
+      "atmosphere": "N2",
+      "sequence": "after top-electrode deposition; no additional bottom-electrode pre-anneal"
+    },
+    "measurement_temperature": {
+      "status": "not reported",
+      "detail": "Not established in the inspected article sections 2.1-2.2 or Figure 3 discussion; 400 C is the fabrication anneal, not a measurement temperature."
+    },
+    "waveform": {
+      "status": "not reported",
+      "detail": "The P-E drive waveform is not established in the inspected source; the separate pulse write/read description in Figure 3(b) does not specify this P-E trace's waveform."
+    },
+    "device_diameter": {
+      "status": "not reported",
+      "detail": "Section 2.1 reports fabricated capacitor diameters of 50-200 um, not the exact diameter of the Figure 3(a) Ref. device."
+    },
+    "evidence": "Kim et al., DOI 10.3390/ma13132968, sections 2.1 (stack, fabrication and diameter range), 2.2 (10 kHz P-E measurement and 1e5 wake-up cycles at 2.5 MV/cm), and section 3 Figure 3 discussion (Ref. versus Annealed BE). Inspected publisher article and pinned original Figure 3 raster on 2026-10-25."
+  },
+  "calibration": {
+    "x": {
+      "unit": "MV/cm",
+      "anchors": [
+        {"pixel": 272.5, "value": -3},
+        {"pixel": 905.5, "value": 3}
+      ]
+    },
+    "y": {
+      "unit": "uC/cm2",
+      "anchors": [
+        {"pixel": 939.5, "value": -45},
+        {"pixel": 217.5, "value": 45}
+      ]
+    }
+  },
+  "pixel_selection_bound": {
+    "max_error_px": 2,
+    "basis": "Conservative +/-2 original pixels per selected axis coordinate, covering the approximately 3-5-pixel tick-stroke width and manual centre selection/antialiasing ambiguity. Zero-based top-left origin, x rightwards and y downwards. Mid-stroke centres of labelled -3/+3 ticks on the bottom axis of the LEFT Ref. subpanel and -45/+45 ticks on its left axis; not plot borders. Original-size crops and dark-stroke pixel runs were inspected after verifying the original raster hash. This is an extraction selection bound, not a fitted standard deviation, measurement uncertainty, or 2%-of-Ps error. Marker selection requires separate documentation and independent visual review; this profile contains no digitized polarization samples."
+  }
+}

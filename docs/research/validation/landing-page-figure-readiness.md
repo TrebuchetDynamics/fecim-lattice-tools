@@ -3,6 +3,80 @@
 Status: **not ready for a headline measured-versus-simulated overlay**.
 Reviewed 25 October 2026. This is an evidence inventory, not new physics validation.
 
+## Reproducible local HZO comparison (implemented)
+
+The [offline command](../../../cmd/pe-reference/compare.go) now consumes the
+[independently extracted Kim Figure 3(a) markers](../../../validation/literature/data/experimental/kim2020_fig3a_ref_digitized/extraction.md)
+and the [unchanged unfitted baseline](../../../validation/peloop/README.md).
+This local export does **not** make a headline measured overlay ready, validate
+predictive physics, change the legacy experimental-validation count, or authorize
+publication/deployment. The planning/discovery receipts below describe their
+historical snapshots, not the current absence of extraction or report code.
+
+From a local Git source checkout on Linux, choose a **non-existing** output path
+whose parent exists (keep scratch under `$TMPDIR`):
+
+```sh
+go run ./cmd/pe-reference compare \
+  --profile validation/literature/data/experimental/kim2020_fig3a_ref_digitized/source.provenance.json \
+  --data validation/literature/data/experimental/kim2020_fig3a_ref_digitized/loop.csv \
+  --out-dir "$TMPDIR/kim2020-comparison"
+```
+
+- `metrics.json` records the full source profile/attribution, 12 ascending and 14
+  descending reference samples, simulated samples, branch/pooled counts and errors,
+  units, material snapshot and drive settings. RMSE/MAE use uC/cm2; normalized RMSE
+  is a fraction divided by the observed maximum absolute reference P (per branch
+  or pooled), **not measured Ps**. A zero denominator produces `null`.
+- `overlay.svg` shows reference markers and separate simulated branch lines, with
+  axes scaled to include both datasets and preserve mismatch. Its XML metadata
+  contains the same JSON record and its description contains the same caption.
+- `caption.txt` reports branch/pooled scientific values, conditions, settings,
+  attribution, hashes and limitations without promoting agreement to validity.
+  Every artifact retains `unfitted-baseline` and `experimental_validation=false`,
+  even for zero residuals. The command performs exact branch/index/field matching,
+  with no interpolation, smoothing, fitting, or residual pass threshold.
+- SHA-256 fingerprints cover the declared source image, actual profile/data bytes,
+  complete model parameters, current-checkout non-test Go package-root sources
+  (physics, ferroelectric adapter, peloop and command), and running executable.
+  Git HEAD **and dirty state** are recorded. Checkout-source hashes do not assert
+  that an externally built executable came from those sources; its separate hash
+  identifies the binary. Repeated runs with the same executable, input bytes and
+  checkout state produce byte-identical bundles; rebuilds can change the executable
+  fingerprint. No timestamps or output-directory names enter the evidence record.
+- All files are generated and closed in a sibling temporary directory before an
+  atomic Linux `renameat2(RENAME_NOREPLACE)` publishes the complete directory.
+  Existing files, empty directories and symlinks are never overwritten. Invalid
+  inputs and publication failures leave no newly published bundle or staging
+  debris. Linux/filesystem support for this operation is required; other systems
+  fail closed. This reuses the existing `x/sys` dependency without manifest changes.
+
+The source measurement temperature, waveform and exact device diameter remain
+**not reported**. The baseline's 300 K / 1 GPa constructor defaults are not inferred
+measurement conditions. Reset, initial minimum field, and two numerical conditioning
+cycles with 512 steps per half-cycle do not reproduce measured wake-up cycling;
+quasi-static `Update` does not model 10 kHz dynamics. Conventional geometric branch
+assignment is not a recovered time trace. Unresolved merged positive endpoints
+remain omitted. The extraction's isolated/overlapped marker selection bounds
+(+/-2 / +/-4 original pixels) and separate +/-2-pixel tick-anchor bound are not
+instrument uncertainties or statistical error bars. The command fingerprints
+caller-supplied data; it cannot certify measured origin, visual trace fidelity or
+source-image bytes. Independent review against the pinned original remains a
+separate prerequisite to public promotion.
+
+Offline checks (the full merged-tree gate belongs to the coordinator):
+
+```sh
+go test ./cmd/pe-reference -run '^TestCompareCommandEvidenceBoundary$' -count=1
+go test ./validation/peloop ./cmd/pe-reference -count=1
+go test -race ./validation/peloop ./cmd/pe-reference -count=1
+```
+
+`TestCompareCommandEvidenceBoundary` exercises the real command's deterministic
+three-file export, hashes/counts/units/residual consistency, zero-error claim
+boundary and nonzero rejection without changing pre-existing caller paths.
+It does not perform independent visual qualification or experimental validation.
+
 ## Park HZO fixture
 
 - [The generator](../../../cmd/gen-literature-loops/main.go#L1) explicitly writes **synthetic** P–E loops from built-in Park and Cheema presets.
@@ -33,6 +107,114 @@ The [preservation test](../../../validation/literature/bto_digitized_integrity_t
 7. Add focused failing tests before any new extraction, comparison, or plotting behavior.
 
 Until these conditions are met, retain the README's reproducibility example and describe the available regression/literature checks without claiming a physics proof.
+
+## Experimental HZO evidence frontier
+
+Status: Accepted
+
+**Authority:** derived engineering plan within the accepted evidence-honesty and reproducible-figure requirements above, chosen by autonomous project discovery. This accepts planning scope, not implementation, commits, publication, deployment, or a claim of experimental agreement. The owner still reviews each previously staged proposal separately. Preserve that index and the separate concurrent-research branch.
+
+**Goal HZO-REF:** independently extract one traceable primary-paper HZO P–E reference and produce an honest, reproducible comparison with the unchanged simulator. A useful mismatch is a successful comparison workflow; low error is not a condition for accepting the data. This is not a promise to turn the existing zero experimental-validation count into a passing physics claim.
+
+### Discovery and priorities
+
+The product is an educational/research Go simulator: ferroelectric device models feed crossbar, inference, circuit, comparison and EDA modules through shared physics and viewmodel contracts. Fyne is the desktop shell; the deployed Astro landing page is a separate static presentation surface, not a browser simulator. Important journeys are exploring device/array behavior, reproducing numerical runs, and assessing exactly which scientific claims those runs support.
+
+Discovery inspected the working tree at HEAD `816d17c7a007c620b0e7d834701e9c35e756e6bd`, including uncommitted correction work. HEAD alone does not identify those inputs. Existing staged-proposal verification belongs to its recorded candidate tree, not to this future work. `autowork tasks prepare --no-commit .` initially returned `NO_STORE`, no actions, and no running runner; no existing task IDs or task-store focus were available then. During persistence, another session created the separate BWC-FOUNDATIONS browser-core plan/task batch and changed staged files. Preserve its IDs, records and priority; HZO-REF is added at priority 4 without taking focus. Do not stage, unstage, commit or repair the other session's work. Legacy backlog documents were read, not converted or rewritten.
+
+| Priority / goal class | Requirement → evidence → current state | Frontier decision |
+|---|---|---|
+| 1 — accepted research credibility; derived engineering goal HZO-REF | This document's seven figure criteria; [correction audit](park-reference-correction.md); `validation/literature/reference_evidence_test.go` → synthetic Park and excluded BTO cannot establish measured HZO agreement. **DOCUMENTED/OBSERVED; high confidence.** The current MDPI sidecar contains only an ID and DOI. | Save the five tasks below. Do not promote any existing curve by relabeling its provenance. |
+| 2 — accepted publication preparation | [Release/JOSS gates](../../internals/release/research-software-readiness.md), [paper plan](../paper/PLAN.md) → local drafts exist, but author review, research-use evidence and publication qualifications remain unresolved. **DOCUMENTED; blocked/unverified.** | Retain existing gates; do not create a competing submission or outreach batch. A new reference does not establish JOSS eligibility. |
+| 3 — accepted reliability and review separation | `artifacts/staged-review/README.md`, `verification.md`; nightly physics-race proposal → local candidate verification exists, broad race qualification is not established. **DOCUMENTED/OBSERVED; partial.** | Preserve the seven review proposals; no duplicate fix, CI dispatch, or unearned passing race claim. |
+| 4 — browser workbench opportunity | `docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md`, `web/README.md` → a design and deployed static page do not establish implemented browser simulation. **DOCUMENTED/OBSERVED; implementation unverified.** | Outside this scientific-evidence batch. Do not infer new browser implementation or architecture-pivot authority. |
+
+The first gap has the strongest correctness/publication leverage and a bounded offline deliverable. This is qualitative prioritization, not measured ROI. New application features, full-workbench implementation, expanded technology comparisons, additional papers and JOSS submission remain outside this frontier.
+
+### Primary source decision and limits
+
+**Planner choice:** Kim et al., *Materials* **13** (2020), 2968, [DOI 10.3390/ma13132968](https://www.mdpi.com/1996-1944/13/13/2968), Figure **3(a), left-hand Ref. subpanel**, red circular markers, “RTA after TE dep.” and “After wake-up.” Use the marker centres of that one measured loop, not the blue Annealed BE subpanel, panel 3(b), plotted connecting lines, or the old `mdpi2020_hzo_10nm_wakeup` CSV.
+
+**OBSERVED primary-source evidence:** sections 2.1–2.2 describe 90 nm TiN / 10 nm Hf0.5Zr0.5O2 / 90 nm TiN, 400 °C / 60 s N2 RTA after top-electrode deposition, electrical hysteresis measurement at 10 kHz, and 10^5 wake-up cycles at 2.5 MV/cm. The Ref. device has no additional bottom-electrode pre-anneal. Fabricated capacitor diameters span 50–200 µm; the exact plotted device diameter, measurement temperature and P–E drive waveform are not established by the inspected text. Record them as **not reported**, not room temperature or an invented waveform. The anneal temperature is not the measurement temperature.
+
+The original publisher raster was fetched only into temporary research scratch and visually inspected: [Figure 3 PNG](https://pub.mdpi-res.com/materials/materials-13-02968/article_deploy/html/images/materials-13-02968-g003.png), 3629 × 1210 pixels, SHA-256 `2016943b0e199bf68e4e56783d7edb42324762b442c816cc66b8c6b19046ddfa`, 961494 bytes. It visibly separates the red Ref. and blue Annealed BE curves into different axes. The Ref. axes label electric field in **MV/cm** and polarization in **µC/cm²**, with labelled ticks including −3/+3 MV/cm and −45/+45 µC/cm². Capture exact tick-centre pixel coordinates during extraction; do not use the plot borders as those ticks. Original-image pixels, not the tool's resized display coordinates, are authoritative.
+
+[Publisher-deposited Crossref metadata](https://api.crossref.org/works/10.3390/ma13132968) identifies the version-of-record license as [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Preserve attribution and the actual source/license evidence. Do not commit or deploy the original figure/PDF; only derived numeric extraction artifacts and attributed generated comparison graphics are in scope. A future changed raster/hash requires an explicit provenance update, never silent reuse of old coordinates. A web-search lookup for the DOI/license returned no usable results; the license observation comes from the DOI metadata, not a search snippet.
+
+**UNKNOWN / qualification limits:** source text and raster availability are verified, but no numeric points, calibration coordinates, extraction uncertainty, model residuals or trace-fidelity review have been produced in this planning pass. No experimental validation is claimed. Automated metadata checks cannot prove that a person or model clicked the right curve: independent review against the original is required before public promotion, under the existing review/publication gates, not a new approval registry.
+
+### Specification and chosen design
+
+**Users/trigger:** a researcher invokes an offline command with a qualified source profile and a pixel-point CSV. Public source acquisition is a separate read-only preparation step. The command must neither fetch the internet nor access Cloudflare credentials or the deployed site.
+
+**Architecture/stack:** a small Go standard-library extraction/comparison package at `validation/peloop/` and offline command `cmd/pe-reference/`. Reuse `shared/physics.DefaultHZO()` and `module1-hysteresis/pkg/ferroelectric.NewPreisachModel`, `Reset`, `Update`. Do not alter those models, presets or their existing test helpers. No Python/browser service, new dependency, manifest change or generic research platform is needed.
+
+**Fixed interfaces between tasks:**
+
+- HZO-REF-1 produces `SourceProfile` and `ReadSourceProfile(io.Reader) (SourceProfile, error)` in `validation/peloop/provenance.go`. JSON schema version 1 records a new dataset ID `kim2020_fig3a_ref_digitized`; DOI/article/figure/trace/license; source asset URL/hash/width/height; material/measurement conditions with explicit not-reported fields; two labelled tick-centre anchors per axis; and a documented pixel-selection bound. Axis anchors contain a pixel coordinate and physical value. Bounds are extraction bounds, not fitted standard deviations or fabricated 2%-of-Ps measurement uncertainties.
+- HZO-REF-2 produces `Digitize(SourceProfile, io.Reader) ([]byte, error)`. Input CSV is `branch,point_index,x_px,y_px`; output CSV is `branch,point_index,field_MV_cm,polarization_uC_cm2`. Branch values are `ascending` and `descending`; indices start at 0 within each branch. Use independent affine calibration for each axis; inverted image y is handled by its anchor slope. Reject missing/nonfinite data, repeated indices, duplicate fields within a branch, invalid anchors, points outside the raster, more than 10000 rows, or an input over 2 MiB. Never smooth, average, complete missing markers, rescale to a preset, or interpolate reference points.
+- HZO-REF-3 supplies the source-qualified profile, raw pixel CSV and regenerated physical CSV at `validation/literature/data/experimental/kim2020_fig3a_ref_digitized/`. Do not place auxiliary JSON beneath recursively ingested `experimental-data/`. Store source/profile/pixel/physical hashes and point counts. Extract visible marker centres once per branch; unresolved merged endpoints may be omitted with explicit reasons, not duplicated or guessed. Preserve the complete visible branch spans and P=0 crossings. Map the lower loop branch to increasing E and upper to decreasing E as an explicitly disclosed conventional quasi-static assignment, not a measured time trace.
+- HZO-REF-4 independently produces `Sample{Branch string, PointIndex int, FieldMVcm float64, PolarizationUCcm2 float64}`, `ReadSamples(io.Reader) ([]Sample, error)`, `Compare(reference, simulated []Sample) (Metrics, error)` and `SimulateBaseline([]Sample) (BaselineResult, error)`. Physical CSV names are exactly those above. `BaselineResult` carries simulated samples, full material snapshot and the fixed conditioning/settings. `Metrics` carries per-branch and pooled counts, RMSE and MAE in µC/cm², and optional RMSE divided by **max abs(reference polarization)**, labelled as that observed denominator, not measured Ps. Match identical branch/index/field samples; reject unmatched fields rather than interpolate, extrapolate or cross branches. A zero normalization denominator gives no normalized metric, not NaN/Inf.
+- Baseline simulation uses the unchanged DefaultHZO preset at its constructor's 300 K / 1 GPa settings. After `Reset`, run two conditioning cycles over the observed field extrema, 512 evenly spaced steps per half-cycle, ending at the minimum field; then evaluate ascending and descending reference field sequences. Record this schedule and model source/parameter fingerprints. Do not call this measured wake-up reproduction. `Update` is quasi-static, not a simulation of the paper's 10 kHz waveform. No P values from this reference may fit/select/retune the model in this batch.
+- HZO-REF-5 integrates `pe-reference digitize --profile PATH --pixels PATH --out PATH` and `pe-reference compare --profile PATH --data PATH --out-dir PATH`. The latter emits `metrics.json`, `overlay.svg`, and `caption.txt` together into a caller-selected scratch directory. Record data/profile/model fingerprints, Git revision and dirty state; do not pretend a dirty run is identified by HEAD alone. JSON/caption state `comparison_kind=unfitted-baseline` and `experimental_validation=false`, source/measurement limits, conditioning, exact-field matching, counts, RMSE units and denominator. The SVG uses distinct measured markers and simulated lines. Mismatch remains visible; it does not make the command fail or trigger fitting. The output directory must not already exist; publish the three files together from a sibling temporary directory only after successful validation/generation. Invalid inputs fail nonzero without final success artifacts; pre-existing paths are never removed or overwritten.
+
+**Rejected alternatives:** relabeling current MDPI/Park fixtures would recreate circular evidence; smoothing BTO changes the evidence and is not HZO; insisting on Park's disputed trace delays an accessible clean primary source; a same-data optimizer would only establish calibration; another browser plotting subsystem is unnecessary for this offline reference. No held-out predictive-validity threshold is justified by the current evidence, so none is invented. The legacy eight-reference/zero-experimental-validation summary remains unchanged.
+
+### Executable batch and acceptance
+
+All commands below are **proposed/unrun**. Production code, tests and datasets are not written during planning. Every behavior task starts by adding its named failing test, records expected RED, implements only its scope, records GREEN, and obtains the repository-required independent review. TDD is not satisfied by a passing metadata/format check. Implementation and all commits still require the owner's separate authorization; review a staged diff before each commit.
+
+| ID / placement | Outcome and owned files | Acceptance seam / proposed checks | Actual prerequisites |
+|---|---|---|---|
+| **HZO-REF-1 / Now** | Fail-closed source-profile reader plus actual Figure 3(a) calibration/attribution profile. `validation/peloop/provenance.go`, `provenance_test.go`; dataset `source.provenance.json`; `citations/papers/kim2020_tin_hzo_electrodes.md`. | `TestSourceProfileAdmission`: valid selected source parses; missing/wrong trace, missing license/hash/conditions/calibration or degenerate/nonfinite axes reject; explicitly not-reported measurement fields remain honest. `go test ./validation/peloop -run '^TestSourceProfileAdmission$' -count=1` | None. Capture tick coordinates from the original raster, not from a model. |
+| **HZO-REF-2 / Next** | Reproducible pixel-to-physical conversion and digitize command. `validation/peloop/digitize.go`, `digitize_test.go`; `cmd/pe-reference/main.go`, `main_test.go`. | `TestDigitizeCalibratedPixels`: a hand-computable fixture proves both affine axes/inverted y and rejects invalid/oversize/duplicate input. `TestDigitizeCommand`: exact CSV output and nonzero/no-output rejection. `go test ./validation/peloop -run '^TestDigitizeCalibratedPixels$' -count=1`; `go test ./cmd/pe-reference -run '^TestDigitizeCommand$' -count=1` | HZO-REF-1 supplies the validated source type and reader. |
+| **HZO-REF-3 / Next** | Independently digitized numeric reference, not a generated curve. Dataset `points.pixels.csv`, `loop.csv`, `extraction.md`; `validation/literature/hzo_measured_data_test.go`. | `TestHZOIndependentDigitization`: committed CSV regenerates byte-for-byte; hashes match; each branch has at least 10 finite distinct-field markers, both signs of E/P and ordered coverage/crossings; historical synthetic/unverified inputs remain untouched. `go test ./validation/literature -run '^TestHZOIndependentDigitization$' -count=1`. Separate non-automated trace-fidelity qualification compares the reconstructed markers with the original source before any public measured claim. | HZO-REF-1 and HZO-REF-2 supply the actual source admission and converter. If markers/conditions cannot support the specification, stop with a bounded evidence blocker; do not fill missing data. |
+| **HZO-REF-4 / Now** | Branch-safe matched-field metrics and unchanged-model baseline adapter. `validation/peloop/compare.go`, `compare_test.go`, `baseline.go`, `baseline_test.go`. | `TestCompareMatchedBranches`: hand-computable branch residuals/counts/normalizer and rejection of mismatched, nonfinite, empty or zero-denominator hazards. `TestBaselineUsesUnchangedPreset`: repeatable output and unchanged material snapshot, no measured-P fitting, explicitly recorded constructor settings/conditioning. `go test ./validation/peloop -run '^(TestCompareMatchedBranches|TestBaselineUsesUnchangedPreset)$' -count=1` | None. The shared CSV/interface contract above is sufficient; no actual extracted points are needed for unit tests. |
+| **HZO-REF-5 / Next** | One-command local JSON/SVG/caption comparison with claim-safe provenance. `cmd/pe-reference/compare.go`, `compare_test.go`, `main.go`; this document's readiness statement. | `TestCompareCommandEvidenceBoundary`: deterministic numeric outputs, hashes/units/counts/mismatch and limitations survive end-to-end, experimental flag remains false, invalid input leaves no final success artifacts. `go test ./cmd/pe-reference -run '^TestCompareCommandEvidenceBoundary$' -count=1`; final affected gate `go test ./validation/peloop ./cmd/pe-reference -count=1` and `go test -race ./validation/peloop ./cmd/pe-reference -count=1`. | HZO-REF-2 provides the command seam, HZO-REF-3 the measured extraction, HZO-REF-4 the comparator/baseline. Do not promote the existing headline or deploy an overlay. |
+
+The source/converter/extraction/report chain is longer than three because the converter consumes a validated calibration contract, the extracted CSV must be produced by that converter, and the report must consume the actual measured CSV rather than a fabricated stand-in. HZO-REF-4 is an independent ready lane and may proceed alongside HZO-REF-1/2/3 with disjoint files. HZO-REF-2 and HZO-REF-5 both own `cmd/pe-reference/main.go`, but their real command-seam dependency already serializes that write. No database, credentials, service, exclusive global resource or live authority is required. The task store's worktree validity does not make uncommitted records selectable by a committed-store runner.
+
+**Review focus / pre-mortem:** (1) a correct DOI can mask a wrong subpanel or regenerated curve: HZO-REF-1 rejects an incorrect trace/profile, HZO-REF-3 checks reproducible numeric artifacts and requires independent visual qualification; (2) inverted axes or same-field opposite branches can manufacture low residuals: HZO-REF-2's affine fixture and HZO-REF-4's branch-mismatch case prevent that; (3) stale hashes, dirty model state or a tidy plot can overstate evidence: HZO-REF-5's end-to-end boundary test records fingerprints and keeps `experimental_validation=false`. Non-automated source fidelity and rights qualifications are not represented as automated test results.
+
+**Batch invariant:** preserve all existing model parameters, numerical fixtures, quarantine data, legacy artifact counts, staged proposals, concurrent work and public/deployment state. Never smooth or generate reference values to improve agreement. No test checks numerical fit quality as an acceptance target.
+
+**Verification/closeout:** focused RED/GREEN commands above are future work. Run the repository full-suite gate once on the eventual integrated candidate under the authorized execution workflow, preserving display-test requirements; a focused pass is not a full-suite pass. Never run artifact-producing literature suites in this planning pass. The goal stays unmet until actual numeric extraction, comparison artifacts and required reviews exist. Public promotion, independent predictive validation, additional conditions, publication/outreach and submission are separate later gates, not silently dropped tasks or an automatic successor daemon.
+
+### Discovery recheck — existing active frontier
+
+Reconciled the existing frontier at local HEAD `c16cab0a1f138212906ed5bc96398e38d3e30b07`, rather than creating another batch. **Planner decision: no additional goal or task is justified while the accepted high-value work below is already covered.** Preserve all IDs, rankings, admitted contracts, closures and runner ownership. This recheck does not renew implementation, integration, service, commit or push authority.
+
+- **DOCUMENTED:** the product remains a simulation-only Go/Fyne research workbench with separate static web presentation. The accepted browser/core, lifecycle and source-honesty requirements remain in their existing owners; no new strategy or browser implementation scope is inferred.
+- **OBSERVED:** prepare API 4 is available; read-only preparation reports converted/READY with a runner that reads the task store. Worktree task validation passes for 11 tasks and three goals, without drafts or pending task-file changes. T-003 and HZO-REF-1 have coordinator-verified closure receipts; that is not full-browser, trace-fidelity or predictive-physics qualification. Their new presentation/source-profile implementation is present in canonical source.
+- **OBSERVED:** the runner reports HZO-REF-2/4 executing and T-001/T-002/T-006 implemented but awaiting integration. These are existing execution/closeout states, not missing product plans. Do not adopt them, reopen their contracts, duplicate implementation tasks or start a competing worker. T-004 and T-005 retain their actual progress/partial-outcome dependencies; HZO-REF-3/5 retain the converter/extraction/comparison chain.
+- **OBSERVED handoff gap:** `git cat-file -e HEAD:docs/research/validation/landing-page-figure-readiness.md` fails, while this source owner exists as an untracked working-tree file and `tasks/goals/HZO-REF.md` is committed. Task-schema validity therefore does **not** prove that an isolated committed checkout contains this accepted source. Record this as an existing-goal document-persistence issue, not a new scientific finding or a reason to rewrite in-flight task contracts. The integration/documentation owner should persist a reviewed authoritative planning source and its references under the existing scope, without sweeping the unapproved reference-correction/publication work into a commit merely to silence the missing-source check.
+- **OBSERVED delivery gap:** the published merge `91d8b630` (upstream dependency updates and GLFW alignment) is not an ancestor of this local HEAD. Its full Xvfb-suite pass applies to that delivered snapshot, not to newer local runner commits or dirty work. Canonical integration and cleanup remain the existing delivery/coordinator recovery operation; standalone planning does not perform it or create a replacement implementation task.
+
+**Continuation:** existing next actions are the runner/coordinator's integration and verification of its completed candidates, with HZO-REF-2/4 remaining owned by their running workers. Only their dependent tasks become eligible as actual prerequisites close. Later browser/storage/HTTP expansion remains the existing deferred roadmap until the current foundations provide its implementation evidence. No consequential new owner product choice was discovered; scientific visual review, publication and live qualifications remain separate gates.
+
+**This occurrence:** only this discovery note is saved. No code/tests/fixtures/manifests/CI/executable instructions or task/goal contracts are changed; no experiment, fresh product/full-suite run, implementation dispatch, service change, commit or push is performed. TDD: N/A, planning evidence only. Existing source-bound planning decisions are reused; no duplicate batch, empty planning commit or successor daemon is created.
+
+### Planning verification receipt
+
+- [x] Investigated accepted requirements, backlog, current source/tests and the accessible primary paper/raster; no model experiment or production extraction was run.
+- [x] Saved HZO-REF and HZO-REF-1 through HZO-REF-5 through `autowork tasks goal/add` using literal JSON; read back all six records and this plan. Goal remains unmet, focus unchanged. HZO-REF-1/4 have no task prerequisites; 2/3/5 wait on their recorded dependencies. All remain uncommitted, not qualified for committed-store selection.
+- [x] Fresh read-only builder review reported **“nothing important left”** and confirmed independent lanes, source-fidelity limits and the non-predictive evidence boundary. No implementation worker was dispatched.
+- [x] `autowork tasks validate --worktree .` returned `ok: true`, nine tasks, three goals and no drafts at this check, including the concurrent sessions' records. This is task-contract validity, not passing implementation tests.
+- [x] `git diff --check -- docs/research/validation/landing-page-figure-readiness.md tasks` passed. These paths are untracked, so a separate read-only content check also passed for all five HZO task contracts, the goal, new-section local links and whitespace; the tracked-diff check alone does not cover them.
+- [x] Content-hash comparison found the only change to any pre-existing dirty file was this planning section; removing it reproduced this document's original SHA exactly. HEAD remained unchanged. Concurrent sessions added/staged separate plans/tasks, so the aggregate index hash changed; this session performed no staging or commits and did not alter their records.
+
+Relevant inspected working-tree input SHA-256 values (recheck changed inputs before execution):
+
+| Input | SHA-256 |
+|---|---|
+| `shared/physics/material_presets.go` | `97a855e2a351e3b8c4bb21a944eb1ef3a4f4ac6944968edbd3e398ef99a695d4` |
+| `module1-hysteresis/pkg/ferroelectric/preisach.go` | `faa59b9cf3c2d731d98e5d23edde0089e7c741840746fc60a48ed80ab993a2e8` |
+| `validation/literature/module1_pe_loop_test.go` | `52506a461d576c9c33003150eaaf3972e031b51a6c127eca1689a2e7040f03cf` |
+| `validation/literature/data/mdpi2020_ma13132968_fig3a_hzo_10nm_wakeup.provenance.json` | `5f0b486f2bb4ae09cc8d7aaf01cae06d7fb54e1e591b265957950cc768903dcf` |
+
+TDD: N/A for this planning-only change; no production behavior, tests or fixture values were changed. Future RED/GREEN commands remain unrun. No numerical extraction result, experimental pass, full-suite pass or publication readiness is asserted.
+
+**Next executable action after separate implementation authorization:** HZO-REF-1, write `TestSourceProfileAdmission` and record its expected failure. No owner product question currently blocks this engineering scope; source-fidelity/publication approval is a later qualification, not permission to launch workers now.
 
 ## Public-source refresh for outreach
 

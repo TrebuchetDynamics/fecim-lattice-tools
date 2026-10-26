@@ -15,7 +15,7 @@ func TestE2E_M6GUISmoke(t *testing.T) {
 	if os.Getenv("FECIM_RUN_E2E_M6_SMOKE") != "1" {
 		t.Skip("Set FECIM_RUN_E2E_M6_SMOKE=1 to enable module6 GUI smoke test")
 	}
-	ensureDisplayForGraphicalTests(t)
+	// The in-memory test driver does not require a graphical session.
 	app := test.NewApp()
 	defer app.Quit()
 

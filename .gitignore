@@ -119,7 +119,8 @@ output/regression/
 web/fecim.wasm
 web/.astro/
 web/dist/
-web/node_modules/
+# Dependency installs for the marketing site and future React workbench.
+node_modules/
 web/test-results/
 web/playwright-report/
 cmd/calibrate-preisach/
@@ -133,8 +134,13 @@ cmd/gen-literature-loops/
 validation/literature/output/
 /opensource/**
 
-# Secrets
+# Local environment secrets; keep secret-free templates versioned.
 .env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.template
 
 # Cognee (local knowledge engine)
 .venv-cognee/
@@ -150,3 +156,7 @@ validation/literature/output/
 !.claude/skills/
 !.claude/skills/**
 .worktrees/
+
+# Local caches and generated coverage reports (not source/test data).
+/.cache/
+/coverage/

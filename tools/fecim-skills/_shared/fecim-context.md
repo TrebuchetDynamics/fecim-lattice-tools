@@ -50,12 +50,15 @@ go func() {
 
 ## UI boundary rule (per `AGENTS.md`)
 
+React web is the primary UI target; Fyne is deprecated compatibility, not a mandatory path for new features/demos. React is not an already-shipped client. Follow the [approved browser workbench design](../../../docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#architecture-and-scope): React owns presentation and interaction across the planned thin local Go API; Go owns scientific computation, values, evidence and identities. Keep core state testable and preserve the Go core/CLI.
+
+The current executable and `launch.sh` still open legacy Fyne by default. Preserve existing entry points, default-build GUI packages and regression guards until replacements pass the approved behavioral and accessibility gates; do not add `legacy_fyne` gates or change launch defaults as part of this policy. For legacy Fyne maintenance, never block the UI thread and marshal widget mutations from goroutines through `fyne.Do(func() { ... })`.
 
 ## Build target matrix
 
 | Target | CGO | Entry | Use |
 |---|---|---|---|
-| Default | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools` | Canonical Fyne shell |
+| Current default (legacy) | `CGO_ENABLED=0` | `./cmd/fecim-lattice-tools` | Deprecated Fyne compatibility shell (still runnable) |
 
 ## Host preflight and search fallback
 
@@ -76,5 +79,5 @@ Do not install host packages from a skill. Missing compilers, headers, qmd, agen
 | `go test ./...` | Full suite | exit code plus package/test pass/fail/skip counts |
 | `go test -json ./...` | Full-suite count extraction | summarized pass/fail/skip counts |
 | `go test -race ./...` | Race detection (mandatory when changing concurrency) | exit code plus package/test counts |
-| `make test-Fyne-ui` | Canonical Fyne desktop UI shell tests | exit code and target output |
+| `make test-legacy-fyne` | Legacy Fyne compatibility GUI command/module tests | exit code and target output |
 | `FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...` | Regenerate physics regression goldens (only when divergence is intentional) | written justification and golden diff |

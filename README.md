@@ -1,5 +1,7 @@
 # FeCIM Lattice Tools
 
+> **UI direction:** React web is the primary UI target; Fyne is **deprecated in this project** and retained for legacy compatibility. The React workbench is not yet a runnable distribution in this checkout. Use the existing CLI for reproducible studies; the Fyne instructions below describe the current legacy UI, not the future default. See the [React-primary migration policy](./docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy).
+
 <p align="center">
   <img src="./assets/readme/hero.svg" width="100%" alt="FeCIM Lattice Tools turns cited device assumptions into reproducible pre-silicon trade-off studies">
 </p>
@@ -67,7 +69,7 @@ The repository exposes both a local CLI workbench and a Fyne desktop shell. Use 
 ### Prerequisites
 
 - Go 1.26.10 or newer (patched toolchain; see `go.mod`)
-- A CGO-capable desktop toolchain only when running the Fyne interface
+- CGO enabled and a native desktop toolchain when building the Fyne interface; see [desktop dependencies](./docs/guides/installation.md#desktop-build-dependencies)
 - No API keys, cloud services, database, or daemon
 
 ### 1. Copy the reproducible example

@@ -77,7 +77,9 @@ func flattenCanvasNodes(root fyne.CanvasObject) []canvasNode {
 		if o == nil {
 			return
 		}
-		if p := ptrID(o); p != 0 {
+		// Keep this CI-safe traversal independent of graphical crawler helpers.
+		if v := reflect.ValueOf(o); v.Kind() == reflect.Pointer && !v.IsNil() {
+			p := v.Pointer()
 			if seen[p] {
 				return
 			}

@@ -48,6 +48,7 @@ Root `AGENTS.md` and `CLAUDE.md` remain instruction-discovery entry points. The 
 | [code-quality.md](code-quality.md) | Standards and linting | Contributors |
 | [memory-optimization.md](memory-optimization.md) | Memory profiling and tuning | Performance |
 | [accessibility.md](accessibility.md) | UI accessibility standards | GUI developers |
+| [Accessible browser workbench design](superpowers/specs/2026-10-25-accessible-browser-workbench-design.md) | Proposed browser contracts and numbered Orca acceptance gate; not implemented | Designers, reviewers, accessibility testers |
 | [repo-health.md](repo-health.md) | CI status and health metrics | Maintainers |
 | [Technical Recovery Roadmap](audits/2026-09-01-technical-recovery-roadmap.md) | Active correctness, trust, architecture, and governance recovery program | Maintainers, reviewers |
 | [Critical Hardening Plan](superpowers/plans/2026-09-01-critical-correctness-and-trust-hardening.md) | Executable TDD plan for the five P0 recovery items | Implementers |
