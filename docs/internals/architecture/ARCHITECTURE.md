@@ -2,6 +2,8 @@
 
 A comprehensive reference to the design, structure, and patterns of the FeCIM Lattice Tools project.
 
+> **UI direction update (2026-10-25):** React web is the primary UI target and Fyne is deprecated in this project. The Fyne diagrams, entry points and threading rules below describe the existing compatibility implementation, not the future product direction. Retain the Go core and CLI; do not claim a shipped React client or delete legacy commands before replacement qualification. See the [accepted React-primary policy](../superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy).
+
 ## Table of Contents
 
 1. [High-Level Architecture](#high-level-architecture)
