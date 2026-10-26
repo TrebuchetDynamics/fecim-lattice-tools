@@ -3,6 +3,7 @@ package report
 import (
 	"bytes"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -108,6 +109,179 @@ func (w *failingWriter) Write(data []byte) (int, error) {
 		return 0, errors.New("writer failed")
 	}
 	return len(data), nil
+}
+
+// This catches path-based authority, unpinned report directories, premature
+// replacement, and cleanup that deletes a different writer's scratch file.
+func TestGenerateRootConfinement(t *testing.T) {
+	for _, scenario := range []string{"bytes", "outside reports link", "outside output link", "retarget", "sync failure", "retarget failure", "substituted scratch", "substituted scratch failure"} {
+		t.Run(scenario, func(t *testing.T) {
+			bundle, analysis := reportFixture()
+			dir, outside := t.TempDir(), t.TempDir()
+			bundle.Root = outside // Descriptive metadata must not grant authority.
+			root, err := os.OpenRoot(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer root.Close()
+			put := func(name, body string) {
+				t.Helper()
+				if err := os.WriteFile(name, []byte(body), 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			read := func(name string) string {
+				t.Helper()
+				data, err := os.ReadFile(name)
+				if err != nil {
+					t.Fatal(err)
+				}
+				return string(data)
+			}
+			names := []string{"results.json", "results.csv", "report.md"}
+			for _, name := range names {
+				put(filepath.Join(outside, name), "outside marker")
+			}
+			reports := filepath.Join(dir, "reports")
+			if scenario == "outside reports link" {
+				if err := os.Symlink(outside, reports); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				if err := os.Mkdir(reports, 0o755); err != nil {
+					t.Fatal(err)
+				}
+				for _, name := range names {
+					put(filepath.Join(reports, name), "previous report")
+				}
+				put(filepath.Join(reports, ".tmp-unrelated"), "keep")
+			}
+			if scenario == "bytes" {
+				// The handle remains authoritative after its original path is replaced.
+				moved := filepath.Join(t.TempDir(), "pinned")
+				if err := os.Rename(dir, moved); err != nil {
+					t.Fatal(err)
+				}
+				reports = filepath.Join(moved, "reports")
+				if err := os.Symlink(outside, dir); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if scenario == "outside output link" {
+				if err := root.Remove("reports/results.json"); err != nil {
+					t.Fatal(err)
+				}
+				if err := root.Symlink(filepath.Join(outside, "results.json"), "reports/results.json"); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			fault := errors.New("precommit sync failure")
+			originalSync := syncReportFile
+			t.Cleanup(func() { syncReportFile = originalSync })
+			substituted := ""
+			first := true
+			syncReportFile = func(f *os.File) error {
+				if !first {
+					return f.Sync()
+				}
+				first = false
+				if scenario == "retarget" || scenario == "retarget failure" {
+					if err := root.Rename("reports", "pinned-reports"); err != nil {
+						t.Fatal(err)
+					}
+					reports = filepath.Join(dir, "pinned-reports")
+					if err := root.Symlink(outside, "reports"); err != nil {
+						t.Fatal(err)
+					}
+				}
+				if strings.HasPrefix(scenario, "substituted scratch") {
+					substituted = filepath.Base(f.Name())
+					if err := os.Remove(filepath.Join(reports, substituted)); err != nil {
+						t.Fatal(err)
+					}
+					put(filepath.Join(reports, substituted), "other writer")
+				}
+				if strings.Contains(scenario, "failure") {
+					return fault
+				}
+				return f.Sync()
+			}
+			err = GenerateRoot(root, bundle, analysis)
+			if scenario == "outside reports link" {
+				if err == nil {
+					t.Fatal("accepted escaping reports link")
+				}
+			} else if strings.Contains(scenario, "failure") {
+				if !errors.Is(err, fault) {
+					t.Fatalf("error=%v, want injected precommit failure", err)
+				}
+			} else if scenario == "substituted scratch" {
+				if err == nil {
+					t.Fatal("committed another writer's substituted scratch")
+				}
+			} else if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := root.Stat("."); err != nil {
+				t.Fatalf("caller root closed: %v", err)
+			}
+			for _, name := range names {
+				if got := read(filepath.Join(outside, name)); got != "outside marker" {
+					t.Fatalf("outside %s changed: %s", name, got)
+				}
+			}
+			entries, err := os.ReadDir(outside)
+			if err != nil || len(entries) != len(names) {
+				t.Fatalf("outside namespace changed: %v %v", entries, err)
+			}
+			if scenario == "outside reports link" {
+				return
+			}
+			if strings.Contains(scenario, "failure") || scenario == "substituted scratch" {
+				for _, name := range names {
+					if got := read(filepath.Join(reports, name)); got != "previous report" {
+						t.Fatalf("precommit failure replaced %s: %s", name, got)
+					}
+				}
+			} else {
+				legacy := filepath.Join(t.TempDir(), "new", "study")
+				if err := Generate(legacy, bundle, analysis); err != nil {
+					t.Fatal(err)
+				}
+				for i, write := range []func(io.Writer) error{
+					func(w io.Writer) error { return WriteJSON(w, bundle, analysis) },
+					func(w io.Writer) error { return WriteCSV(w, analysis) },
+					func(w io.Writer) error { return WriteMarkdown(w, bundle, analysis) },
+				} {
+					var want bytes.Buffer
+					if err := write(&want); err != nil {
+						t.Fatal(err)
+					}
+					for _, path := range []string{filepath.Join(reports, names[i]), filepath.Join(legacy, "reports", names[i])} {
+						if got := read(path); got != want.String() {
+							t.Fatalf("%s differs from serializer bytes", path)
+						}
+					}
+				}
+			}
+			entries, err = os.ReadDir(reports)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, entry := range entries {
+				if strings.HasPrefix(entry.Name(), ".tmp-") && entry.Name() != ".tmp-unrelated" && entry.Name() != substituted {
+					t.Fatalf("owned scratch leaked: %s", entry.Name())
+				}
+			}
+			if got := read(filepath.Join(reports, ".tmp-unrelated")); got != "keep" {
+				t.Fatal("unrelated scratch changed")
+			}
+			if substituted != "" && read(filepath.Join(reports, substituted)) != "other writer" {
+				t.Fatal("substituted scratch removed")
+			}
+		})
+	}
 }
 
 func TestGenerateWritesThreeReports(t *testing.T) {
