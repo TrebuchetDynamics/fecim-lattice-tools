@@ -119,7 +119,7 @@ Pass the exact quoted strong revision from `ReadConfiguration`. Even no-ops requ
 
 A valid no-op leaves all three files' bytes and modification times unchanged and creates no temporary file. A changed save validates before writing, exclusively creates an unpredictable regular temporary file inside the same root, writes it, preserves the target's permission bits, syncs and closes it, then rechecks all three documents and cancellation immediately before replacing the named file through `root.Rename`. It refuses observed permission changes rather than broadening access. Ownership, ACLs and special mode bits are not preserved. Precommit failures remove only the call's owned temporary file, leaving the original document intact. Successful rename is the commit point: a later cancellation does not turn the committed save into a cancellation error. Callers retain ownership of both handles on success and failure.
 
-The editor mutex serializes participating saves **within that editor only**. Use external coordination or stop other editors while saving: a nonparticipating writer can still change files between the last revision check and rename. This is **not cross-process compare-and-swap**, and reading the three files is not a transactional filesystem snapshot. Replacement behavior is qualified for local Linux filesystems only; no power-loss durability, directory-sync, WASM or other-filesystem guarantee is made. Configuration I/O is root-confined, but this does not establish full confinement for project creation, runs, reports or exports. There is no delivered browser editor, HTTP status mapping or Orca qualification in this primitive.
+The editor mutex serializes participating saves **within that editor only**. Use external coordination or stop other editors while saving: a nonparticipating writer can still change files between the last revision check and rename. This is **not cross-process compare-and-swap**, and reading the three files is not a transactional filesystem snapshot. Replacement behavior is qualified for local Linux filesystems only; no power-loss durability, directory-sync, WASM or other-filesystem guarantee is made. Configuration I/O is root-confined, but this does not establish full confinement for project creation, runs or exports. Report generation has its own confined primitive described below. There is no delivered browser editor, HTTP status mapping or Orca qualification in this primitive.
 
 `workbench/project/configuration_save_test.go::TestSaveConfiguration` covers exact no-op preservation (including CRLF and missing final newline), revision/conflict handling, deterministic concurrent/external edits, root ownership and confinement, persistence faults and commit-point cancellation. Offline checks:
 
@@ -180,6 +180,17 @@ The study snapshots verified expected IDs before execution and reloads only thos
 
 ## Reports
 
+[`report.GenerateRoot(root, bundle, analysis)`](../../workbench/report/report.go) writes through a caller-owned `*os.Root`; keep the handle open during the call. `bundle.Root` is descriptive metadata, not output authority. `report.Generate(path, bundle, analysis)` remains the path adapter and opens/closes its own handle, creating missing project directories as before. Neither entry point changes the JSON, CSV or Markdown serializers or scientific records.
+
+Generation creates and pins a `reports` directory handle. Escaping directory links fail; an output-file link is replaced rather than followed. Each output uses an unpredictable, exclusively created scratch file in that directory, then syncs/closes it before root-relative rename. Directory retargeting does not redirect writes or cleanup. A precommit failure preserves that output's previous report and removes only scratch still identified as belonging to the call; unrelated scratch and substitutions observed at the identity check are left alone. Identity checks and subsequent remove/rename operations are not atomic against other writers: coordinate concurrent namespace changes externally. Earlier reports in the same call may already have been replaced: this is **per-file atomic replacement**, not an all-three-report transaction, cross-process compare-and-swap or power-loss durability guarantee. Replacement is qualified for local Linux filesystems, not WASM or other-filesystem guarantees.
+
+`workbench/report/report_test.go::TestGenerateRootConfinement` covers escaping links, misleading bundle metadata, moved project handles, deterministic directory retargeting/precommit failures, scratch ownership and serializer-byte compatibility. Offline checks:
+
+```bash
+CGO_ENABLED=0 go test ./workbench/report -run 'TestGenerateRootConfinement|TestReportsAreDeterministicAndExcludeRuntimeMetadata|TestGenerateWritesThreeReports|TestWriteMarkdownStopsAtFirstWriterError' -count=1
+go test -race ./workbench/report -count=1
+```
+
 Markdown reports include the project model version, run evaluator/revision metadata, input paths and hashes, citation keys, and each metric's model and assumptions.
 
 Each experiment writes:
@@ -206,7 +217,7 @@ Input files must remain inside the project directory, pass their declared SHA-25
 
 [Project loading](../../workbench/project/load.go) reads YAML and inputs through an authorized `os.Root` directory handle, rejecting symlinks that escape it while allowing relative links within it. Optional citation-existence checks use a separately authorized citation-directory handle. Library callers use `project.LoadRoot(root, citations)` and retain ownership of both handles; nil `citations` skips existence checks, not citation-key validation. `project.Load(path, options)` remains available and opens/closes its own handles. `Bundle.Root` is descriptive metadata, not filesystem authority.
 
-This boundary covers project loading and the configuration preparation/save primitives described above. It does not establish confinement for project creation, run storage, reports, or exports.
+This boundary covers project loading, configuration preparation/save, and report generation through the rooted primitives described above. It does not establish confinement for project creation, run storage, or exports.
 
 ## Selected-run EDA export
 
