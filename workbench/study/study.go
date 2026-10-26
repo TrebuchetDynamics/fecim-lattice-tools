@@ -11,7 +11,6 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"fecim-lattice-tools/workbench/edaexport"
 	"fecim-lattice-tools/workbench/experiment"
 	"fecim-lattice-tools/workbench/fecim"
 	"fecim-lattice-tools/workbench/project"
@@ -188,129 +187,75 @@ func rollbackStarterProject(paths []string, root string, createdDir bool) {
 }
 
 func ValidateProject(root, citationDir string) (project.Bundle, int, error) {
-	bundle, err := project.Load(root, project.LoadOptions{CitationDir: citationDir})
+	handle, citations, closeRoots, err := openRoots(root, citationDir)
 	if err != nil {
 		return project.Bundle{}, 0, err
 	}
-	points, err := project.Expand(bundle)
-	if err != nil {
-		return project.Bundle{}, 0, err
-	}
-	return bundle, len(points), nil
+	defer closeRoots()
+	return ValidateProjectRoot(handle, citations)
 }
 
 func Run(ctx context.Context, root string, opts RunOptions) (RunOutcome, error) {
-	return run(ctx, root, opts, fecim.Evaluate, report.Generate)
+	return run(ctx, root, opts, fecim.Evaluate, report.GenerateRoot)
 }
 
-func run(ctx context.Context, root string, opts RunOptions, evaluate experiment.Evaluator, writeReport func(string, project.Bundle, experiment.Analysis) error) (RunOutcome, error) {
-	outcome := RunOutcome{ResultsState: ResultsUnavailable}
+func run(ctx context.Context, root string, opts RunOptions, evaluate experiment.Evaluator, writeReport func(*os.Root, project.Bundle, experiment.Analysis) error) (RunOutcome, error) {
 	if opts.Workers < 1 {
-		return outcome, errors.New("workers must be at least 1")
+		return RunOutcome{ResultsState: ResultsUnavailable}, errors.New("workers must be at least 1")
 	}
-	bundle, err := project.Load(root, project.LoadOptions{CitationDir: opts.CitationDir})
+	handle, citations, closeRoots, err := openRoots(root, opts.CitationDir)
 	if err != nil {
-		return outcome, err
+		return RunOutcome{ResultsState: ResultsUnavailable}, err
 	}
-	outcome.Bundle = bundle
-	points, err := experiment.Expand(bundle)
-	if err != nil {
-		return outcome, err
-	}
-	// Snapshot only verified active-sweep IDs. Old or corrupt unrelated runs
-	// neither contribute results nor prevent collection of this study.
-	ids := make([]string, len(points))
-	reused := make(map[string]bool, len(points))
-	for i, point := range points {
-		id, err := experiment.ID(point, fecim.EvaluatorVersion, bundle.Inputs)
-		if err != nil {
-			return outcome, err
-		}
-		_, ok, err := experiment.LoadRunRecord(bundle.Root, id)
-		if err != nil {
-			// Preserve the runner's nonblocking total snapshot on preflight failure.
-			select {
-			case opts.Progress <- experiment.ProgressSnapshot{Total: len(points)}:
-			default:
-			}
-			return outcome, err
-		}
-		ids[i] = id
-		reused[id] = ok
-	}
-
-	summary, runErr := experiment.Run(ctx, bundle, experiment.RunOptions{
-		Evaluator:          evaluate,
-		EvaluatorVersion:   fecim.EvaluatorVersion,
-		Workers:            opts.Workers,
-		RepositoryRevision: opts.RepositoryRevision,
-		Progress:           opts.Progress,
-	})
-	// Run has joined its workers. Its delivered records are independently
-	// trusted; reload expected IDs to recover commits lost during cancellation.
-	collected := make(map[string]experiment.RunRecord, len(summary.Runs))
-	for _, record := range summary.Runs {
-		if _, expected := reused[record.Manifest.RunID]; expected {
-			collected[record.Manifest.RunID] = record
-		}
-	}
-	var reconciliationErr error
-	outcome.Summary.Runs = make([]experiment.RunRecord, 0, len(points))
-	for _, id := range ids {
-		record, ok, err := experiment.LoadRunRecord(bundle.Root, id)
-		if err != nil {
-			reconciliationErr = errors.Join(reconciliationErr, err)
-		} else if ok {
-			record.Reused = reused[id] || collected[id].Reused
-			collected[id] = record
-		}
-		if record, ok := collected[id]; ok {
-			record.Reused = record.Reused || reused[id]
-			outcome.Summary.Runs = append(outcome.Summary.Runs, record)
-		} else if runErr == nil && err == nil {
-			reconciliationErr = errors.Join(reconciliationErr, fmt.Errorf("%w: expected run %s is missing after execution", experiment.ErrUnverifiableRun, id))
-		}
-	}
-	if reconciliationErr != nil {
-		if len(outcome.Summary.Runs) > 0 {
-			outcome.ResultsState = ResultsPartial
-		}
-		return outcome, errors.Join(runErr, reconciliationErr)
-	}
-	outcome.ResultsState = ResultsPartial
-	if len(outcome.Summary.Runs) == len(points) {
-		outcome.ResultsState = ResultsComplete
-	}
-	outcome.Analysis = experiment.Analyze(bundle, outcome.Summary.Runs)
-	outcome.AnalysisAvailable = true
-	if runErr != nil {
-		return outcome, runErr
-	}
-	if err := writeReport(bundle.Root, bundle, outcome.Analysis); err != nil {
-		return outcome, err
-	}
-	return outcome, nil
+	defer closeRoots()
+	opts.CitationDir = ""
+	return runRoot(ctx, handle, citations, opts, evaluate, writeReport)
 }
 
 func GenerateReport(root, citationDir string) (experiment.Analysis, error) {
-	bundle, err := project.Load(root, project.LoadOptions{CitationDir: citationDir})
+	handle, citations, closeRoots, err := openRoots(root, citationDir)
 	if err != nil {
 		return experiment.Analysis{}, err
 	}
-	runs, err := experiment.LoadRuns(bundle.Root)
-	if err != nil {
-		return experiment.Analysis{}, err
-	}
-	if len(runs) == 0 {
-		return experiment.Analysis{}, errors.New("project has no committed runs")
-	}
-	analysis := experiment.Analyze(bundle, runs)
-	if err := report.Generate(bundle.Root, bundle, analysis); err != nil {
-		return experiment.Analysis{}, fmt.Errorf("generate report: %w", err)
-	}
-	return analysis, nil
+	defer closeRoots()
+	return GenerateReportRoot(handle, citations)
 }
 
 func ExportRun(root, runID string) (string, error) {
-	return edaexport.ExportSelectedRun(root, runID)
+	handle, err := os.OpenRoot(root)
+	if err != nil {
+		return "", err
+	}
+	defer handle.Close()
+	rel, err := ExportRunRoot(handle, runID)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(root, rel), nil
+}
+
+// Legacy path adapters own these handles; rooted operations only borrow them.
+func openRoots(path, citationDir string) (*os.Root, *os.Root, func(), error) {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	root, err := os.OpenRoot(abs)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	var citations *os.Root
+	if citationDir != "" {
+		citations, err = os.OpenRoot(citationDir)
+		if err != nil {
+			_ = root.Close()
+			return nil, nil, nil, err
+		}
+	}
+	return root, citations, func() {
+		if citations != nil {
+			_ = citations.Close()
+		}
+		_ = root.Close()
+	}, nil
 }

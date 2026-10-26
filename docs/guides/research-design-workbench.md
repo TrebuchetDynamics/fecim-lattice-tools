@@ -156,7 +156,7 @@ go test -race ./workbench/experiment -count=1
 
 ### Go runner and study progress
 
-Direct callers of `experiment.Run` or `experiment.RunRoot` can set `RunOptions.Progress` to a caller-owned `chan<- experiment.ProgressSnapshot`. Callers of [`study.Run`](../../workbench/study/study.go) can set `study.RunOptions.Progress` to the same channel type; study forwards it unchanged, preserving existing outcome, error, and report behavior. Nil disables notifications. Sends never block simulation; unread or full channels may lose any snapshot, including the final one. The caller must not close the channel while `Run` is active. The runner never closes it. Reconcile notifications with the returned summary/error and committed runs, not channel closure or the last received snapshot.
+Direct callers of `experiment.Run` or `experiment.RunRoot` can set `RunOptions.Progress` to a caller-owned `chan<- experiment.ProgressSnapshot`. Callers of [`study.Run`](../../workbench/study/study.go) or [`study.RunRoot`](../../workbench/study/root.go) can set `study.RunOptions.Progress` to the same channel type; study forwards it unchanged, preserving existing outcome, error, and report behavior. Nil disables notifications. Sends never block simulation; unread or full channels may lose any snapshot, including the final one. The caller must not close the channel while `Run` is active. The runner never closes it. Reconcile notifications with the returned summary/error and committed runs, not channel closure or the last received snapshot.
 
 Snapshots contain only `total`, `completed`, `reused`, `failed`, and `cancelled` JSON counts. `total` is the expanded candidate count. `completed` includes reused and failed committed points; `reused` and `failed` are overlapping subsets of `completed`. After caller-context cancellation, `cancelled` counts unresolved candidates only once all workers settle. Committed points remain completed, and systemic errors alone do not count unresolved work as cancelled. Notifications do not change run IDs, artifact bytes, or ordered outcomes. This is a Go runner/study API, not a CLI or Fyne progress display.
 
@@ -194,6 +194,21 @@ Failures are preserved instead of silently disappearing. Constraints do not turn
 Use `AnalysisAvailable` before reading analysis counts. Valid empty partial results have explicit zero counts. Reconciliation integrity errors retain independently trusted records when possible but leave analysis empty and unavailable; missing counts are not zeros. Partial feasibility and Pareto results describe only the collected subset, not the full experiment.
 
 The study snapshots verified expected IDs before execution and reloads only those IDs after workers settle. Unrelated old runs do not enter the outcome or prevent collection. `experiment.LoadRunRecord` verifies an exact committed successful or failed record and distinguishes absence from corruption; export-only `LoadRun` still rejects failed records. Cancellation and systemic execution errors do not regenerate aggregate reports. These availability fields are in-memory Go API metadata, not persisted scientific schema changes.
+
+### Go rooted study operations
+
+[`study.RunRoot(ctx, root, citations, opts)`](../../workbench/study/root.go) coordinates project loading, active-run preflight, evaluation, reconciliation and automatic reporting through the supplied `*os.Root` handles. `ValidateProjectRoot(root, citations)` validates and expands the project; `GenerateReportRoot(root, citations)` regenerates reports from committed runs; `ExportRunRoot(root, id)` exports a verified successful run and returns the relative path `exports/<id>`.
+
+The caller owns both handles and must keep them open until the operation returns and all started workers have settled. Nil project roots and closed project or citation handles return errors. Nil citations skips citation-existence checks, not key validation. Rooted `RunOptions.CitationDir` must be empty: a nonempty value is rejected rather than opened. `Bundle.Root` and `root.Name()` remain metadata, even after their paths are renamed or replaced.
+
+The legacy study path APIs open and close their own handles and share this orchestration; `Run` opens its optional citation path and clears the internal option before entering the rooted pipeline. Legacy `ExportRun` retains its joined project/export return path. Both run APIs preserve the outcomes above, expected-ID reconciliation, reuse, error identity and nonblocking progress. `CreateStarterProject` remains outside this existing-project boundary. These APIs do not deliver HTTP/React endpoints or a filesystem sandbox; the local-Linux and concurrent-writer qualifications of the underlying primitives still apply.
+
+`workbench/study/study_test.go::TestStudyRootOperations` checks real artifacts, path replacement during evaluation, outside links/markers, citation conflicts, invalid roots and caller ownership. The existing partial-outcome cases exercise both rooted and legacy orchestration. Offline checks:
+
+```bash
+CGO_ENABLED=0 go test ./workbench/study -run 'TestStudyRootOperations|TestRunRetainsPartialOutcome|TestRunForwardsProgress|TestRunAndGenerateReportUseStructuredStudyOutcome' -count=1
+go test -race ./workbench/study -count=1
+```
 
 ## Reports
 
@@ -234,7 +249,7 @@ Input files must remain inside the project directory, pass their declared SHA-25
 
 [Project loading](../../workbench/project/load.go) reads YAML and inputs through an authorized `os.Root` directory handle, rejecting symlinks that escape it while allowing relative links within it. Optional citation-existence checks use a separately authorized citation-directory handle. Library callers use `project.LoadRoot(root, citations)` and retain ownership of both handles; nil `citations` skips existence checks, not citation-key validation. `project.Load(path, options)` remains available and opens/closes its own handles. `Bundle.Root` is descriptive metadata, not filesystem authority.
 
-This boundary covers project loading, configuration preparation/saves, rooted run persistence, report generation, and selected-run EDA exports through the rooted primitives described here. It does not establish confinement for project creation or a complete study workflow.
+This boundary covers project loading, configuration preparation/saves, rooted run persistence, report generation, selected-run EDA exports and complete existing-project study orchestration through the rooted APIs described here. It does not establish confinement for project creation.
 
 ## Selected-run EDA export
 
