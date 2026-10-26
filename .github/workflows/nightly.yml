@@ -16,17 +16,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install GUI build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Build & vet
@@ -70,7 +70,7 @@ jobs:
           go test -v -count=1 ./validation/... -run TestM1_WriteVerifyStats_Regression
 
       - name: Upload validation artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly-validation-${{ github.run_id }}
@@ -93,17 +93,17 @@ jobs:
       FECIM_GIT_COMMIT: ${{ github.sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install GUI build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Run broad physics race suite without short-mode exclusions
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload physics race log even on failure
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: physics-race-${{ github.run_id }}
           path: artifacts/physics-race/

@@ -6,7 +6,7 @@ This document lists required prerequisites and optional dependencies for specifi
 
 ## Prerequisites
 
-- **Go 1.25+** — https://go.dev/dl/
+- **Go 1.26.10+** (patched minimum; CI reads `go.mod`) — https://go.dev/dl/
 - **Git** — For cloning the repository
 
 The Fyne desktop app requires **CGO enabled**, a C compiler, and the platform's graphics development dependencies listed below. A non-CGO build supports headless subcommands, not desktop startup: [`fyne_nocgo.go:16–20`](../../cmd/fecim-lattice-tools/fyne_nocgo.go) returns an explicit error when a desktop workspace is requested. The desktop implementation is selected by the `cgo` build constraint in [`fyne_app.go:1–18`](../../cmd/fecim-lattice-tools/fyne_app.go).
@@ -25,7 +25,7 @@ Install Go and Git first. These additional dependencies are needed for the Fyne 
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y gcc libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev
+sudo apt-get install -y gcc libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libwayland-dev libxkbcommon-dev
 # Optional: run legacy GUI/layout tests on a headless server
 sudo apt-get install -y xvfb
 ```
@@ -33,7 +33,7 @@ sudo apt-get install -y xvfb
 ### Linux (Fedora/RHEL)
 
 ```bash
-sudo dnf install -y gcc mesa-libGL-devel libX11-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel libXxf86vm-devel
+sudo dnf install -y gcc mesa-libGL-devel libX11-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel libXxf86vm-devel wayland-devel libxkbcommon-devel
 ```
 
 ### macOS

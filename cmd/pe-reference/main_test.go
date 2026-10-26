@@ -28,6 +28,8 @@ func TestDigitizeCommand(t *testing.T) {
 	}{
 		{"valid", valid, "", false},
 		{"invalid points", valid + "ascending,2,NaN,578.5\n", "", true},
+		{"ascending reversal", header + "ascending,1,272.5,578.5\nascending,0,905.5,578.5\n", "", true},
+		{"descending reversal", header + "descending,1,905.5,578.5\ndescending,0,272.5,578.5\n", "", true},
 		{"existing output", valid, "existing", true},
 		{"missing pixels", valid, "missing pixels", true},
 		{"missing profile", valid, "missing profile", true},

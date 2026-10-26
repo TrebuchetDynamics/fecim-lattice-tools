@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
@@ -28,12 +28,12 @@ jobs:
       - name: Install GUI build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Run make ci
@@ -67,7 +67,7 @@ jobs:
         run: go test -short ./... -coverprofile=coverage.out
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage.out
@@ -79,17 +79,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install GUI and external validation dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev iverilog
+          sudo apt-get install -y libwayland-dev libxkbcommon-dev
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Record Icarus Verilog version

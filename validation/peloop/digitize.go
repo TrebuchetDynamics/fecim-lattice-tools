@@ -97,6 +97,12 @@ func Digitize(p SourceProfile, r io.Reader) ([]byte, error) {
 			if !ok {
 				return nil, fmt.Errorf("pixels: %s: missing point_index %d", name, i)
 			}
+			if i > 0 {
+				previous := branch[i-1].field
+				if (name == "ascending" && pt.field <= previous) || (name == "descending" && pt.field >= previous) {
+					return nil, fmt.Errorf("pixels: %s: field reverses direction at point_index %d", name, i)
+				}
+			}
 			_ = writer.Write([]string{name, strconv.Itoa(i), strconv.FormatFloat(pt.field, 'g', -1, 64), strconv.FormatFloat(pt.polarization, 'g', -1, 64)})
 		}
 	}

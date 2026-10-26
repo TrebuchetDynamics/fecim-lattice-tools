@@ -54,6 +54,8 @@ func TestDigitizeCalibratedPixels(t *testing.T) {
 		{"index gap", header + "ascending,0,100,550\nascending,2,200,550\n"},
 		{"repeated index", header + "descending,0,100,550\ndescending,0,200,550\n"},
 		{"duplicate field", header + "ascending,0,100,550\nascending,1,100.0,325\n"},
+		{"ascending reversal in index order", header + "ascending,1,100,550\nascending,0,700,550\n"},
+		{"descending reversal in index order", header + "descending,1,700,550\ndescending,0,100,550\n"},
 		{"malformed CSV", header + "ascending,0,\"100,550\n"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

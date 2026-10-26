@@ -37,7 +37,9 @@ export default defineConfig({
   workers: 1,
   reporter: [['list']],
   webServer: {
-    command: 'npm run preview -- --host 127.0.0.1 --port 4321',
+    // Astro 7 may auto-background when it detects a coding agent. Playwright
+    // must own a foreground server so startup, failure, and cleanup are gated.
+    command: 'npm run preview -- --host 127.0.0.1 --port 4321 --ignore-lock',
     url: 'http://127.0.0.1:4321',
     reuseExistingServer: !process.env.CI,
     timeout: 45_000,

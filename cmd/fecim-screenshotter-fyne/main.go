@@ -56,6 +56,11 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+// Return before exiting so deferred display cleanup runs on every error path.
+func run() int {
 	outDir := flag.String("out", "cmd/fecim-lattice-tools/testdata/screenshots", "output directory for screenshots")
 	sizeW := flag.Int("w", 1200, "window width")
 	sizeH := flag.Int("h", 800, "window height")
@@ -71,7 +76,7 @@ func main() {
 	cleanupDisplay, err := ensureDisplayForCapture(*autoXvfb, *xvfbScreen, *xvfbDisplayStart, *xvfbDisplayEnd)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to initialize graphical display: %v\n", err)
-		os.Exit(2)
+		return 2
 	}
 	if cleanupDisplay != nil {
 		defer cleanupDisplay()
@@ -81,7 +86,7 @@ func main() {
 
 	if err := os.MkdirAll(*outDir, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create out dir: %v\n", err)
-		os.Exit(2)
+		return 2
 	}
 
 	mods := []struct {
@@ -109,10 +114,10 @@ func main() {
 		for _, m := range mods {
 			if err := runSingleCapture(os.Args[0], *outDir, m.name, *sizeW, *sizeH, *tag, *hysEngine); err != nil {
 				fmt.Fprintf(os.Stderr, "[screenshotter] %s failed: %v\n", m.name, err)
-				os.Exit(1)
+				return 1
 			}
 		}
-		return
+		return 0
 	}
 
 	for _, m := range mods {
@@ -130,12 +135,12 @@ func main() {
 		fileBase := m.name + "_" + strings.TrimSpace(*tag)
 		if err := captureOne(*outDir, fileBase, fyne.NewSize(float32(*sizeW), float32(*sizeH)), settle, m.start, *hysEngine, m.create); err != nil {
 			fmt.Fprintf(os.Stderr, "[screenshotter] %s failed: %v\n", m.name, err)
-			os.Exit(1)
+			return 1
 		}
-		return
+		return 0
 	}
 	fmt.Fprintf(os.Stderr, "[screenshotter] unknown module %q\n", *only)
-	os.Exit(2)
+	return 2
 }
 
 func runSingleCapture(binary, outDir, module string, width, height int, tag, hysEngine string) error {
