@@ -119,7 +119,7 @@ Pass the exact quoted strong revision from `ReadConfiguration`. Even no-ops requ
 
 A valid no-op leaves all three files' bytes and modification times unchanged and creates no temporary file. A changed save validates before writing, exclusively creates an unpredictable regular temporary file inside the same root, writes it, preserves the target's permission bits, syncs and closes it, then rechecks all three documents and cancellation immediately before replacing the named file through `root.Rename`. It refuses observed permission changes rather than broadening access. Ownership, ACLs and special mode bits are not preserved. Precommit failures remove only the call's owned temporary file, leaving the original document intact. Successful rename is the commit point: a later cancellation does not turn the committed save into a cancellation error. Callers retain ownership of both handles on success and failure.
 
-The editor mutex serializes participating saves **within that editor only**. Use external coordination or stop other editors while saving: a nonparticipating writer can still change files between the last revision check and rename. This is **not cross-process compare-and-swap**, and reading the three files is not a transactional filesystem snapshot. Replacement behavior is qualified for local Linux filesystems only; no power-loss durability, directory-sync, WASM or other-filesystem guarantee is made. Configuration I/O is root-confined, but this does not establish full confinement for project creation, runs or exports. Report generation has its own confined primitive described below. There is no delivered browser editor, HTTP status mapping or Orca qualification in this primitive.
+The editor mutex serializes participating saves **within that editor only**. Use external coordination or stop other editors while saving: a nonparticipating writer can still change files between the last revision check and rename. This is **not cross-process compare-and-swap**, and reading the three files is not a transactional filesystem snapshot. Replacement behavior is qualified for local Linux filesystems only; no power-loss durability, directory-sync, WASM or other-filesystem guarantee is made. Configuration I/O is root-confined, but this alone does not establish confinement for other filesystem operations. Run persistence, report generation and selected-run exports have their own rooted primitives described below. There is no delivered browser editor, HTTP status mapping or Orca qualification in this primitive.
 
 `workbench/project/configuration_save_test.go::TestSaveConfiguration` covers exact no-op preservation (including CRLF and missing final newline), revision/conflict handling, deterministic concurrent/external edits, root ownership and confinement, persistence faults and commit-point cancellation. Offline checks:
 
@@ -145,7 +145,7 @@ Runtime timestamps and repository revision remain in run provenance but do not c
 
 The store pins the `runs/` namespace and each run directory through child handles. Commits exclusively create unpredictable root-relative scratch directories and atomically publish complete run directories. Publication failure verifies any winning record through the same pinned namespace; cleanup removes only owned scratch files, not unrelated temporary entries. Root-confined reads reject links outside their pinned directories. The 16 MiB artifact bounds, canonical bytes, schema, run identities, integrity checks, reuse, model failures and cancellation/progress behavior are unchanged.
 
-This path-confinement behavior is qualified for local Linux filesystems. `os.Root` is not a sandbox against privileged mounts, hard links or same-user malware; no power-loss durability or other-platform guarantee is made. These primitives do not add HTTP/React endpoints or establish confinement for report generation or exports.
+This path-confinement behavior is qualified for local Linux filesystems. `os.Root` is not a sandbox against privileged mounts, hard links or same-user malware; no power-loss durability or other-platform guarantee is made. These primitives do not add HTTP/React endpoints or establish confinement for other filesystem operations.
 
 `workbench/experiment/root_store_test.go::TestRootedRunStore` covers outside links, metadata retargeting, namespace pinning, publication failure/recovery, scratch ownership, canonical compatibility, failed-point reuse, cancellation and caller-handle ownership. Offline checks:
 
@@ -234,7 +234,7 @@ Input files must remain inside the project directory, pass their declared SHA-25
 
 [Project loading](../../workbench/project/load.go) reads YAML and inputs through an authorized `os.Root` directory handle, rejecting symlinks that escape it while allowing relative links within it. Optional citation-existence checks use a separately authorized citation-directory handle. Library callers use `project.LoadRoot(root, citations)` and retain ownership of both handles; nil `citations` skips existence checks, not citation-key validation. `project.Load(path, options)` remains available and opens/closes its own handles. `Bundle.Root` is descriptive metadata, not filesystem authority.
 
-This boundary covers project loading, configuration preparation/saves, rooted run persistence, and report generation through the rooted primitives described above. It does not establish confinement for project creation, exports, or a complete study workflow that also generates reports.
+This boundary covers project loading, configuration preparation/saves, rooted run persistence, report generation, and selected-run EDA exports through the rooted primitives described here. It does not establish confinement for project creation or a complete study workflow.
 
 ## Selected-run EDA export
 
@@ -245,6 +245,21 @@ fecim-lattice-tools export /path/to/study -run <64-character-run-id>
 ```
 
 The command verifies the stored run identity and artifact hashes, rejects failed/tampered runs, and writes SPICE, Verilog, DEF, LEF, Liberty, and a SHA-256 export manifest to `exports/<run-id>/`. It never reruns the simulation and never overwrites an existing export directory. The existing EDA cell/layout generators use their default SKY130 assumptions; the manifest records that the source `tech_node` is not mapped to a foundry PDK. These outputs are design artifacts for exploration, not foundry sign-off.
+
+### Go rooted selected-run exports
+
+[`edaexport.ExportSelectedRunRoot(root, id)`](../../workbench/edaexport/selected.go) borrows a caller-owned `*os.Root` and returns the relative path `exports/<id>`. Keep the handle open until the call returns. The legacy `ExportSelectedRun(path, id)` opens its own handle and still returns the joined project/export path. Neither entry point invokes the evaluator.
+
+The exporter requires `experiment.LoadRunRoot` to verify a successful run before creating output. It retains the 16,384-cell bound and source design/run identity. Pure Module 6 generators feed exclusive writes through pinned `exports` and destination handles; no path-based EDA writer is invoked. Existing destinations, including files and links, are refused. Escaping export/run-artifact links and malformed, tampered or failed runs are rejected. The manifest is written last and hashes the actual generated bytes written successfully. Verilog and DEF retain generator timestamp comments: exports made at different times are not claimed byte-identical.
+
+On failure, cleanup removes only still-recognized files created by the call and its own empty destination, not existing destinations or unrelated markers. Identity checks and removal are not atomic against nonparticipating writers; coordinate namespace changes externally. Path confinement is qualified for local Linux filesystems, not privileged mounts, hard links or same-user malware. This is not a power-loss durability, foundry-PDK or browser-API guarantee.
+
+`workbench/edaexport/selected_test.go::TestExportSelectedRunRootConfinement` covers moved handles, outside links, invalid/unverified runs, bounds, collisions, deterministic artifact-write failure and cleanup, scientific content, source preservation and actual-byte hashes. Existing `TestExportSelectedRun` tests cover the legacy joined path and tampered-run refusal. Offline checks:
+
+```bash
+CGO_ENABLED=0 go test ./workbench/edaexport -run 'TestExportSelectedRunRootConfinement|TestExportSelectedRun' -count=1
+go test -race ./workbench/edaexport -count=1
+```
 
 ## Current Scope
 
