@@ -1,6 +1,8 @@
 # FeCIM Lattice Tools - Accessibility Audit Report
 
 > **Note:** This file was previously located at `docs/ACCESSIBILITY_AUDIT.md`. It has moved to `docs/internals/accessibility.md`.
+>
+> **Browser workbench proposal (2026-10-25):** This historical Fyne audit is not a browser accessibility verification. See the [accessible browser design](superpowers/specs/2026-10-25-accessible-browser-workbench-design.md) and its [numbered Orca task scripts](superpowers/specs/2026-10-25-accessible-browser-workbench-orca-acceptance.md) for the proposed navigation, pronunciation, conflict/editing, comparison, plot and lifecycle contracts. The manual gate has **not been executed**; implementation is not part of this documentation update.
 
 **Date:** 2026-02-07  
 **Auditor:** OpenClaw Accessibility Audit  

@@ -3,7 +3,7 @@
 
 When the user's request matches the trigger description below, follow the workflow in the linked file.
 
-- **fecim-builder** — Runs build flows for the canonical Fyne shell and module commands on this Go 1.25 monorepo. Use when building, packaging, or debugging build failures in cmd/fecim-lattice-tools or module GUI commands. → see `tools/fecim-skills/fecim-builder/SKILL.md`
+- **fecim-builder** — Use when building, packaging, or debugging build failures for FeCIM's React web target, existing Go core/CLI, or deprecated Fyne compatibility commands in this Go 1.25 monorepo. → see `tools/fecim-skills/fecim-builder/SKILL.md`
 - **fecim-citation** — Verifies and formats FeCIM physics/measurement claims against the project's published-source list and docs/4-research/honesty-audit.md. Use when adding a numeric claim, accuracy figure, or device-parameter assertion to code, docs, PR descriptions, or commit messages. → see `tools/fecim-skills/fecim-citation/SKILL.md`
 - **fecim-fyne-thread-check** — Audits Go code for goroutine-to-widget access without fyne.Do(...) wrapping, the project's most common GUI freeze cause. Use when reviewing a PR that adds goroutines, async I/O, or simulation tickers in any pkg/gui/ or shell package. → see `tools/fecim-skills/fecim-fyne-thread-check/SKILL.md`
 - **fecim-grill** — Relentlessly interviews the user about a proposed FeCIM physics, simulation, or GUI change before any code is written — covering source citation, educational-vs-validated framing, TDD-RED test, thread-safety, and honesty-audit alignment. Use when starting a non-trivial change to physics, ISPP, crossbar, or GUI logic. → see `tools/fecim-skills/fecim-grill/SKILL.md`

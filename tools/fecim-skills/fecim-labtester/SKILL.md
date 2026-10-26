@@ -5,16 +5,21 @@ description: Runs the FeCIM test matrix (full, race, module-scoped, coverage, go
 
 # fecim-labtester
 
-Pick the right test invocation, run it, and triage failures against the 5 known bug patterns. See `tools/fecim-skills/_shared/fecim-context.md` for the test matrix and bug list.
+React web is the primary UI target; Fyne is deprecated compatibility. The React client is planned, not an already-shipped distribution. For browser work, inspect current implementation and supported test tooling before choosing checks; do not invent a React package/test command or treat the Astro marketing site in `web/` as the client.
+
+Keep Go core/CLI and physics regression coverage, plus legacy Fyne guards while shipped. Fyne widget mutations from goroutines still require `fyne.Do(func() { ... })`; deprecation does not waive thread safety or prove browser/accessibility acceptance.
+
+Pick the right test invocation, run it, and triage failures against the 5 known bug patterns. See `tools/fecim-skills/_shared/fecim-context.md` for the Go test matrix and bug list, and `docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md` for the approved browser direction.
 
 ## Workflow
 
 1. **Pick scope** by the change being verified:
+   - Full check (unchanged): `env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m`
    - Whole suite: `go test ./...`
    - Counted whole suite: `go test -json ./...` followed by a pass/fail/skip/package summary
    - Race detection: `go test -race ./...`
    - Module: `go test ./module1-hysteresis/...` (or `make test-hys`, `test-xbar`, `test-mnist`, `test-circuits`, `test-shared`)
-   - Canonical Fyne shell: `make test-Fyne-ui`
+   - Deprecated Fyne compatibility: `make test-legacy-fyne`
    - Coverage: `go test -cover ./...`
    - Diff hygiene: `git diff --check`
 

@@ -3,6 +3,8 @@
 Date: 2026-07-19
 Status: Approved for implementation planning
 
+> **Superseding UI direction (2026-10-25):** The owner has deprecated Fyne in favor of React web. This original design's Go-core/CLI, identity, persistence and scientific boundaries remain applicable; its Fyne-primary product direction is superseded by the [React-primary deprecation policy](2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy). Existing Fyne implementation remains compatibility until replacement qualification. This notice does not change runtime defaults, remove code or attest React delivery.
+
 > **2026-10-25 browser-client companion (design only):** The [accessible browser workbench design](2026-10-25-accessible-browser-workbench-design.md) consolidates the approved table-first direction and seven accessibility/editing additions. Its [numbered Orca acceptance tasks](2026-10-25-accessible-browser-workbench-orca-acceptance.md) are unexecuted human gates. It proposes a local browser adapter as an additive exception to this original first slice's no-HTTP-service non-goal; it does not replace CLI/Fyne or claim an implemented browser client. Written-design review is pending; no implementation or commits are authorized.
 
 ## Context

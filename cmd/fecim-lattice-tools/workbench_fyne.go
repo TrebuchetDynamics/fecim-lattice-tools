@@ -45,6 +45,10 @@ func joinInts(values []int) string {
 }
 
 func CreateResearchWorkbenchContent(window fyne.Window) fyne.CanvasObject {
+	return createResearchWorkbenchContent(window, study.Run)
+}
+
+func createResearchWorkbenchContent(window fyne.Window, runStudy func(context.Context, string, study.RunOptions) (study.RunOutcome, error)) fyne.CanvasObject {
 	projectPath := widget.NewEntry()
 	projectPath.SetPlaceHolder("Select an existing project folder or an empty folder to initialize")
 	status := widget.NewLabel("Local projects only · simulation estimates, not measured hardware")
@@ -92,7 +96,7 @@ func CreateResearchWorkbenchContent(window fyne.Window) fyne.CanvasObject {
 			exportButton.Enable()
 		}
 	}
-	runTask := func(label string, cancellable bool, operation func(context.Context, string) (string, error)) {
+	runTaskWithOutcome := func(label string, cancellable bool, operation func(context.Context, string) (status, details string)) {
 		root := strings.TrimSpace(projectPath.Text)
 		if root == "" {
 			status.SetText("Choose a project folder first")
@@ -114,8 +118,7 @@ func CreateResearchWorkbenchContent(window fyne.Window) fyne.CanvasObject {
 		}
 		status.SetText(label + "…")
 		go func() {
-			result, err := operation(ctx, root)
-			wasCancelled := errors.Is(ctx.Err(), context.Canceled)
+			terminalStatus, result := operation(ctx, root)
 			cancel()
 			fyne.Do(func() {
 				busy = false
@@ -125,19 +128,25 @@ func CreateResearchWorkbenchContent(window fyne.Window) fyne.CanvasObject {
 				}
 				runSelect.Enable()
 				refreshRuns(root)
-				if err != nil {
-					if wasCancelled {
-						status.SetText(label + " cancelled · committed runs are preserved")
-					} else {
-						status.SetText(label + " failed")
-					}
-					output.SetText(err.Error())
-					return
-				}
-				status.SetText(label + " complete")
+				buttons[len(buttons)-1].Disable()
+				status.SetText(terminalStatus)
 				output.SetText(result)
 			})
 		}()
+	}
+
+	// Non-simulation actions retain their existing text/error presentation.
+	runTask := func(label string, cancellable bool, operation func(context.Context, string) (string, error)) {
+		runTaskWithOutcome(label, cancellable, func(ctx context.Context, root string) (string, string) {
+			result, err := operation(ctx, root)
+			if err != nil {
+				if workbenchCancellationOnly(err) {
+					return label + " cancelled · committed runs are preserved", err.Error()
+				}
+				return label + " failed", err.Error()
+			}
+			return label + " complete", result
+		})
 	}
 
 	choose := widget.NewButton("Choose folder…", func() {
@@ -218,18 +227,9 @@ func CreateResearchWorkbenchContent(window fyne.Window) fyne.CanvasObject {
 		})
 	})
 	simulate := widget.NewButton("Simulate sweep", func() {
-		runTask("Simulation", true, func(ctx context.Context, root string) (string, error) {
-			outcome, err := study.Run(ctx, root, study.RunOptions{Workers: 1, RepositoryRevision: buildRevision()})
-			if err != nil {
-				return "", err
-			}
-			reused := 0
-			for _, run := range outcome.Summary.Runs {
-				if run.Reused {
-					reused++
-				}
-			}
-			return fmt.Sprintf("total=%d reused=%d failed=%d feasible=%d pareto=%d\n", len(outcome.Summary.Runs), reused, outcome.Analysis.Counts["failed"], outcome.Analysis.Counts["feasible"], outcome.Analysis.Counts["pareto"]), nil
+		runTaskWithOutcome("Simulation", true, func(ctx context.Context, root string) (string, string) {
+			outcome, err := runStudy(ctx, root, study.RunOptions{Workers: 1, RepositoryRevision: buildRevision()})
+			return formatWorkbenchOutcome(outcome, err)
 		})
 	})
 	analyze := widget.NewButton("Analyze · generate reports", func() {
@@ -265,6 +265,7 @@ func CreateResearchWorkbenchContent(window fyne.Window) fyne.CanvasObject {
 		if cancelTask != nil {
 			cancelTask()
 			status.SetText("Cancel requested · completed runs are preserved and can be resumed")
+			buttons[len(buttons)-1].Disable()
 		}
 	})
 	exportButton = widget.NewButton("Export selected run · SPICE/Verilog/DEF/LEF/Liberty", func() {

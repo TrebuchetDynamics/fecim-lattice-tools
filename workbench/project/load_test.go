@@ -2,6 +2,7 @@ package project
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,6 +69,141 @@ parameters:
   - path: circuit.adc_bits
     values: [4, 6]
 `
+
+// Reopening Root.Name(), caching a checked path, or using path-based file reads
+// would let these fixtures escape the caller's authority.
+func TestLoadRootConfinement(t *testing.T) {
+	openRoot := func(t *testing.T, path string) *os.Root {
+		t.Helper()
+		root, err := os.OpenRoot(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { root.Close() })
+		return root
+	}
+	put := func(t *testing.T, path, body string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	link := func(t *testing.T, target, path string) {
+		t.Helper()
+		if err := os.Symlink(target, path); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, name := range []string{"project.yaml", "design.yaml", "sweep.yaml", "input.csv", "park2015_advmat_hzo.md"} {
+		t.Run(name+" retarget", func(t *testing.T) {
+			base := t.TempDir()
+			projectDir, citationDir := filepath.Join(base, "project"), filepath.Join(base, "citations")
+			for _, dir := range []string{projectDir, citationDir} {
+				if err := os.MkdirAll(filepath.Join(dir, "data", "inner"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				link(t, "data/inner", filepath.Join(dir, "nested"))
+			}
+			const marker = "PRIVATE-OUTSIDE-MARKER\n"
+			outside := filepath.Join(base, "outside")
+			put(t, outside, marker)
+			digest := fmt.Sprintf("%x", sha256.Sum256([]byte(marker)))
+			p := validProjectYAML + fmt.Sprintf("inputs:\n  - path: input.csv\n    sha256: %s\n    citation: park2015_advmat_hzo\n    evidence: experiment-calibrated\n", digest)
+			writeBundle(t, filepath.Join(projectDir, "data", "inner"), p, validDesignYAML, validSweepYAML)
+			put(t, filepath.Join(projectDir, "data", "inner", "input.csv"), marker)
+			put(t, filepath.Join(citationDir, "data", "inner", "park2015_advmat_hzo.md"), "# Park\n")
+			for _, file := range []string{"project.yaml", "design.yaml", "sweep.yaml", "input.csv"} {
+				link(t, "nested/"+file, filepath.Join(projectDir, file))
+			}
+			link(t, "nested/park2015_advmat_hzo.md", filepath.Join(citationDir, "park2015_advmat_hzo.md"))
+			root, citations := openRoot(t, projectDir), openRoot(t, citationDir)
+			got, err := LoadRoot(root, citations)
+			if err != nil || len(got.Inputs) != 1 || got.Inputs[0].SHA256 != digest {
+				t.Fatalf("nested in-root links: bundle=%+v, err=%v", got, err)
+			}
+
+			// Retarget after a successful load, without a scheduling race or sleep.
+			dir := projectDir
+			if strings.HasSuffix(name, ".md") {
+				dir = citationDir
+			}
+			path := filepath.Join(dir, name)
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			link(t, "../outside", path)
+			for _, load := range []func() (Bundle, error){
+				func() (Bundle, error) { return LoadRoot(root, citations) },
+				func() (Bundle, error) { return Load(projectDir, LoadOptions{CitationDir: citationDir}) },
+			} {
+				_, err := load()
+				var pathErr *os.PathError
+				// A traversal error, not a YAML parse/hash error containing marker
+				// bytes, proves the outside file was rejected before consumption.
+				if !errors.As(err, &pathErr) || !strings.Contains(pathErr.Err.Error(), "escapes") || strings.Contains(err.Error(), marker) {
+					t.Fatalf("err=%v, want traversal rejection before reading outside bytes", err)
+				}
+			}
+			if strings.HasSuffix(name, ".md") {
+				if _, err := LoadRoot(root, nil); err != nil {
+					t.Fatalf("nil citations should skip existence checks: %v", err)
+				}
+			}
+			if body, err := os.ReadFile(outside); err != nil || string(body) != marker {
+				t.Fatalf("outside fixture changed: %q, %v", body, err)
+			}
+			for _, handle := range []*os.Root{root, citations} {
+				if _, err := handle.Stat("."); err != nil {
+					t.Fatalf("caller handle closed after rejection: %v", err)
+				}
+			}
+		})
+	}
+
+	t.Run("root names are metadata", func(t *testing.T) {
+		base := t.TempDir()
+		projectDir, citationDir := filepath.Join(base, "project"), filepath.Join(base, "citations")
+		for _, dir := range []string{projectDir, citationDir} {
+			if err := os.Mkdir(dir, 0o755); err != nil {
+				t.Fatal(err)
+			}
+		}
+		writeBundle(t, projectDir, validProjectYAML, validDesignYAML, validSweepYAML)
+		put(t, filepath.Join(citationDir, "park2015_advmat_hzo.md"), "# Park")
+		root, citations := openRoot(t, projectDir), openRoot(t, citationDir)
+		for _, dir := range []string{projectDir, citationDir} {
+			if err := os.Rename(dir, dir+"-moved"); err != nil {
+				t.Fatal(err)
+			}
+			link(t, t.TempDir(), dir)
+		}
+		got, err := LoadRoot(root, citations)
+		if err != nil || got.Root != root.Name() || got.Project.ID != "hzo-study" {
+			t.Fatalf("renamed roots: bundle=%+v, err=%v", got, err)
+		}
+		if _, err := LoadRoot(root, nil); err != nil {
+			t.Fatalf("optional citation checks / caller handle lifetime: %v", err)
+		}
+		if _, err := citations.Stat("park2015_advmat_hzo.md"); err != nil {
+			t.Fatalf("caller citation handle closed: %v", err)
+		}
+	})
+
+	for _, tc := range []struct{ name, suffix, want string }{
+		{"multiple documents", "---\n{}\n", "multiple YAML documents"},
+		{"oversized document", "#" + strings.Repeat(" ", 1<<20), "exceeds"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeBundle(t, dir, validProjectYAML+tc.suffix, validDesignYAML, validSweepYAML)
+			_, err := LoadRoot(openRoot(t, dir), nil)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("err=%v, want %s", err, tc.want)
+			}
+		})
+	}
+}
 
 func TestLoadStrictBundle(t *testing.T) {
 	root := t.TempDir()
@@ -141,7 +277,7 @@ func TestLoadRejectsInputSymlinkEscapingProject(t *testing.T) {
 	digest := fmt.Sprintf("%x", sha256.Sum256([]byte("private\n")))
 	p := validProjectYAML + fmt.Sprintf("inputs:\n  - path: inputs/outside.csv\n    sha256: %s\n    citation: park2015_advmat_hzo\n    evidence: experiment-calibrated\n", digest)
 	writeBundle(t, root, p, validDesignYAML, validSweepYAML)
-	if _, err := Load(root, LoadOptions{}); err == nil || !strings.Contains(err.Error(), "escapes project root") {
+	if _, err := Load(root, LoadOptions{}); err == nil || !strings.Contains(err.Error(), "escapes") {
 		t.Fatalf("err=%v, want containment error", err)
 	}
 }

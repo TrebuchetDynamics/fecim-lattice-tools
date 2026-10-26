@@ -1,6 +1,7 @@
 package project
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -25,15 +26,46 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 	if err != nil {
 		return Bundle{}, err
 	}
-	bundle := Bundle{Root: abs}
-	if err := decodeStrict(filepath.Join(abs, "project.yaml"), &bundle.Project); err != nil {
-		return Bundle{}, fmt.Errorf("project.yaml: %w", err)
+	projectRoot, err := os.OpenRoot(abs)
+	if err != nil {
+		return Bundle{}, err
 	}
-	if err := decodeStrict(filepath.Join(abs, "design.yaml"), &bundle.Design); err != nil {
-		return Bundle{}, fmt.Errorf("design.yaml: %w", err)
+	defer projectRoot.Close()
+	var citations *os.Root
+	if opts.CitationDir != "" {
+		citations, err = os.OpenRoot(opts.CitationDir)
+		if err != nil {
+			return Bundle{}, err
+		}
+		defer citations.Close()
 	}
-	if err := decodeStrict(filepath.Join(abs, "sweep.yaml"), &bundle.Sweep); err != nil {
-		return Bundle{}, fmt.Errorf("sweep.yaml: %w", err)
+	return LoadRoot(projectRoot, citations)
+}
+
+// LoadRoot reads a bundle using only the supplied directory handles. The caller
+// owns both handles; nil citations skips citation existence checks. Bundle.Root
+// is descriptive metadata, not authority for subsequent filesystem access.
+func LoadRoot(root, citations *os.Root) (Bundle, error) {
+	return loadConfigurationRoot(root, citations, nil)
+}
+
+// A nonnil overlay supplies only the three fixed configuration documents.
+// Input/citation reads retain the supplied root authority and the same validator.
+func loadConfigurationRoot(root, citations *os.Root, overlay *ConfigurationSnapshot) (Bundle, error) {
+	if root == nil {
+		return Bundle{}, errors.New("project root is required")
+	}
+	bundle := Bundle{Root: root.Name()}
+	for i, dst := range []any{&bundle.Project, &bundle.Design, &bundle.Sweep} {
+		var err error
+		if overlay == nil {
+			err = decodeRoot(root, configurationDocuments[i], dst)
+		} else {
+			err = decodeStrict(strings.NewReader(overlay.documents[i]), dst)
+		}
+		if err != nil {
+			return Bundle{}, fmt.Errorf("%s: %w", configurationDocuments[i], err)
+		}
 	}
 	if bundle.Project.SchemaVersion != 1 || bundle.Design.SchemaVersion != 1 || bundle.Sweep.SchemaVersion != 1 {
 		return Bundle{}, errors.New("all schema_version values must be 1")
@@ -72,44 +104,61 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 		return Bundle{}, errors.New("sweep requires at least one parameter")
 	}
 
-	citations := append([]string(nil), bundle.Project.Citations...)
-	citations = append(citations, inputCitations(bundle.Project.Inputs)...)
-	for _, key := range citations {
+	keys := append([]string(nil), bundle.Project.Citations...)
+	keys = append(keys, inputCitations(bundle.Project.Inputs)...)
+	for _, key := range keys {
 		if !citationRE.MatchString(key) {
 			return Bundle{}, fmt.Errorf("invalid citation key %q", key)
 		}
-		if opts.CitationDir != "" {
-			if _, err := os.Stat(filepath.Join(opts.CitationDir, key+".md")); err != nil {
+		if citations != nil {
+			if _, err := citations.Stat(key + ".md"); err != nil {
 				return Bundle{}, fmt.Errorf("citation %s: %w", key, err)
 			}
 		}
 	}
-	inputs, err := resolveInputs(abs, bundle.Project.Inputs)
+	inputs, err := resolveInputs(root, bundle.Project.Inputs)
 	if err != nil {
 		return Bundle{}, err
 	}
 	bundle.Inputs = inputs
+	if overlay != nil {
+		if err := preflightConfigurationSweep(bundle.Sweep); err != nil {
+			return Bundle{}, fmt.Errorf("sweep: %w", err)
+		}
+	}
 	if _, err := Expand(bundle); err != nil {
 		return Bundle{}, fmt.Errorf("sweep: %w", err)
 	}
 	return bundle, nil
 }
 
-func decodeStrict(path string, dst any) error {
-	info, err := os.Stat(path)
+func decodeRoot(root *os.Root, path string, dst any) error {
+	file, err := root.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	info, err := file.Stat()
 	if err != nil {
 		return err
 	}
 	if info.Size() > maxProjectFileBytes {
 		return fmt.Errorf("file exceeds %d bytes", maxProjectFileBytes)
 	}
-	file, err := os.Open(path)
+	return decodeStrict(file, dst)
+}
+
+func decodeStrict(reader io.Reader, dst any) error {
+	// Bound the actual bytes, too: an opened file can grow after Stat, and YAML
+	// comments/whitespace beyond the limit must not look like a valid EOF.
+	data, err := io.ReadAll(io.LimitReader(reader, maxProjectFileBytes+1))
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-
-	decoder := yaml.NewDecoder(io.LimitReader(file, maxProjectFileBytes+1))
+	if int64(len(data)) > maxProjectFileBytes {
+		return fmt.Errorf("file exceeds %d bytes", maxProjectFileBytes)
+	}
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	decoder.KnownFields(true)
 	if err := decoder.Decode(dst); err != nil {
 		return err
@@ -139,22 +188,14 @@ func ValidateDesign(design Design) error {
 	return nil
 }
 
-func resolveInputs(root string, refs []InputRef) ([]ResolvedInput, error) {
+func resolveInputs(root *os.Root, refs []InputRef) ([]ResolvedInput, error) {
 	out := make([]ResolvedInput, 0, len(refs))
 	for _, ref := range refs {
 		clean := filepath.Clean(ref.Path)
 		if filepath.IsAbs(clean) || clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
 			return nil, fmt.Errorf("unsafe input path %q", ref.Path)
 		}
-		resolved, err := filepath.EvalSymlinks(filepath.Join(root, clean))
-		if err != nil {
-			return nil, err
-		}
-		rel, err := filepath.Rel(root, resolved)
-		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			return nil, fmt.Errorf("input escapes project root: %q", ref.Path)
-		}
-		data, err := os.ReadFile(resolved)
+		data, err := root.ReadFile(clean)
 		if err != nil {
 			return nil, err
 		}
