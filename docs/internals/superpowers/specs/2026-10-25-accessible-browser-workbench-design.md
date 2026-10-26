@@ -17,7 +17,7 @@ These decisions were explicitly approved in the conversation. A resumed session 
 |---|---|---|
 | BW-01 | Local-first; keep the Go physics/workbench core and existing CLI. No hosted compute, database, or physics rewrite. Keep future delivery options possible without implementing WASM. | Architecture and scope |
 | BW-02 | React, TypeScript, Vite; React Aria Components for interactive primitives, native HTML where sufficient; thin Go `net/http` API; embedded production assets. | Stack, contracts and build policy |
-| BW-03 | Research workbench is the first browser replacement. Fyne expert modules remain usable until separately proven replacements exist. | Architecture and scope |
+| BW-03 | React web is the primary UI direction; Fyne is deprecated in this project. The research workbench is the first replacement; existing Fyne expert modules remain legacy compatibility until separately proven replacements exist. | React-primary deprecation policy; Architecture and scope |
 | BW-04 | Data tables are primary; Go computes values, summaries and scientific analysis; exact values, filtering/pagination and full-data export remain accessible. | Go/browser ownership; sections 2, 4, 5 |
 | BW-05 | Approved API boundary, with explicit close, active execution discovery, ETags/If-Match, RFC 9457 errors, server pagination, count-only SSE and health fingerprints. | Local API contract |
 | BW-06 | Launch-granted roots, fragment bootstrap, cookie-authenticated SSE, exact Host/Origin protection, mutation header and end-to-end filesystem confinement. | Authentication, confinement and threat model |
@@ -32,19 +32,50 @@ These decisions were explicitly approved in the conversation. A resumed session 
 
 Do not infer that this register grants implementation, commits, task execution, or release authority. No approval is fabricated for unexecuted checks. Newly discovered material conflicts must be recorded in the affected section rather than silently changing approved intent.
 
+## React-primary deprecation policy
+
+Status: Accepted
+
+**Owner decision:** “fyne is deprecated in favor of react web.” This replaces earlier Fyne-first product direction, not the factual history of what currently runs. The deprecation is this repository's policy; it is not a claim that the upstream Fyne framework is deprecated.
+
+- **Primary UI target:** the approved React + TypeScript + Vite browser application over the Go API. Go retains scientific computations, values, units, evidence, persistence and the CLI; no physics or language rewrite.
+- **Deprecated compatibility UI:** existing Fyne commands/modules. No new Fyne-only features, demos or migration pilots should be planned. Preserve required correctness/security fixes and regression checks while those paths remain shipped. Existing Fyne thread-safety rules still apply to compatibility fixes.
+- **Not removed and not yet replaced:** no entry point, dependency, build tag or default-launch behavior changes in this planning pass. Do not route users to a nonexistent React app. React becomes the recommended runnable path only once its declared scope passes behavioral/security and numbered Orca acceptance gates; retire remaining Fyne surfaces separately after replacement qualification. No unsupported removal date is invented.
+- **Not the marketing site:** `web/` remains the static Astro landing page. The React workbench is a distinct application; changing its target does not authorize an Astro rewrite, hosted compute or a desktop wrapper.
+- **Completed work remains history:** T-005's verified Fyne result presentation and all existing receipts are retained, not renamed into React delivery or superseded as if unimplemented. The Go foundations T-001..T-004/T-006 remain reusable. At inspection, all six are closed with coordinator-verified receipts; no new runtime tests are claimed by this documentation pass.
+
+### Focused deprecation batch and boundary
+
+The requested outcome here is to correct UI direction and future work selection, not implement the whole React client. The approved API/security/editing/table/plot/manual-test contract below is retained. It is not reopened or silently treated as delivered. Concrete browser implementation still needs its own full bounded plan, including end-to-end storage confinement and assets/contracts; this deprecation batch must not launch a listener or scaffold/install frontend dependencies.
+
+Documentation owners updated in this batch: this design/decision register, the original core architecture's status notice, README, architecture guide and terminology. Executable agent/skill instructions are implementation-role artifacts, so they are **not edited during planning**. Two complete records under `REACT-UI-POLICY` own the remaining instruction-role work:
+
+| Task | Outcome | Writes / prerequisites |
+|---|---|---|
+| `T-007-5906cd8f` | Replace Fyne-first agent guidance with React-primary policy | `AGENTS.md`, `CLAUDE.md`, shared FeCIM context; no prerequisite |
+| `T-008-5079bc9b` | Retarget build and test skills to the React migration | Canonical builder/labtester skills plus generated Codex/OpenCode metadata; no prerequisite |
+
+Their exact scope, exclusions, literal policy assertions, existing adapter checks and next actions are in `tasks/items/`. Both are independent, with disjoint source ownership and no live/exclusive resource. Protected instruction-path scheduling can still serialize them; this is not a product dependency. Planner's queue call: priority 2, no focus takeover, existing task ranks/contracts/history preserved. Records remain uncommitted and do not authorize the active runner to execute newly saved work. No successor planning daemon is created.
+
+Planner's calls: phased deprecation instead of immediate deletion; no new Fyne feature work; keep the scientific Go core/CLI and legacy regression gates; distinguish React product priority from current runtime availability. Immediate default-switch/deletion was rejected because there is no React workbench distribution in this checkout. Continuing Fyne-first instructions was rejected because it contradicts the owner's explicit decision.
+
+Verification is qualitative: no authoritative plan calls Fyne the future primary UI, no instruction requires new features to gain a Fyne path, no command claims a not-yet-built React distribution, and completed receipts remain unchanged. Future instruction tasks run literal policy checks and existing adapter checks, not tests invented solely to count prose edits. Preserve the existing `Full check:` command and legacy safety obligations. Both instruction owners replace the obsolete `make test-Fyne-ui` reference with the existing `make test-legacy-fyne` where relevant, without changing test targets. All future task checks are proposed/unrun; TDD N/A for this documentation/task-only planning batch.
+
+Builder review: a fresh read-only reviewer reported **“nothing important left”**, confirming both task scopes and their independent lanes. This was a planning/source review, not a runtime or accessibility pass. The reviewer’s shared-context test-alias observation is included in T-007. Final planning checks: `autowork tasks validate --worktree .` **PASS** (13 tasks, 4 goals, no drafts; only this new goal/two tasks pending). Task readback, new policy links, independent write/dependency ownership and literal Python-check syntax **PASS**; scoped `git diff --check` **PASS**. These are consistency receipts, not execution evidence. No instruction, product code, test, dependency or service is changed by this planning batch; no commit is created. Next action after separate execution authorization: T-007's instruction-policy assertion, or independent T-008's skill-policy assertion, then only their scoped changes. The full React client implementation and human Orca gate remain outside this batch.
+
 ### Documentation map and current implementation evidence
 
 | Source | Current fact / boundary |
 |---|---|
-| `workbench/experiment/types.go:17-33` | Go metrics carry numeric value, unit, model, assumptions and evidence; no display/speech DTO exists there today. |
+| `workbench/experiment/types.go`; `workbench/presentation/value.go` | Go metrics retain numeric value, unit, model, assumptions and evidence; `presentation.FormatMetric` now supplies separate display/speakable/availability forms. Browser consumption is not yet implemented. |
 | `workbench/experiment/analyze.go:28` | Feasibility and Pareto analysis belongs to Go. |
-| `workbench/experiment/runner.go:36-149` | The runner accepts a context, drains worker outcomes, and can return partial records on cancellation. |
-| `workbench/study/study.go:184-211` | Study orchestration returns an empty outcome on runner error; it does not yet expose the browser's required partial cancellation summary. |
-| `workbench/project/load.go:23-36,95-125` | Current loading decodes strict typed YAML, including rejection of unknown fields; it is not a comment-preserving editor. |
+| `workbench/experiment/runner.go`; `progress.go` | The runner accepts a context and an optional nonblocking count-progress channel; this is not yet a browser job registry or SSE endpoint. |
+| `workbench/study/study.go` | `study.Run` retains trustworthy partial results and explicit `ResultsState`/`AnalysisAvailable`; the browser still needs its lifecycle adapter. |
+| `workbench/project/load.go` | `LoadRoot` provides scoped reads with strict typed YAML; it is not end-to-end confined persistence or a comment-preserving editor. |
 | `web/README.md` | `web/` is a static Astro project/marketing site, not this browser client. |
 | [Accessibility audit](../../accessibility.md) | Historical Fyne audit, not evidence of browser/Orca acceptance. |
 
-The browser adapter, field-patch editing, ETags, presentation/speech values, lifecycle snapshots and accessible views below are **new design requirements**. Existing model equations, result identities, evidence definitions and CLI/Fyne workflows are not replaced.
+The browser adapter, field-patch editing, ETags and accessible views below remain **planned requirements**. Some reusable Go progress/presentation/outcome foundations are now implemented, not the browser client itself. Scientific equations, result identities, evidence definitions and CLI behavior remain unchanged; Fyne workflows are deprecated compatibility, not the future primary UI.
 
 ## Architecture and scope
 
@@ -56,7 +87,7 @@ Local Go adapter: validation, editing/concurrency, presentation, lifecycle
 Project files → evaluator → immutable runs → analysis and reports
 ```
 
-A browser transport is an additive, local-only design extension. The older core design's no-HTTP-service non-goal remains historical for its first slice; the approved browser direction permits a loopback adapter, **not** hosted compute or a public/multi-user deployment. The first replacement is the research workbench, not all expert modules. Fyne stays working until each replacement meets behavioral and accessibility gates; do not remove or gate existing entry points in this documentation pass. `web/` stays the Astro marketing site. A future static WASM demo is distinct from hosted compute and is out of scope.
+A browser transport is an additive, local-only design extension. The older core design's no-HTTP-service non-goal remains historical for its first slice; the approved browser direction permits a loopback adapter, **not** hosted compute or a public/multi-user deployment. The first replacement is the research workbench, not all expert modules. Fyne is deprecated: retain its existing entry points for compatibility until each replacement meets behavioral and accessibility gates, but do not plan new Fyne-only features or describe it as the future primary UI. Do not remove or gate existing entry points in this documentation pass. `web/` stays the Astro marketing site. A future static WASM demo is distinct from hosted compute and is out of scope.
 
 ### Stack, contracts and build policy
 
@@ -181,6 +212,8 @@ The browser uses Go's speakable text for accessible names/readable cell content,
 Missing metrics say “Not available” and why; evidence is text, not just color or a badge icon. Unknown unit symbols must not silently pass through as if pronunciation were verified: Go supplies a defined expansion or explicit unsupported-unit status. Unit/exponent pronunciation is a mandatory manual acceptance task, not delegated to default synthesizer handling of Unicode or scientific notation.
 
 ## 3. YAML editing, preservation and optimistic concurrency
+
+Implementation planning for the next Go-only slice is saved in the [configuration editing frontier](../plans/2026-10-25-browser-configuration-editing.md): `T-009-1bca6e59` prepares node-preserving validated edits; `T-010-1f9b8e44` adds revision-guarded, root-confined saves. These are planned tasks, not shipped editing, HTTP or React functionality. Raw field conflicts still require later Go presentation and browser/Orca qualification.
 
 The browser submits **field changes**, never a whole YAML document or a browser-reserialized project. Each save identifies the project document, base ETag and allowlisted typed field paths with proposed input. Go parses values, applies accepted changes to its YAML node tree and validates the resulting full configuration before writing. Reject unsupported/ambiguous paths, invalid scalars, duplicate-key ambiguity and unsafe alias changes rather than reconstructing the document and losing data.
 

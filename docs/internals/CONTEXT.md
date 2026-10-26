@@ -4,9 +4,17 @@ Shared language for the FeCIM Lattice Tools default UI and scientific simulation
 
 ## Language
 
+**Primary UI Target**:
+The React web workbench over the Go core, as directed by the owner. It is the destination for new UI work, not a claim that the browser distribution already exists. Go remains authoritative for science and the CLI remains supported.
+_Avoid_: new Fyne feature, browser-side physics, already-shipped React replacement
+
+**Deprecated UI Surface**:
+The existing Fyne desktop commands and expert modules, retained temporarily for compatibility while React replacements are qualified. Deprecation does not mean removal or permission to abandon correctness/security fixes and legacy regression checks. See the [React-primary policy](superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy).
+_Avoid_: primary Fyne UI, future Fyne default, removed Fyne interface
+
 **Default UI Surface**:
-The supported user-facing application surface for normal use, testing, screenshots, and documentation. It is the place where migrated module behavior must appear.
-_Avoid_: next UI, future shell, experimental shell
+The actually shipped default entry point at a given revision. It is distinct from the Primary UI Target during migration: the current Fyne launcher is deprecated compatibility, while React becomes the recommended runnable UI only after replacement qualification. Do not relabel runtime availability from a design decision alone.
+_Avoid_: target equals shipped, screenshot proves replacement, deprecated equals deleted
 
 **Historical UI Surface**:
 Any removed pre-Fyne UI path. It must not be presented as a supported, recommended, or released user path.
@@ -69,7 +77,7 @@ The rule that FeCIM results are model estimates for education and design explora
 _Avoid_: hardware proof, measured advantage, demonstrated device result
 
 **UI Stabilization Pass**:
-A bounded bug-hunting and hardening slice for the Default UI Surface that checks Fyne thread safety, module lifecycle cleanup, layout stability, scroll behavior, accessibility modes, and supported window sizes before visual polish. It produces focused failing tests for confirmed bugs before production fixes.
+A bounded bug-hunting and hardening slice for a shipped UI surface: React replacements must meet their browser accessibility/lifecycle contracts; retained Fyne compatibility fixes still check Fyne thread safety, module lifecycle cleanup, layout stability, scroll behavior, accessibility modes, and supported window sizes. This is not authority for new Fyne-only features. It produces focused failing tests for confirmed bugs before production fixes.
 _Avoid_: redesign sprint, subjective polish pass, untested GUI cleanup
 
 **Purpose Directory**:
