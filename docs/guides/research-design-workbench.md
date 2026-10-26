@@ -137,9 +137,26 @@ Completed successful and model-domain-failed runs are immutable. Repeating an ex
 
 Runtime timestamps and repository revision remain in run provenance but do not change deterministic report content.
 
+### Go rooted run persistence
+
+[`experiment.RunRoot(ctx, root, bundle, opts)`](../../workbench/experiment/runner.go) borrows a caller-owned `*os.Root` for run cache reads and commits. Keep the handle open until the call returns and all started workers have settled. `bundle.Root` and `root.Name()` are metadata only; neither is reopened. Nil or closed handles return errors. The legacy `experiment.Run` resolves `bundle.Root` to its own root (or nearest existing ancestor) and uses the same execution/store path. A missing legacy workspace is created only when committing a valid result; precommit failures and cancellation leave it absent.
+
+`experiment.LoadRunRecordRoot(root, id)` verifies an exact successful or failed record and returns `false` without error when absent. `experiment.LoadRunRoot(root, id)` requires a verified successful record for export. `experiment.LoadRunsRoot(root)` verifies all committed records and returns them in point-index/run-ID order, ignoring scratch entries. Their string-path counterparts remain available. All rooted operations retain caller ownership on success and failure.
+
+The store pins the `runs/` namespace and each run directory through child handles. Commits exclusively create unpredictable root-relative scratch directories and atomically publish complete run directories. Publication failure verifies any winning record through the same pinned namespace; cleanup removes only owned scratch files, not unrelated temporary entries. Root-confined reads reject links outside their pinned directories. The 16 MiB artifact bounds, canonical bytes, schema, run identities, integrity checks, reuse, model failures and cancellation/progress behavior are unchanged.
+
+This path-confinement behavior is qualified for local Linux filesystems. `os.Root` is not a sandbox against privileged mounts, hard links or same-user malware; no power-loss durability or other-platform guarantee is made. These primitives do not add HTTP/React endpoints or establish confinement for report generation or exports.
+
+`workbench/experiment/root_store_test.go::TestRootedRunStore` covers outside links, metadata retargeting, namespace pinning, publication failure/recovery, scratch ownership, canonical compatibility, failed-point reuse, cancellation and caller-handle ownership. Offline checks:
+
+```bash
+CGO_ENABLED=0 go test ./workbench/experiment -run 'TestRootedRunStore|TestRunWorkerDeterminism|TestRunCancellation|TestRunProgressCounts|TestRunRejects' -count=1
+go test -race ./workbench/experiment -count=1
+```
+
 ### Go runner and study progress
 
-Direct callers of `experiment.Run` can set `RunOptions.Progress` to a caller-owned `chan<- experiment.ProgressSnapshot`. Callers of [`study.Run`](../../workbench/study/study.go) can set `study.RunOptions.Progress` to the same channel type; study forwards it unchanged, preserving existing outcome, error, and report behavior. Nil disables notifications. Sends never block simulation; unread or full channels may lose any snapshot, including the final one. The caller must not close the channel while `Run` is active. The runner never closes it. Reconcile notifications with the returned summary/error and committed runs, not channel closure or the last received snapshot.
+Direct callers of `experiment.Run` or `experiment.RunRoot` can set `RunOptions.Progress` to a caller-owned `chan<- experiment.ProgressSnapshot`. Callers of [`study.Run`](../../workbench/study/study.go) can set `study.RunOptions.Progress` to the same channel type; study forwards it unchanged, preserving existing outcome, error, and report behavior. Nil disables notifications. Sends never block simulation; unread or full channels may lose any snapshot, including the final one. The caller must not close the channel while `Run` is active. The runner never closes it. Reconcile notifications with the returned summary/error and committed runs, not channel closure or the last received snapshot.
 
 Snapshots contain only `total`, `completed`, `reused`, `failed`, and `cancelled` JSON counts. `total` is the expanded candidate count. `completed` includes reused and failed committed points; `reused` and `failed` are overlapping subsets of `completed`. After caller-context cancellation, `cancelled` counts unresolved candidates only once all workers settle. Committed points remain completed, and systemic errors alone do not count unresolved work as cancelled. Notifications do not change run IDs, artifact bytes, or ordered outcomes. This is a Go runner/study API, not a CLI or Fyne progress display.
 
@@ -206,7 +223,7 @@ Input files must remain inside the project directory, pass their declared SHA-25
 
 [Project loading](../../workbench/project/load.go) reads YAML and inputs through an authorized `os.Root` directory handle, rejecting symlinks that escape it while allowing relative links within it. Optional citation-existence checks use a separately authorized citation-directory handle. Library callers use `project.LoadRoot(root, citations)` and retain ownership of both handles; nil `citations` skips existence checks, not citation-key validation. `project.Load(path, options)` remains available and opens/closes its own handles. `Bundle.Root` is descriptive metadata, not filesystem authority.
 
-This boundary covers project loading and the configuration preparation/save primitives described above. It does not establish confinement for project creation, run storage, reports, or exports.
+This boundary covers project loading, configuration preparation/saves and the rooted run-persistence primitives described above. It does not establish confinement for project creation, reports or exports, or for a complete study workflow that also generates reports.
 
 ## Selected-run EDA export
 
