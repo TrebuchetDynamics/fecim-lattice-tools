@@ -1,6 +1,7 @@
 package report
 
 import (
+	"crypto/rand"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -160,11 +161,37 @@ func WriteMarkdown(writer io.Writer, bundle project.Bundle, analysis experiment.
 	return nil
 }
 
+// Generate opens and owns a project root, preserving creation of missing parents.
 func Generate(root string, bundle project.Bundle, analysis experiment.Analysis) error {
-	dir := filepath.Join(root, "reports")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	root = filepath.Clean(root)
+	if err := os.MkdirAll(root, 0o755); err != nil {
 		return err
 	}
+	handle, err := os.OpenRoot(root)
+	if err != nil {
+		return err
+	}
+	defer handle.Close()
+	return GenerateRoot(handle, bundle, analysis)
+}
+
+// GenerateRoot borrows root and ignores bundle.Root as filesystem authority.
+// Each report is replaced separately after sync/close; this is not a transaction
+// across all three reports or a power-loss durability guarantee.
+func GenerateRoot(root *os.Root, bundle project.Bundle, analysis experiment.Analysis) error {
+	if root == nil {
+		return errors.New("report root is required")
+	}
+	if err := root.MkdirAll("reports", 0o755); err != nil {
+		return err
+	}
+	// Pin the output directory as well: retargeting reports while writing must
+	// not redirect rename or cleanup to a different directory.
+	dir, err := root.OpenRoot("reports")
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
 	outputs := []struct {
 		name  string
 		write func(io.Writer) error
@@ -217,23 +244,53 @@ func metricNames(analysis experiment.Analysis) []string {
 	return names
 }
 
-func writeAtomic(dir, name string, write func(io.Writer) error) error {
-	file, err := os.CreateTemp(dir, ".tmp-"+name+"-")
+// Private seam for deterministic precommit faults/interleavings in tests.
+// Production always uses the real file method; never change it during use.
+var syncReportFile = (*os.File).Sync
+
+func writeAtomic(dir *os.Root, name string, write func(io.Writer) error) error {
+	temp := ".tmp-" + name + "-" + rand.Text()
+	file, err := dir.OpenFile(temp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return err // Do not remove a path we did not create.
+	}
+	defer file.Close()
+	owned, err := file.Stat()
+	committed := false
+	defer func() {
+		if !committed {
+			if owned == nil {
+				owned, _ = file.Stat()
+			}
+			if current, err := dir.Lstat(temp); err == nil && owned != nil && os.SameFile(owned, current) {
+				_ = dir.Remove(temp)
+			}
+		}
+	}()
 	if err != nil {
 		return err
 	}
-	temp := file.Name()
-	defer func() { _ = os.Remove(temp) }()
 	if err := write(file); err != nil {
 		return errors.Join(err, file.Close())
 	}
-	if err := file.Sync(); err != nil {
+	if err := syncReportFile(file); err != nil {
 		return errors.Join(err, file.Close())
 	}
 	if err := file.Close(); err != nil {
 		return err
 	}
-	return os.Rename(temp, filepath.Join(dir, name))
+	current, err := dir.Lstat(temp)
+	if err != nil {
+		return err
+	}
+	if !os.SameFile(owned, current) {
+		return errors.New("report temporary changed before replacement")
+	}
+	if err := dir.Rename(temp, name); err != nil {
+		return err
+	}
+	committed = true
+	return nil
 }
 
 func shortID(id string) string {

@@ -3,7 +3,7 @@ schema = 1
 id = "T-012-f1aebb7e"
 title = "Generate reports through confined root handles"
 short = "Confine report output"
-status = "open"
+status = "done"
 goal = "BWC-STORAGE"
 section = "Now"
 rank = 2000
@@ -16,6 +16,8 @@ scope = "Add report.GenerateRoot(root *os.Root, bundle project.Bundle, analysis 
 acceptance = ["Given outside reports links, misleading Bundle.Root, deterministic retarget/precommit failure and an existing report marker, when GenerateRoot runs, then outside data/previous output stay intact, only its own scratch is removed and caller root remains open. Prove in workbench/report/report_test.go::TestGenerateRootConfinement (new, first RED).", "Given valid identical bundle/analysis, when rooted or legacy report output is generated, then existing deterministic scientific JSON/CSV/Markdown bytes and writer-error behavior remain compatible. Prove in TestGenerateRootConfinement and existing deterministic/generation/writer-error tests."]
 checks = ["CGO_ENABLED=0 go test ./workbench/report -run 'TestGenerateRootConfinement|TestReportsAreDeterministicAndExcludeRuntimeMetadata|TestGenerateWritesThreeReports|TestWriteMarkdownStopsAtFirstWriterError' -count=1", "go test -race ./workbench/report -count=1"]
 exclusions = ["No copied serializers/scientific analysis, HTTP/UI, run-store/editor changes, all-file transaction/power-loss guarantee, dependencies/manifests/host changes."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/T-012-f1aebb7e.toml"
 +++
 - Sources: docs/internals/superpowers/plans/2026-10-25-browser-rooted-persistence.md#accepted-rooted-persistence; docs/internals/superpowers/plans/2026-10-25-browser-rooted-persistence.md#s2-reports.
 - Authority: Planning only; no implementation, commit, dispatch, hosted compute or live authorization granted. A later explicit execution instruction is required.
