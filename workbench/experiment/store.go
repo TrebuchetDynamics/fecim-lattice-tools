@@ -2,6 +2,7 @@ package experiment
 
 import (
 	"bytes"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 )
 
 const maxRunArtifactBytes int64 = 16 << 20
@@ -22,29 +24,114 @@ var (
 	ErrUnverifiableRun = errors.New("experiment: unverifiable cached run")
 )
 
+// store owns only child handles. Once opened, the runs namespace is never
+// resolved again, including during publication failure recovery.
 type store struct {
-	root   string
-	rename func(string, string) error
+	root     *os.Root
+	runsPath string
+	mu       sync.Mutex
+	runs     *os.Root
+	rename   func(string, string) error
 }
 
-func (s store) load(id string) (RunRecord, bool, error) {
+func openStore(root *os.Root) (*store, error) {
+	if root == nil {
+		return nil, errors.New("experiment root is required")
+	}
+	owned, err := root.OpenRoot(".")
+	if err != nil {
+		return nil, err
+	}
+	return pinStore(owned, "runs")
+}
+
+// Legacy Run may target a workspace that does not yet exist. Pin its nearest
+// existing ancestor now, then create only the missing relative path at commit.
+// No later I/O reopens the original string path.
+func openStorePath(path string) (*store, error) {
+	ancestor, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	runsPath := "runs"
+	for {
+		root, err := os.OpenRoot(ancestor)
+		if err == nil {
+			return pinStore(root, runsPath)
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+		parent := filepath.Dir(ancestor)
+		if parent == ancestor {
+			return nil, err
+		}
+		runsPath = filepath.Join(filepath.Base(ancestor), runsPath)
+		ancestor = parent
+	}
+}
+
+// pinStore takes ownership of the already-open root, including on failure.
+func pinStore(owned *os.Root, runsPath string) (*store, error) {
+	s := &store{root: owned, runsPath: runsPath}
+	if _, err := s.runsRoot(false); err != nil {
+		s.close()
+		return nil, err
+	}
+	return s, nil
+}
+
+// runsRoot serializes lazy creation across workers. Invalid/oversized evaluator
+// results must not create storage, but an existing namespace is pinned up front.
+func (s *store) runsRoot(create bool) (*os.Root, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.runs != nil {
+		return s.runs, nil
+	}
+	if create {
+		if err := s.root.MkdirAll(s.runsPath, 0o755); err != nil {
+			return nil, err
+		}
+	}
+	runs, err := s.root.OpenRoot(s.runsPath)
+	if !create && errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	s.runs = runs
+	return runs, nil
+}
+
+// close is called only after all workers have settled.
+func (s *store) close() {
+	if s.runs != nil {
+		_ = s.runs.Close()
+	}
+	_ = s.root.Close()
+}
+
+func (s *store) load(id string) (RunRecord, bool, error) {
 	if !runIDRE.MatchString(id) {
 		return RunRecord{}, false, fmt.Errorf("invalid run ID %q", id)
 	}
-	dir := filepath.Join(s.root, "runs", id)
-	info, err := os.Stat(dir)
+	runs, err := s.runsRoot(false)
+	if err != nil || runs == nil {
+		return RunRecord{}, false, err
+	}
+	dir, err := runs.OpenRoot(id)
 	if errors.Is(err, os.ErrNotExist) {
 		return RunRecord{}, false, nil
 	}
 	if err != nil {
 		return RunRecord{}, false, err
 	}
-	if !info.IsDir() {
-		return RunRecord{}, false, fmt.Errorf("run path %s is not a directory", dir)
-	}
+	defer dir.Close()
 
 	var record RunRecord
-	manifestBytes, err := readRunArtifact(filepath.Join(dir, "manifest.json"))
+	manifestBytes, err := readRunArtifact(dir, "manifest.json")
 	if err != nil {
 		return RunRecord{}, false, fmt.Errorf("%w: read manifest.json for run %s: %v", ErrUnverifiableRun, id, err)
 	}
@@ -61,14 +148,14 @@ func (s store) load(id string) (RunRecord, bool, error) {
 	if !bytes.Equal(manifestBytes, canonicalManifest) {
 		return RunRecord{}, false, fmt.Errorf("%w: run %s manifest.json is not canonical", ErrUnverifiableRun, id)
 	}
-	designBytes, err := readRunArtifact(filepath.Join(dir, "resolved-design.json"))
+	designBytes, err := readRunArtifact(dir, "resolved-design.json")
 	if err != nil {
 		return RunRecord{}, false, fmt.Errorf("%w: read resolved-design.json for run %s: %v", ErrUnverifiableRun, id, err)
 	}
 	if err := decodeRunArtifact(designBytes, &record.Design); err != nil {
 		return RunRecord{}, false, fmt.Errorf("%w: decode resolved-design.json for run %s: %v", ErrUnverifiableRun, id, err)
 	}
-	resultBytes, err := readRunArtifact(filepath.Join(dir, "result.json"))
+	resultBytes, err := readRunArtifact(dir, "result.json")
 	if err != nil {
 		return RunRecord{}, false, fmt.Errorf("%w: read result.json for run %s: %v", ErrUnverifiableRun, id, err)
 	}
@@ -99,7 +186,7 @@ func (s store) load(id string) (RunRecord, bool, error) {
 	return record, true, nil
 }
 
-func (s store) commit(record RunRecord) (RunRecord, error) {
+func (s *store) commit(record RunRecord) (RunRecord, error) {
 	id := record.Manifest.RunID
 	if !runIDRE.MatchString(id) {
 		return RunRecord{}, fmt.Errorf("invalid run ID %q", id)
@@ -138,8 +225,8 @@ func (s store) commit(record RunRecord) (RunRecord, error) {
 		return RunRecord{}, err
 	}
 
-	runsDir := filepath.Join(s.root, "runs")
-	if err := os.MkdirAll(runsDir, 0o755); err != nil {
+	runs, err := s.runsRoot(true)
+	if err != nil {
 		return RunRecord{}, err
 	}
 	if existing, ok, err := s.load(id); err != nil {
@@ -149,26 +236,53 @@ func (s store) commit(record RunRecord) (RunRecord, error) {
 		return existing, nil
 	}
 
-	tempDir, err := os.MkdirTemp(runsDir, ".tmp-"+id+"-")
+	// Mkdir is exclusive and the unpredictable name is relative to the pinned
+	// namespace. A collision never grants ownership of an existing entry.
+	var tempDir string
+	for {
+		tempDir = ".tmp-" + id + "-" + rand.Text()
+		err = runs.Mkdir(tempDir, 0o700)
+		if !errors.Is(err, os.ErrExist) {
+			break
+		}
+	}
 	if err != nil {
 		return RunRecord{}, err
 	}
-	defer func() { _ = os.RemoveAll(tempDir) }()
-	if err := writeExclusive(filepath.Join(tempDir, "manifest.json"), manifestBytes); err != nil {
+	scratch, err := runs.OpenRoot(tempDir)
+	if err != nil {
+		_ = runs.Remove(tempDir) // Never recursively clean an unpinned entry.
+		return RunRecord{}, err
+	}
+	published := false
+	defer func() {
+		if !published {
+			// Clean through our handle, not a possibly retargeted scratch name.
+			for _, name := range []string{"manifest.json", "resolved-design.json", "result.json"} {
+				_ = scratch.Remove(name)
+			}
+			owned, ownErr := scratch.Stat(".")
+			entry, entryErr := runs.Lstat(tempDir)
+			if ownErr == nil && entryErr == nil && os.SameFile(owned, entry) {
+				_ = runs.Remove(tempDir)
+			}
+		}
+		_ = scratch.Close()
+	}()
+	if err := writeExclusive(scratch, "manifest.json", manifestBytes); err != nil {
 		return RunRecord{}, fmt.Errorf("write manifest.json: %w", err)
 	}
-	if err := writeExclusive(filepath.Join(tempDir, "resolved-design.json"), designBytes); err != nil {
+	if err := writeExclusive(scratch, "resolved-design.json", designBytes); err != nil {
 		return RunRecord{}, fmt.Errorf("write resolved-design.json: %w", err)
 	}
-	if err := writeExclusive(filepath.Join(tempDir, "result.json"), resultBytes); err != nil {
+	if err := writeExclusive(scratch, "result.json", resultBytes); err != nil {
 		return RunRecord{}, fmt.Errorf("write result.json: %w", err)
 	}
-	finalDir := filepath.Join(runsDir, id)
 	rename := s.rename
 	if rename == nil {
-		rename = os.Rename
+		rename = runs.Rename
 	}
-	if err := rename(tempDir, finalDir); err != nil {
+	if err := rename(tempDir, id); err != nil {
 		existing, ok, loadErr := s.load(id)
 		if loadErr != nil {
 			return RunRecord{}, loadErr
@@ -179,26 +293,53 @@ func (s store) commit(record RunRecord) (RunRecord, error) {
 		}
 		return RunRecord{}, err
 	}
+	published = true
 	return record, nil
 }
 
-func LoadRuns(root string) ([]RunRecord, error) {
-	runsDir := filepath.Join(root, "runs")
-	entries, err := os.ReadDir(runsDir)
+func LoadRuns(path string) ([]RunRecord, error) {
+	root, err := os.OpenRoot(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	storage := store{root: root}
+	defer root.Close()
+	return LoadRunsRoot(root)
+}
+
+// LoadRunsRoot verifies and lists committed runs through pinned child handles.
+// The caller retains root and must keep it open until this operation returns.
+func LoadRunsRoot(root *os.Root) ([]RunRecord, error) {
+	storage, err := openStore(root)
+	if err != nil {
+		return nil, err
+	}
+	defer storage.close()
+	runsRoot, err := storage.runsRoot(false)
+	if err != nil || runsRoot == nil {
+		return nil, err
+	}
+	dir, err := runsRoot.Open(".")
+	if err != nil {
+		return nil, err
+	}
+	entries, readErr := dir.ReadDir(-1)
+	closeErr := dir.Close()
+	if readErr != nil {
+		return nil, readErr
+	}
+	if closeErr != nil {
+		return nil, closeErr
+	}
 	runs := make([]RunRecord, 0, len(entries))
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), ".tmp-") {
 			continue
 		}
 		if !entry.IsDir() {
-			return nil, fmt.Errorf("run path %s is not a directory", filepath.Join(runsDir, entry.Name()))
+			return nil, fmt.Errorf("run path %s is not a directory", filepath.Join("runs", entry.Name()))
 		}
 		record, ok, err := storage.load(entry.Name())
 		if err != nil {
@@ -264,8 +405,8 @@ func checkRunArtifactSize(name string, data []byte) error {
 	return nil
 }
 
-func readRunArtifact(path string) ([]byte, error) {
-	file, err := os.Open(path)
+func readRunArtifact(root *os.Root, path string) ([]byte, error) {
+	file, err := root.Open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -299,8 +440,8 @@ func decodeRunArtifact(data []byte, target any) error {
 	return nil
 }
 
-func writeExclusive(path string, data []byte) error {
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+func writeExclusive(root *os.Root, path string, data []byte) error {
+	file, err := root.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 	if err != nil {
 		return err
 	}

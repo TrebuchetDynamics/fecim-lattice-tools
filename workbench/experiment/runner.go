@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -40,6 +41,18 @@ type runOutcome struct {
 }
 
 func Run(ctx context.Context, bundle project.Bundle, opts RunOptions) (Summary, error) {
+	return run(ctx, bundle, opts, func() (*store, error) { return openStorePath(bundle.Root) })
+}
+
+// RunRoot evaluates and persists runs using only root and pinned child handles.
+// Bundle.Root is metadata, not filesystem authority. The caller owns root and
+// must keep it open until RunRoot returns, after all started workers settle.
+// On Linux this confines path traversal, not privileged mounts or hard links.
+func RunRoot(ctx context.Context, root *os.Root, bundle project.Bundle, opts RunOptions) (Summary, error) {
+	return run(ctx, bundle, opts, func() (*store, error) { return openStore(root) })
+}
+
+func run(ctx context.Context, bundle project.Bundle, opts RunOptions, openStorage func() (*store, error)) (Summary, error) {
 	if opts.Evaluator == nil || opts.EvaluatorVersion == "" {
 		return Summary{}, errors.New("evaluator and evaluator version are required")
 	}
@@ -65,9 +78,16 @@ func Run(ctx context.Context, bundle project.Bundle, opts RunOptions) (Summary, 
 		progress.send(opts.Progress)
 	}()
 
-	storage := store{root: bundle.Root}
 	records := make([]RunRecord, len(points))
 	complete := make([]bool, len(points))
+	if err := ctx.Err(); err != nil {
+		return orderedSummary(records, complete), err
+	}
+	storage, err := openStorage()
+	if err != nil {
+		return orderedSummary(records, complete), err
+	}
+	defer storage.close()
 	recordComplete := func(index int, record RunRecord) {
 		records[index] = record
 		complete[index] = true
@@ -167,7 +187,7 @@ func Run(ctx context.Context, bundle project.Bundle, opts RunOptions) (Summary, 
 	return summary, nil
 }
 
-func evaluateJob(ctx context.Context, storage store, bundle project.Bundle, opts RunOptions, job runJob) runOutcome {
+func evaluateJob(ctx context.Context, storage *store, bundle project.Bundle, opts RunOptions, job runJob) runOutcome {
 	if err := ctx.Err(); err != nil {
 		return runOutcome{index: job.index, err: err}
 	}

@@ -915,17 +915,24 @@ func TestStoreCommitPropagatesUnverifiableRenameWinner(t *testing.T) {
 		Result: successResult(1),
 	}
 	renameErr := errors.New("rename lost")
-	storage := store{
-		root: bundle.Root,
-		rename: func(_, finalDir string) error {
-			if err := os.Mkdir(finalDir, 0o755); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.WriteFile(filepath.Join(finalDir, "manifest.json"), []byte("{"), 0o644); err != nil {
-				t.Fatal(err)
-			}
-			return renameErr
-		},
+	root, err := os.OpenRoot(bundle.Root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	storage, err := openStore(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer storage.close()
+	storage.rename = func(_, finalDir string) error {
+		if err := storage.runs.Mkdir(finalDir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := storage.runs.WriteFile(filepath.Join(finalDir, "manifest.json"), []byte("{"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return renameErr
 	}
 
 	_, err = storage.commit(record)
