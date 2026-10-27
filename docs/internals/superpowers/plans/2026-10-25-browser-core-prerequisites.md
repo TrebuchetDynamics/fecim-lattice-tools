@@ -2,6 +2,8 @@
 
 Status: Planning only; no implementation, commits, dispatch, hosting or publication authorized. This is an autonomous discovery frontier, not a replacement for the recovery program or a full browser implementation plan.
 
+**Latest owner scope — one React application:** [ADR 0005](../../adr/0005-unified-react-hosted-and-local.md) and the [current UI policy](../specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy) supersede this historical plan's delivery assumptions. Keep Go and CLI. The same React source builds hosted/static with Go/WASM Worker computation and local/embedded with full same-origin server capabilities; hosted never calls localhost. React home replaces Astro. Fyne stays deprecated, is retired module-by-module when its React replacement is qualified at behavior/accessibility parity, then deleted under a separately authorized implementation. This latest removal condition supersedes the intervening no-parity-condition wording, not completed IDs/receipts. No new Fyne features, code removal, implementation or commits are authorized here.
+
 **Goal:** Qualify four bounded core prerequisites of the approved local-first browser direction without changing model equations, scientific identities or existing CLI/Fyne success behavior.
 
 **Architecture:** Retain the headless Go packages and introduce only capability-safe project reads, observable runner counts, study progress propagation and pure numeric presentation. The concurrent RDW-LIFECYCLE frontier's T-006-d5e490fd is the explicit partial-result/availability producer; T-005 is its Fyne consumer. This batch does not duplicate that repair. Do not introduce HTTP, React or a second source of scientific truth in this batch.
@@ -40,7 +42,7 @@ Revision inspected: `816d17c7a007c620b0e7d834701e9c35e756e6bd`, plus the dirty w
 
 ### Goal classes and prioritization
 
-- **Accepted:** reproducible scientific workbench; local-first accessible browser client; retain Go/CLI/Fyne; no hosted compute. Refine these, do not reopen the stack choice.
+- **Accepted:** reproducible scientific workbench; local-first accessible React browser client; retain Go/CLI; no hosted compute. Fyne is fully deprecated under the subsequent owner clarification above, not a required retained UI target. Do not reopen the stack choice.
 - **Derived engineering (planner call):** BWC-FOUNDATIONS — qualify the four core seams below. Confinement and truthful lifecycle precede browser convenience; pure presentation is an independent accessibility prerequisite.
 - **Existing accepted work, not reprioritized:** technical recovery and release/provenance tasks retain their IDs and scope. They have concurrent dirty work; do not duplicate or mark complete based on this pass.
 - **Proposed strategic / excluded:** hosted compute, collaboration accounts, database storage, physics/language rewrite and a WASM demo. No runnable task is created for them.
