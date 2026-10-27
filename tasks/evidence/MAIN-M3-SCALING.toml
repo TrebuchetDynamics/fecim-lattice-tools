@@ -1,0 +1,9 @@
+schema = 1
+task = "MAIN-M3-SCALING"
+candidate = "4c6613922a53679083e4249f3464b3f7e121f02d"
+integration = "bc0f3bc4f232e7b2d0d1bd127449aa99abf15adf"
+tree = "8f46b60d7eda31af8220bbcb8f0ef2fc06d16903"
+contract_hash = "d99311891335d53ac0003556714cbd72507af02d6bd05bd07f9e64a53d621270"
+checks = ["<path>", "<path>", "--verify", "<path>", "MAIN-M3-SCALING"]
+result = "pass"
+review = "passed"
