@@ -3,6 +3,7 @@ package crossbar
 import (
 	"math"
 	"math/rand"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -400,78 +401,128 @@ func TestStressNonIdealityExtreme(t *testing.T) {
 
 // TestStressArchitectureComparison compares 0T1R vs 1T1R vs 2T1R.
 func TestStressArchitectureComparison(t *testing.T) {
-	architectures := []string{"0T1R", "1T1R", "2T1R"}
-
-	// Create same input for all architectures
-	arr, err := NewArray(&Config{
-		Rows:       16,
-		Cols:       16,
-		NoiseLevel: 0.02,
-		ADCBits:    8,
-		DACBits:    8,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer arr.Destroy()
-
-	// Program random weights
-	for i := 0; i < 16; i++ {
-		for j := 0; j < 16; j++ {
-			arr.ProgramWeight(i, j, rand.Float64())
-		}
-	}
-
-	input := make([]float64, 16)
-	for i := range input {
-		input[i] = rand.Float64()
-	}
-
-	results := make(map[string]*MVMResult)
-
-	// Run MVM for each architecture
-	for _, arch := range architectures {
-		opts := &MVMOptions{
-			EnableIRDrop:     true,
-			EnableSneakPaths: true,
-			EnableVariation:  true,
-			EnableDrift:      false,
-			Temperature:      300.0,
-			Architecture:     arch,
-		}
-
-		result, err := arr.MVMWithNonIdealities(input, opts)
-		if err != nil {
-			t.Fatalf("MVM failed for %s: %v", arch, err)
-		}
-		results[arch] = result
-	}
-
-	// Verify 2T1R has best accuracy (lowest RMSE)
-	rmse0T1R := results["0T1R"].RMSE
-	rmse1T1R := results["1T1R"].RMSE
-	rmse2T1R := results["2T1R"].RMSE
-
-	// Allow a tiny stochastic margin since variation noise can make 1T1R and 2T1R
-	// nearly identical on some seeds/runs.
-	const rmseMargin = 1.05
-	if rmse2T1R > rmse1T1R*rmseMargin {
-		t.Errorf("2T1R RMSE (%v) should be <= 1T1R RMSE (%v) within %.2fx margin", rmse2T1R, rmse1T1R, rmseMargin)
-	}
-	if rmse1T1R > rmse0T1R {
-		t.Errorf("1T1R RMSE (%v) should be <= 0T1R RMSE (%v)", rmse1T1R, rmse0T1R)
-	}
-
-	// Verify all outputs are valid
-	for arch, result := range results {
-		for i, val := range result.ActualOutput {
-			if math.IsNaN(val) || math.IsInf(val, 0) {
-				t.Errorf("%s: Output[%d] is not finite: %v", arch, i, val)
+	for _, fixture := range []string{"BalancedVariation", "PositiveVariationCancellation", "Stochastic"} {
+		t.Run(fixture, func(t *testing.T) {
+			arr, err := NewArray(&Config{
+				Rows:       16,
+				Cols:       16,
+				NoiseLevel: 0.02,
+				ADCBits:    8,
+				DACBits:    8,
+			})
+			if err != nil {
+				t.Fatal(err)
 			}
-		}
-	}
+			defer arr.Destroy()
 
-	t.Logf("RMSE comparison: 0T1R=%.4f, 1T1R=%.4f, 2T1R=%.4f", rmse0T1R, rmse1T1R, rmse2T1R)
+			// Own every random fixture value, including the constructor's cell noise.
+			// rand.Seed is a no-op on Go >=1.24; a global seed cannot replay this test.
+			rng := rand.New(rand.NewSource(0))
+			for i := 0; i < 16; i++ {
+				for j := 0; j < 16; j++ {
+					weight := 0.5
+					// Pair +/-2% variation so the uniform-weight row has no net
+					// gain error before IR drop. This is not a selected lucky seed.
+					factor := 0.98 + 0.04*float64(j%2)
+					switch fixture {
+					case "PositiveVariationCancellation":
+						factor = 1.04
+					case "Stochastic":
+						weight = rng.Float64()
+						factor = math.Max(0, 1+0.02*rng.NormFloat64())
+					}
+					if err := arr.ProgramWeight(i, j, weight); err != nil {
+						t.Fatal(err)
+					}
+					arr.cells[i][j].NoiseFactor = factor
+				}
+			}
+
+			input := make([]float64, 16)
+			for i := range input {
+				// Full scale is DAC-exact: no DAC rounding error to cancel IR drop.
+				input[i] = 1.0
+				if fixture == "Stochastic" {
+					input[i] = rng.Float64()
+				}
+			}
+
+			results := make(map[string]*MVMResult)
+			architectures := []string{"0T1R", "1T1R", "2T1R"}
+			for _, arch := range architectures {
+				opts := &MVMOptions{
+					EnableIRDrop:     true,
+					EnableSneakPaths: true,
+					EnableVariation:  true,
+					EnableDrift:      false,
+					Temperature:      300.0,
+					Architecture:     arch,
+				}
+				result, err := arr.MVMWithNonIdealities(input, opts)
+				if err != nil {
+					t.Fatalf("MVM failed for %s: %v", arch, err)
+				}
+				results[arch] = result
+
+				if len(result.ActualOutput) != 16 || math.IsNaN(result.RMSE) || math.IsInf(result.RMSE, 0) {
+					t.Fatalf("%s: invalid output dimensions or RMSE: %v", arch, result)
+				}
+				for i, val := range result.ActualOutput {
+					if math.IsNaN(val) || math.IsInf(val, 0) {
+						t.Errorf("%s: Output[%d] is not finite: %v", arch, i, val)
+					}
+				}
+				if result.IRDropAnalysis == nil || result.SneakPathAnalysis == nil {
+					t.Fatalf("%s: fixture must exercise IR drop and sneak paths", arch)
+				}
+				for _, metric := range []float64{result.IRDropAnalysis.MaxIRDrop, result.SneakPathAnalysis.TotalSneak} {
+					if math.IsNaN(metric) || math.IsInf(metric, 0) || metric <= 0 {
+						t.Fatalf("%s: IR drop and sneak current must be finite and positive, got %v", arch, metric)
+					}
+				}
+
+				if fixture != "BalancedVariation" && arch != "0T1R" {
+					// Guard against silently losing variation coverage. The passive
+					// array saturates, so use the isolated architectures for this check.
+					opts.EnableVariation = false
+					withoutVariation, err := arr.MVMWithNonIdealities(input, opts)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if slices.Equal(result.ActualOutput, withoutVariation.ActualOutput) {
+						t.Errorf("%s: variation did not affect output", arch)
+					}
+				}
+			}
+
+			rmse0T1R := results["0T1R"].RMSE
+			rmse1T1R := results["1T1R"].RMSE
+			rmse2T1R := results["2T1R"].RMSE
+			const rmseMargin = 1.05
+			if fixture == "BalancedVariation" {
+				if rmse2T1R > rmse1T1R*rmseMargin {
+					t.Errorf("2T1R RMSE (%v) should be <= 1T1R RMSE (%v) within %.2fx margin", rmse2T1R, rmse1T1R, rmseMargin)
+				}
+				if rmse1T1R > rmse0T1R {
+					t.Errorf("1T1R RMSE (%v) should be <= 0T1R RMSE (%v)", rmse1T1R, rmse0T1R)
+				}
+			}
+			// Regression for the old assertion's confounder: positive variation
+			// cancels some IR loss, making *more* isolation have worse total RMSE.
+			// Random total RMSE is not a monotonic measure of architecture isolation.
+			if fixture == "PositiveVariationCancellation" && rmse2T1R <= rmse1T1R*rmseMargin {
+				t.Error("fixture no longer demonstrates variation/IR-drop error cancellation")
+			}
+			for i := 1; i < len(architectures); i++ {
+				previous, current := results[architectures[i-1]], results[architectures[i]]
+				if current.IRDropAnalysis.MaxIRDrop >= previous.IRDropAnalysis.MaxIRDrop ||
+					current.SneakPathAnalysis.TotalSneak >= previous.SneakPathAnalysis.TotalSneak {
+					t.Errorf("%s: isolation should reduce IR drop and sneak current", architectures[i])
+				}
+			}
+			t.Logf("RMSE comparison: 0T1R=%.4f, 1T1R=%.4f, 2T1R=%.4f", rmse0T1R, rmse1T1R, rmse2T1R)
+		})
+	}
 }
 
 // TestStressNumericalStability tests very small and large conductance values.
