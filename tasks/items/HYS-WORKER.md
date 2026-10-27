@@ -1,0 +1,28 @@
++++
+schema = 1
+id = "HYS-WORKER"
+title = "Qualify the production Go hysteresis Worker across native Node and Firefox"
+short = "Production Worker and exact parity"
+status = "open"
+goal = "HYS-REACT"
+section = "Next"
+rank = 4000
+depends_on = ["HYS-CORE", "HYS-PROGRAM", "HYS-ANALYSIS"]
+touches = ["cmd/fecim-hysteresis-wasm/", "workbench/hysteresis/bridge.go", "workbench/hysteresis/bridge_test.go", "web/src/worker/hysteresis-worker.mjs", "validation/wasm/hysteresis_parity_test.go", "validation/wasm/hysteresis_harness.mjs", "validation/wasm/harness.mjs", "validation/wasm/README.md", "docs/internals/testing/wasm-parity-gate.md"]
+resources = []
+kind = "implementation"
+ownership = "worker"
+scope = "Build production Go/WASM entry and JSON Worker bridge for all three real producer APIs, owning the sole operation registry. Add version/request/session/revision validation, Go-enforced preallocation/work caps, bounded yield/progress/cancel, hard terminate/recreate and stale-response rejection. Extend current three-runtime harness to actual production operations; preserve the original eight-point example gate. Measure and gate production budgets/admitted caps per plan, including explicit cold-loop marker and matching runtime assets."
+acceptance = ["Given identical admitted core/programming/analysis commands, seeds, step schedule and build identity, when native, Node and real Firefox execute production code, then successful finite complete scientific JSON bytes are identical; TestHysteresisProductionParity preserves TestExampleResultsJSONNativeWASM and fails enabled missing prerequisites rather than skipping. Include unavailable time-resolved status and independent diagnostic-profile identity.", "Given invalid/oversize/unsupported protocol or cancellation/stale revisions, when the bridge runs, then Go rejects before allocation/state mutation, jobs yield, terminal states are truthful and terminated Workers cannot publish late results; TestHysteresisWorkerLifecycle uses real Worker happy paths and explicit fault injection only for failures.", "Given a cold cache and a private static test server/proxy shaping aggregate 10 Mbit/s plus 100 ms request RTT, when production Worker assets/default Sine loop run, then module/runtime payload and Worker-driver complete-result latency satisfy the plan guardrails; TestHysteresisWorkerBudgets records exact byte filter, shaping, marker, host/tools and measured per-operation admission. Full React-route budget is additionally HYS-UI's check, not claimed here. Never alter host-wide networking."]
+checks = ["env FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -count=1 -v", "go test ./workbench/hysteresis -count=1", "env CGO_ENABLED=1 go test -race ./validation/wasm ./workbench/hysteresis -count=1"]
+exclusions = ["Go owns science/defaults/display/speech; simulation-only evidence; no hosted scientific upload/persistence/localhost probing; existing CLI/Fyne/default builds remain. No launch-default change, Fyne deletion, new physical model, golden/tolerance weakening, deployment or service changes.", "No public deployment/push, shared service changes or ungranted external operations; test servers use private ephemeral ports."]
++++
+
+- Sources: docs/internals/superpowers/plans/2026-10-25-hosted-hzo-first-slice.md#go-seams-and-invariant-contract; docs/internals/adr/0005-unified-react-hosted-and-local.md
+- Produces: Production hysteresis Worker JSON envelope/operation registry and pinned Go module/runtime/build identity; native/Node/Firefox parity and measured admission evidence for CORE/PROGRAM/ANALYSIS. Registry owned here only.
+- Consumes: HYS-CORE NewSession/Apply/Advance/Page; HYS-PROGRAM NewProgrammer/Apply/Advance/Snapshot; HYS-ANALYSIS NewAnalysis/Advance/Page/Result, using the exact plan Go seams.
+- Repo obligations triggered: ADR exact parity/isolation/build coherence; extend validation/wasm README and gate receipt with actual production evidence, not old example claims. New entry and bridge files declared. No frontend manifest/lock edits in this task: harness is ESM and reuses locked existing Playwright. Provision locked deps/browser in worker-private environment if missing; no deploy script. Bounded shared-math repair, if parity exposes it, requires focused RED/scientific regressions and an amended bounded write contract before new math paths are edited.
+- Next action: Add TestHysteresisProductionParity for a signed stateful loop using actual production entry; run enabled native/Node/Firefox RED. Reuse documented explicit Firefox/Playwright overrides.
+- Verification status: New tests/commands are proposed/unrun; no implementation evidence or manual qualification is claimed by planning.
+
+- Builder finding resolution: P2 resolved: actual GUI diagnostic profiles/units are the oracle; Preisach model and applied versus contextual inputs are explicitly separate. Worker budgets use only private shaping and do not preclaim the React-route measurement.
