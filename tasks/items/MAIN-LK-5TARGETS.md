@@ -3,7 +3,7 @@ schema = 1
 id = "MAIN-LK-5TARGETS"
 title = "Restore the full-check headless LK five-target regression"
 short = "Repair headless LK target coverage"
-status = "open"
+status = "done"
 goal = "MAIN-CHECK"
 section = "Now"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Investigate and minimally repair the existing-code or fixture defect be
 acceptance = ["A deterministic regression reproduces the demonstrated target-coverage defect before implementation; the minimal repair makes TestHeadlessLKRun_ISPP5Targets_NoNaNInf_AndEFieldUnitsConsistent pass in both command packages without skips, retries, fewer targets, loosened tolerances or changed material/physics defaults. Record RED/GREEN commands and explain whether the failure arose from execution, fixture isolation/selection, logging or resource interference.", "The unchanged repository Full check runs to completion and passes, with the named command-package checks passing uncached repeatedly. Preserve exact native/Node/Firefox report-parity behavior and owned-process cleanup. Report isolated reruns truthfully; the original bundle has none and does not establish a flake or attribute causation to 7048b840."]
 checks = ["env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m", "env CGO_ENABLED=1 xvfb-run -a go test ./cmd/fecim-lattice-tools ./cmd/fecim-lattice-tools-fyne -run '^TestHeadlessLKRun_ISPP5Targets_NoNaNInf_AndEFieldUnitsConsistent$' -count=10 -timeout=10m", "go test ./validation/wasm -count=1", "if ! git diff --quiet 23405de887bfb5e17454105d35a8f48459f571e7 -- validation/wasm; then env FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -count=1 -v; fi", "git diff --check"]
 exclusions = ["No physics equation/preset/quantization/tolerance/golden changes, reduced coverage or masked failures; no new dependencies, launch/build-policy change, browser/UI feature, task closure or fabricated verification. Changes to validation/wasm only for demonstrated interference causing this failure; do not weaken its parity/cleanup guarantees."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/MAIN-LK-5TARGETS.toml"
 +++
 - Sources: docs/tasks/main-lk-5targets.md#contract-and-evidence; AGENTS.md (Full check); docs/internals/testing/TESTING.md#tdd-hard-rule
 - Evidence: Failure: TestHeadlessLKRun_ISPP5Targets_NoNaNInf_AndEFieldUnitsConsistent in cmd/fecim-lattice-tools-fyne; mode_lk_headless_ispp_5targets_test.go:111 expected >=5 distinct targets, got 2 ([1 33]). Checked revision 7048b840b5fe39b49e75c37ef673e8e7bdc56f39; last green c5e4504f22645ef03835641b448cdbd99ad38d41; only commit since green: 7048b840 test(wasm): gate exact native Node and Firefox report parity. Original bundle: /home/xel/git/fecim-lattice-tools/.git/autowork-execution/main-evidence/7048b840b5fe39b49e75c37ef673e8e7bdc56f39 (read main_check.json, main-check.log:5212-5213 and 13177-13178, main-check.exit=1, empty main-check-reruns.log, flaky_history.json={}). No isolated reruns recorded; no three-revision flake evidence. See docs/tasks/main-lk-5targets.md for live source boundaries; no claim that the WASM commit caused the failure.

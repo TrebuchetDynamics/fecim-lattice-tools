@@ -1,0 +1,9 @@
+schema = 1
+task = "MAIN-LK-5TARGETS"
+candidate = "a3413652d69592cc0dac9a7b9f21845722e173fb"
+integration = "075100e3c30970b263eaf55563e7211e6e705516"
+tree = "5ea2a3bf1b745d9ee2d92f1c2158b77bdf412747"
+contract_hash = "90eac6195775b0a7ecbdf1d60f7fd8426ea5d59cc7c4f62913e5f8a536909be8"
+checks = ["<path>", "<path>", "--verify", "<path>", "MAIN-LK-5TARGETS"]
+result = "pass"
+review = "passed"
