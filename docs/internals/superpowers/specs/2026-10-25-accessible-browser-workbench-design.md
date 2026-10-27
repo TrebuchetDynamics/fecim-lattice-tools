@@ -5,7 +5,7 @@ Status: Approved direction with seven additions; consolidated written design awa
 
 ## Intent and source of decisions
 
-Provide a keyboard- and Orca-usable browser client for the simulation-only research workbench. A user must be able to edit a study, run or cancel an experiment, inspect results and evidence, and compare runs without interpreting a plot. Preserve the approved principles: **table first; Go owns every number; cancellation requested is not cancellation finished; plot scope is explicit**.
+Provide **one React application** for the simulation-only research workbench, built for hosted static/browser-only and local/full-engine delivery. Its home view replaces the Astro landing page. A user must be able to inspect models/results and perform the capabilities available in that build without interpreting a plot. Go owns science in both modes: WASM in a Web Worker for browser-only computation; the local Go server for filesystem/large-study/tool operations. Preserve **table first; Go owns every number; cancellation requested is not cancellation finished; plot scope is explicit**. The [accepted delivery decision](../../adr/0005-unified-react-hosted-and-local.md) and [WASM feasibility evidence](../../architecture/browser-wasm-feasibility.md) distinguish approved scope from implemented capabilities.
 
 This document consolidates the approved stack, API boundary, security design, workflow, and user's seven additions from the design conversation. It is a companion to the [core workbench architecture](2026-07-19-research-design-workbench-architecture-design.md), not a claim that browser features already exist. Its manual release gate is [the numbered Orca task scripts](2026-10-25-accessible-browser-workbench-orca-acceptance.md).
 
@@ -15,9 +15,9 @@ These decisions were explicitly approved in the conversation. A resumed session 
 
 | ID | Approved decision | Owning section |
 |---|---|---|
-| BW-01 | Local-first; keep the Go physics/workbench core and existing CLI. No hosted compute, database, or physics rewrite. Keep future delivery options possible without implementing WASM. | Architecture and scope |
-| BW-02 | React, TypeScript, Vite; React Aria Components for interactive primitives, native HTML where sufficient; thin Go `net/http` API; embedded production assets. | Stack, contracts and build policy |
-| BW-03 | React web is the primary UI direction; Fyne is deprecated in this project. The research workbench is the first replacement; existing Fyne expert modules remain legacy compatibility until separately proven replacements exist. | React-primary deprecation policy; Architecture and scope |
+| BW-01 | One React application, two builds: hosted static/browser-only and local/full-engine. Keep Go science and CLI; hosted computation is client-side Go/WASM, never a hosted compute service or TypeScript model. Supersedes WASM-deferred scope. | Unified delivery and capability profiles; ADR 0005 |
+| BW-02 | React, TypeScript, Vite; React Aria Components/native HTML; same routes/components in both builds. Local assets embedded in Go; hosted static assets include Go/WASM and its Worker/runtime. | Stack, contracts and build policy |
+| BW-03 | Fyne remains fully deprecated. Latest owner scope requires module-by-module retirement when React replacement behavior/accessibility parity is qualified, then deletion. No new Fyne features. React home also replaces Astro: no parallel marketing UI. | React-primary deprecation policy; ADR 0005 |
 | BW-04 | Data tables are primary; Go computes values, summaries and scientific analysis; exact values, filtering/pagination and full-data export remain accessible. | Go/browser ownership; sections 2, 4, 5 |
 | BW-05 | Approved API boundary, with explicit close, active execution discovery, ETags/If-Match, RFC 9457 errors, server pagination, count-only SSE and health fingerprints. | Local API contract |
 | BW-06 | Launch-granted roots, fragment bootstrap, cookie-authenticated SSE, exact Host/Origin protection, mutation header and end-to-end filesystem confinement. | Authentication, confinement and threat model |
@@ -28,7 +28,9 @@ These decisions were explicitly approved in the conversation. A resumed session 
 | BW-11 | Compare 2–4 runs: metrics as rows, runs as columns, with units and evidence. | Section 4 |
 | BW-12 | Each v1 plot has at most one Tab stop; selection is driven from the table. | Section 5 |
 | BW-13 | Completion announces run, feasible, Pareto and failure counts. | Section 6 |
-| BW-14 | Manual acceptance uses Orca + Firefox on Linux, keyboard only, through numbered scripts with start state, goal, required speech and failure criteria. | Manual acceptance companion |
+| BW-14 | Manual acceptance uses Orca + Firefox on Linux, keyboard only, through numbered scripts with start state, goal, required speech and failure criteria, in both deployment profiles. | Manual acceptance companion |
+| BW-15 | Hosted build must never contact/probe localhost or pair with the local engine. Server-only actions show local-run instructions and the persistent capability/privacy disclaimer. Local build retains same-origin security design. | Unified delivery and capability profiles |
+| BW-16 | The checked-in example must produce byte-identical results.json through native study/CLI and browser Go/WASM Worker, with identical scientific inputs/versions/revision. No tolerance/field-stripping substitute. | ADR 0005; WASM feasibility and parity gate |
 
 Do not infer that this register grants implementation, commits, task execution, or release authority. No approval is fabricated for unexecuted checks. Newly discovered material conflicts must be recorded in the affected section rather than silently changing approved intent.
 
@@ -36,17 +38,17 @@ Do not infer that this register grants implementation, commits, task execution, 
 
 Status: Accepted
 
-**Owner decision:** “fyne is deprecated in favor of react web.” This replaces earlier Fyne-first product direction, not the factual history of what currently runs. The deprecation is this repository's policy; it is not a claim that the upstream Fyne framework is deprecated.
+**Owner decision:** Fyne is **fully deprecated** in favor of React. The latest explicit scope adds one shared React app with hosted/local builds and requires module-by-module Fyne retirement at replacement parity, followed by deletion. This replaces the earlier separate-site/WASM-deferred direction and the intervening no-parity-removal-condition wording; it does not reopen completed work or authorize implementation. Deprecation is this repository's policy, not a claim about upstream Fyne.
 
 - **Primary UI target:** the approved React + TypeScript + Vite browser application over the Go API. Go retains scientific computations, values, units, evidence, persistence and the CLI; no physics or language rewrite.
-- **Deprecated compatibility UI:** existing Fyne commands/modules. No new Fyne-only features, demos or migration pilots should be planned. Preserve required correctness/security fixes and regression checks while those paths remain shipped. Existing Fyne thread-safety rules still apply to compatibility fixes.
-- **Not removed and not yet replaced:** no entry point, dependency, build tag or default-launch behavior changes in this planning pass. Do not route users to a nonexistent React app. React becomes the recommended runnable path only once its declared scope passes behavioral/security and numbered Orca acceptance gates; retire remaining Fyne surfaces separately after replacement qualification. No unsupported removal date is invented.
-- **Not the marketing site:** `web/` remains the static Astro landing page. The React workbench is a distinct application; changing its target does not authorize an Astro rewrite, hosted compute or a desktop wrapper.
+- **Fully deprecated UI:** existing Fyne commands/modules are legacy code, not a new-feature target. No Fyne-only features/demos. React replacement qualification covers agreed behavior and accessible equivalents; it does not mean replicating inaccessible widget internals. Existing safety/thread rules apply while legacy code remains shipped.
+- **Retirement:** qualify and retire Fyne module views one at a time, then delete their UI code/dependencies when unused, preserving Go science/CLI and completed receipts. Actual removal/default-switch/dependency changes need a separately authorized implementation/test batch; no deletion occurs here. Do not pretend an unbuilt React view already replaces a module.
+- **One public UI:** replace the Astro site with the same React application's home/docs views. Hosted/static and embedded/local are deployment profiles of that application, not separate sites, route trees or duplicated component implementations. No hosted computation service or desktop wrapper.
 - **Completed work remains history:** T-005's verified Fyne result presentation and all existing receipts are retained, not renamed into React delivery or superseded as if unimplemented. The Go foundations T-001..T-004/T-006 remain reusable. At inspection, all six are closed with coordinator-verified receipts; no new runtime tests are claimed by this documentation pass.
 
-### Focused deprecation batch and boundary
+### Historical focused deprecation batch and boundary
 
-The requested outcome here is to correct UI direction and future work selection, not implement the whole React client. The approved API/security/editing/table/plot/manual-test contract below is retained. It is not reopened or silently treated as delivered. Concrete browser implementation still needs its own full bounded plan, including end-to-end storage confinement and assets/contracts; this deprecation batch must not launch a listener or scaffold/install frontend dependencies.
+This subsection records the earlier deprecation-policy planning batch and its then-current checks, not the latest delivery architecture or current task completion. ADR 0005 and the unified profiles below supersede its separate-site/WASM-deferred assumptions. Its requested outcome was to correct UI direction and future work selection, not implement the whole React client. The approved API/security/editing/table/plot/manual-test contract below is retained. It is not reopened or silently treated as delivered. Concrete browser implementation still needs its own full bounded plan, including end-to-end storage confinement and assets/contracts; this deprecation batch must not launch a listener or scaffold/install frontend dependencies.
 
 Documentation owners updated in this batch: this design/decision register, the original core architecture's status notice, README, architecture guide and terminology. Executable agent/skill instructions are implementation-role artifacts, so they are **not edited during planning**. Two complete records under `REACT-UI-POLICY` own the remaining instruction-role work:
 
@@ -80,28 +82,47 @@ The browser adapter, field-patch editing, ETags and accessible views below remai
 ## Architecture and scope
 
 ```text
-Browser: semantic views, focus, table selection, rendering, announcements
-    ↕ typed requests and Go-produced snapshots
-Local Go adapter: validation, editing/concurrency, presentation, lifecycle
-    ↕ existing headless workbench operations
-Project files → evaluator → immutable runs → analysis and reports
+One React app: home/docs, semantic model/result views, focus, tables, plots
+    ├─ hosted + local browser features
+    │    ↕ typed Worker requests / Go-owned results and speech
+    │  Go/WASM Worker → CPU models, bounded in-memory studies/read-only imports
+    └─ local build only
+         ↕ authenticated same-origin API (never called by hosted build)
+       Go server → granted project roots, large studies/reuse, reports, EDA tools
 ```
 
-A browser transport is an additive, local-only design extension. The older core design's no-HTTP-service non-goal remains historical for its first slice; the approved browser direction permits a loopback adapter, **not** hosted compute or a public/multi-user deployment. The first replacement is the research workbench, not all expert modules. Fyne is deprecated: retain its existing entry points for compatibility until each replacement meets behavioral and accessibility gates, but do not plan new Fyne-only features or describe it as the future primary UI. Do not remove or gate existing entry points in this documentation pass. `web/` stays the Astro marketing site. A future static WASM demo is distinct from hosted compute and is out of scope.
+The target is one React application with browser-only and local-engine capabilities, as fixed by [ADR 0005](../../adr/0005-unified-react-hosted-and-local.md). The hosted build is static and does not connect to localhost; the local build embeds the same application and uses same-origin Go APIs. Go/WASM runs browser science in a Worker without filesystem authority. The research workbench remains the first delivery slice; the accepted browser-only model scope below is not a claim that every module view is implemented. Replace Astro with React home/docs and retire Fyne module-by-module after replacement qualification. No implementation, deletion, listener or deployment is performed in this documentation pass.
+
+### Unified delivery and capability profiles
+
+| Feature | Hosted static build | Local embedded build |
+|---|---|---|
+| Home, docs, glossary, citations, honesty audit | Available without engine; replaces Astro | Same views |
+| Hysteresis/ISPP, small CPU crossbar MVM/IR-drop/sneak paths, peripherals, comparisons | Go/WASM Worker; bounded, seeded, in-memory | Same browser views/models; local capabilities additionally available |
+| Small sweeps | Capped in Go before allocation; in-memory results | Same capability plus local large-study path |
+| User-selected results bundle | Read-only, bounded Go decode/display; labelled imported/unverified | Same view; explicit server verification is a separate operation |
+| Disk projects/edits, large sweeps, persistent reuse, stored-run verification | Instruction panel explains how to run `fecim serve`; no connection attempt | Same-origin server API within granted roots |
+| EDA generation/external Yosys/OpenROAD/KLayout, application-requested file writes | Server required; no browser export/write path | Local server/tool capability, explicit authority |
+
+Hosted disclaimer remains visibly present and accessible: “Computations run in your browser using the Go model. Project and result data is not uploaded. On-disk projects and edits, large sweeps, run reuse, stored-run verification, EDA and file writes require the local application: run fecim serve. This hosted build does not contact localhost.” Ordinary static asset requests still reach the hosting provider; do not claim zero network metadata. No analytics, data upload or remote computation.
+
+The deployment profile is explicit build configuration, not inferred by probing the network or receiving an auth failure. Hosted mode omits local-engine transports and shows actionable instructions for unavailable features; it does not silently call a hardcoded URL. Local mode retains the approved token/Host/Origin/cookie/CSRF design without any external-origin CORS exception. Hosted state is ephemeral: refreshing may discard in-memory studies and selection, with an honest warning. No scientific data persistence or application file downloads in hosted mode.
+
+All scientific calculations, defaults, validation, summaries, sorting/filtering/paging semantics and numeric speech/display are Go-owned: in the Worker for hosted operations, in the server/shared core where local operations require it. Browser-only selected-file viewing does not attest stored-run integrity or measured-device validation. Rendering, focus and message transport remain TypeScript/React responsibilities.
 
 ### Stack, contracts and build policy
 
-- Go retains numerical models, project loading, experiments, scientific summaries, reports and exports. The same shared application operations serve CLI, Fyne and HTTP; HTTP handlers do not invoke CLI commands or parse terminal prose.
+- Go retains numerical models, defaults, validation, experiment identities, analysis, summaries and serialization. Share storage-independent operations between native and WASM paths; native persistence is an adapter, not a scientific fork. Thin HTTP/Worker adapters do not invoke CLI prose or reimplement equations. Legacy Fyne calls are historical compatibility, not a second target.
 - React + TypeScript + Vite renders the browser workbench. Use React Aria Components where interaction needs accessible focus/keyboard machinery, and native HTML for simpler controls and read-only tables. Framework choice is not evidence of accessibility.
 - Go API DTO definitions are authoritative. Generate OpenAPI from them and generate TypeScript request/response types and client bindings from that contract. Pin generators; CI regenerates and rejects drift. Go still validates every input at runtime. Keep presentation DTOs separate from immutable scientific records.
-- Production assets are built, not committed. CI and the supported local release workflow run a locked frontend install/build, contract checks, asset freshness checks, then the Go build with `go:embed`. Pin an exact Node version, package-manager version, lockfile and generator versions during implementation; this document does not invent versions or claim installed tooling.
+- Build the same React source twice: hosted-static and local-embedded profiles, sharing routes/components and differing in capability adapters. Production assets are built, not committed. CI runs locked frontend builds, generated API/Worker contract checks, freshness checks and the local Go `go:embed` build. Bundle Go/WASM and the matching compiler runtime support file with both profiles where browser computation is enabled. Pin Go/compiler-shim, Node, package manager, lockfile and generators; this document does not invent versions.
 - The asset manifest records the frontend-input digest, API-contract digest, expected core compatibility identifier and built-asset fingerprint. The running browser compares its embedded manifest with authenticated health information. Core and frontend hashes need not equal each other; an unexpected pairing is a mismatch.
 - Missing assets fail the browser distribution build. A plain `go build` is not itself a frontend build or freshness proof: release CI must reject stale inputs, and `serve` must check the embedded manifest against build-bound frontend inputs/API identity and refuse stale assets **before opening a listener**. A UI health warning additionally catches stale cached browser content. Never claim that `go:embed` alone detects stale assets. Exact build entry-point naming and pinned tool versions belong to implementation planning.
 - Node is a development/build dependency, not a requirement for using the distributed binary. No CDN, remote fonts, analytics, service worker, hosted compute, or desktop wrapper is needed for v1.
 
 ### Local API contract
 
-Every route below is **planned**, under `/api/v1`. `P` denotes an opaque, opened project handle and `E` an ephemeral execution ID. Neither is a scientific SHA-256 run ID. All data routes require authentication. Reads never create projects, run models, regenerate reports or export files.
+Every route below is **planned and local-build-only**, under `/api/v1`. The hosted build never calls these routes on localhost or an external compute service. Browser-only operations use a typed in-process Go/WASM Worker protocol, not this filesystem/job API. `P` denotes an opaque opened project handle and `E` an ephemeral local execution ID; neither is a scientific SHA-256 run ID. All data routes require authentication. Reads never create projects, run models, regenerate reports or export files.
 
 | Method and route | Contract | Existing CLI / source operation |
 |---|---|---|
@@ -165,7 +186,7 @@ ETags and server operation locks protect participating requests, not arbitrary h
 
 Security references: [Go traversal-resistant APIs](https://go.dev/blog/osroot), [OWASP CSRF guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), and [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html). These are design references, not executed security validation.
 
-V1 includes project editing, experiment lifecycle, paginated run tables, run details/evidence, 2–4-run metric comparison, and optional supplementary plots of the same results. No general YAML editor, browser scientific calculator, plot-based selection, interactive plot keyboard navigation, new physics, remote collaboration or full expert-module parity is promised.
+The workbench slice includes project editing/local experiment lifecycle, paginated tables, evidence, 2–4-run comparison and supplementary plots, with capability gating in hosted mode. The accepted browser-only scope includes Go/WASM model visualizations and capped small studies; it does not authorize a TypeScript scientific implementation, new physics, general YAML editor, plot-driven selection, remote collaboration or a claim of full expert-module parity today.
 
 ## Go/browser ownership
 
@@ -280,7 +301,7 @@ Before implementation, review this document and its [numbered manual acceptance 
 
 Future automated verification must cover presentation/unit/exponent forms, page captions and focus targets, stale navigation responses, validation summaries, field-only patches and no-op byte preservation, ETag races and textual conflicts, 2–4-run comparison, plot Tab-stop limits, authoritative cancellation, and terminal counters/deduplication. Maintain core deterministic outputs and existing scientific evidence boundaries. Automated accessibility scans cannot substitute for Orca task completion.
 
-**Manual release gate:** execute every numbered task on the documented browser/Orca stack, recording required speech, actual speech, focus behavior and pass/fail evidence. Any failed or unrun required task blocks an accessibility acceptance claim. Tester approval remains a human decision.
+**Manual release gate:** qualify both hosted and local builds on Orca + Firefox/Linux and keyboard only, using the companion's explicit capability-profile applicability and hosted tasks. Record required/actual speech, focus and pass/fail separately per build; a local pass never certifies hosted WASM behavior. Any failed or unrun applicable required task blocks an accessibility claim. Exact native/WASM example results.json parity is a separate mandatory automated gate, now implemented and run across native Go, Node Go/WASM and headless Firefox Worker; see the validation receipt and feasibility assessment. This does not attest production Worker integration, HZO-loop parity or human Orca acceptance. Tester approval remains a human decision.
 
 TDD: **N/A for this documentation-only consolidation**; it changes no runtime behavior. All implementation and automated tests above are future requirements, not work performed in this change.
 

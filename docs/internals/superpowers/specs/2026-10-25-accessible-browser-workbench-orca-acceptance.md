@@ -6,13 +6,15 @@ Related owner: [approved design direction and decision register](2026-10-25-acce
 
 ## Test environment and evidence
 
-Use Linux, Firefox and Orca, with keyboard only throughout the application tasks. Record exact OS, Firefox, Orca and speech synthesizer versions/settings, keyboard layout, app/core/frontend fingerprints and fixture revision. Record date, tester, task ID, actual speech, actual focus, result and an evidence reference. Speech transcripts must not contain launch tokens or unpublished project data. Accessibility automation is supporting evidence only.
+Use Linux, Firefox and Orca, with keyboard only throughout the application tasks. Qualify **both builds of the same React app**, recording deployment profile (hosted/static or local/embedded), exact OS/Firefox/Orca/synthesizer settings, keyboard layout, frontend/core/WASM fingerprints and fixture revision. Record date, tester, task ID, actual speech, focus, result and evidence. Speech transcripts must not contain launch tokens or unpublished data. Automation is supporting evidence only.
+
+Applicability: local profile runs tasks 1–14. Hosted profile runs shared read/presentation/navigation tasks 2, 4, 11, 12 and 13 using bundled or explicitly selected read-only fixtures, plus hosted-specific tasks 15–17 below. Local server/project/save/export tasks do not become waived hosted capabilities: task 15 proves their instruction-only boundary. Hosted progress/cancel/refresh uses task 16's ephemeral-worker contract, not tasks 7–10's persisted server job contract. Record per-profile pass/fail/not-run, and never treat a local pass as a hosted pass. Any feature later enabled in hosted mode needs its applicable shared and model-specific tasks added; do not silently expand this matrix.
 
 Use normal Orca browse/table commands as well as Tab/Shift+Tab and native control keys. A task does not pass merely because tabbing reaches a control: table cell/header reading must work. Do not use a mouse, visual plot inspection, DOM inspector or another browser to rescue a failed task. A sighted observer may document behavior, but must not supply information unavailable through Orca. Terminal setup and fixture preparation are allowed prerequisites, not substitutes for browser interactions.
 
 Quoted announcements below specify required content, not exact synthesis punctuation or a mandated verbose sentence. Required roles, names, units, exponents, counts and context must be intelligible without visual interpretation; duplicate speech, misleading precision or dropped signs fail. If actual speech differs harmlessly, record it and explain equivalence. A tester cannot waive missing content by guessing from the screen.
 
-All required tasks must pass on the same candidate and documented supported environment. Any failure or unrun task prevents an Orca acceptance claim. After a fix, rerun affected tasks and any shared-focus/speech regressions; do not reuse invalidated evidence. There is no automated or agent-authored human sign-off.
+All applicable required tasks must pass for both deployment profiles built from the same candidate and documented supported environment. Any failure or unrun task prevents an Orca acceptance claim. After a fix, rerun affected tasks and any shared-focus/speech regressions; do not reuse invalidated evidence. There is no automated or agent-authored human sign-off.
 
 ## Future fixture requirements
 
@@ -207,8 +209,44 @@ Fixture controls must be test-only, not an unauthenticated production endpoint. 
 
 **Failure criteria:** Reading generates artifacts or reruns models; export loses source-run identity; arbitrary paths can be requested; downloads lack readable names/status; a busy close silently abandons computation; close deletes or implies deleting project data. Browser download handling must be keyboard-accessible.
 
+## 15. Hosted home, persistent disclaimer and server-only instructions
+
+**Start state:** Hosted static build served from its public/static origin; no local engine running. Browser network capture is available to a test observer/automation, not a navigation aid for the screen-reader tester.
+
+**Goal:** Use one React home/docs/workbench UI and understand exactly which capabilities require the local build without any localhost discovery.
+
+**Steps:** Read home, docs/glossary/citations/honesty audit and navigate into the workbench. Read the persistent disclaimer. Activate each server-only action: on-disk projects/edits, large sweeps, run reuse, stored-run verification, EDA and file output. Follow keyboard-accessible local-run instructions; returning to the hosted view must not start engine detection. Repeat shared view-navigation controls in the local build to verify the same route/component vocabulary.
+
+**Required announcements:** Home/view headings; readable persistent explanation that calculations run in the browser with Go, scientific data is not uploaded, which actions require `fecim serve`, and that the hosted build does not contact localhost. Server-only actions lead to a named instruction heading/panel with the local command, not a loading spinner/auth error or “connected” claim. External citation navigation must be explicit.
+
+**Failure criteria:** A separate Astro-style landing UI must be used; notice disappears or exists only visually; server-required controls are silently disabled without explanation; any hosted localhost/loopback/private-address probe, pairing prompt, scientific-data upload, remote compute or application file write/download occurs. Automated network/file-boundary checks must accompany speech evidence; this manual task alone cannot prove the absence of requests.
+
+## 16. Hosted Go/WASM calculation, caps, responsiveness and cancellation
+
+**Start state:** Hosted build, no local server, synthetic supported-model fixtures and measured supported cap manifest prepared. Worker ready/error states are controllable through test-only fixtures. No project files are persisted.
+
+**Goal:** Operate hosted hysteresis/ISPP, small crossbar/peripheral/comparison views and capped sweeps using Go/WASM while retaining accessible control and honest ephemeral state.
+
+**Steps:** Run each enabled model fixture and a small sweep; navigate/read controls while computation is active. Inspect Go-owned summaries, values, evidence and comparison tables, with plot constraints from task 13. Request cancellation during controlled bounded work and exercise hard worker-restart recovery. Submit a request over a declared cap. Reload while a hosted result exists, then simulate worker/WASM asset load failure.
+
+**Required announcements:** Model/method, units/evidence and browser execution state; throttled count progress without focus theft; actual terminal or cancelled outcome after the worker acknowledges/settles, or an explicit hard-reset/ephemeral-result-loss state. Over-limit input explains the relevant limit and local-run instructions without silently changing inputs. Reload/discard is honestly described as loss of in-memory work, not server-job resumption. Worker load failure leaves docs/read-only views navigable and gives a retry path.
+
+**Failure criteria:** Main UI/Orca control freezes behind a synchronous compute call; per-point speech flood; TypeScript calculates a scientific result/default; cancellation claims persisted server semantics; caps are enforced only in JS or by silent downsampling; a reload invents saved/reused runs; unavailable WASM causes automatic localhost fallback. Cap/performance qualification and exact native/WASM results parity need separate automated evidence; no number is certified by speech alone.
+
+## 17. Hosted read-only result import and one-app parity
+
+**Start state:** Both deployment profiles from the same candidate; user-selected synthetic results bundle, malformed/oversized alternatives and known expected read-only data. No local server for the hosted part.
+
+**Goal:** Read a selected bundle without uploading, writing or falsely attesting stored-run integrity; retain equivalent accessible views in both builds.
+
+**Steps:** Use the native file-input control to select the valid bundle. Read its imported/unverified status, summary, units, evidence, pagination, 2–4-run comparison and supplementary plot using shared tasks 2/4/11/12/13. Select invalid/over-limit inputs and recover. Open the equivalent read-only fixture in the local build and compare required labels/focus/accessible table structure. Exercise server-only verification and export in hosted mode to obtain instructions, not an attempted request/write.
+
+**Required announcements:** File-selection label/status; imported results are unverified; content/metric availability and precise error reasons; no “stored runs verified” or experimental-validation claim from merely opening a bundle. Shared presentation/focus/header/selection speech remains equivalent across profiles. File contents remain readable without a server.
+
+**Failure criteria:** Automatic upload, persistent scientific storage/download/write, directory traversal request, localhost contact, silent model execution while importing, inaccessible native picker, spoofed integrity status, unbounded archive/input processing, or divergent component semantics between builds. A successful import is not a waiver for the server-side integrity gate.
+
 ## Results record
 
-Record each script as `pass`, `fail`, or `not run`, with actual speech/focus and evidence. No result is entered by this design-authoring pass. Future implementation must additionally pass automated API/security, generated-contract/asset freshness, YAML preservation/concurrency, determinism, race and existing CLI/Fyne regression gates. These manual tasks are not replacements for those checks.
+Record each script as `pass`, `fail`, or `not run`, with actual speech/focus and evidence. No result is entered by this design-authoring pass. Future implementation must additionally pass local API/security, hosted no-localhost/no-upload/no-write checks, generated API/Worker contract and dual-build asset freshness, YAML preservation/concurrency, exact native-versus-browser-WASM example results.json parity, numerical determinism, race and required existing build/CLI safety gates. Fyne is deprecated and retired module-by-module after React replacement qualification; its completed history is not React/Orca acceptance. These manual tasks are not replacements for those checks.
 
 TDD: N/A — documentation-only acceptance specification. No production code, test fixtures, automated tests, dependencies, services, commits or releases are changed or performed here.
