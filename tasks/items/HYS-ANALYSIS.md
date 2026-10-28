@@ -3,7 +3,7 @@ schema = 1
 id = "HYS-ANALYSIS"
 title = "Expose real hysteresis diagnostics and honest reference context in Go"
 short = "PUND FORC and evidence results"
-status = "open"
+status = "done"
 goal = "HYS-REACT"
 section = "Next"
 rank = 3000
@@ -16,6 +16,8 @@ scope = "Implement ANALYSIS seam preserving actual GUI PUND/FORC diagnostic prof
 acceptance = ["Given any selected loop engine/material, when legacy-pund-demo is run, then fixed Ec=3e7 V/m, Ps=0.25 C/m², Delta=0.3Ec, 5Ec drive, 100 ns width, 5 ns dt and 1e-12 m² area produce the existing GUI/shared pulse/charge results with independent Preisach/HZO-demo identity, not the selected loop model; TestAnalysisPUND and native GUI TestAnalysisGUIParity.", "Given selected-material Ps and GUI FORC defaults Emax=1 V/m, reversals=21, resolution=21, when bounded analysis completes/cancels, then it preserves guiFORCEverett's weighted expression/clamps and actual sweep/density/grid metadata, never silently substitutes headless TanhEverett or reports L-K execution; TestAnalysisFORC and TestAnalysisGUIParity. Validate bounds before allocation and never call partial matrices complete.", "Given cited/imported, malformed or illustrative reference data, when context is displayed/serialized, then source/branch and imported-unverified/simulation-default status remain, unknown comparisons are unavailable with reasons and illustrative Pr/Ec bands are not experimental evidence; TestAnalysisEvidence."]
 checks = ["go test ./workbench/hysteresis -run TestAnalysis -count=1", "env CGO_ENABLED=1 xvfb-run -a go test ./module1-hysteresis/pkg/gui -run TestAnalysisGUIParity -count=1", "go test ./shared/physics -run 'TestPUND|TestFORC' -count=1", "go test ./shared/viewmodel/hysteresis ./validation/peloop -count=1"]
 exclusions = ["Go owns science/defaults/display/speech; simulation-only evidence; no hosted scientific upload/persistence/localhost probing; existing CLI/Fyne/default builds remain. No launch-default change, Fyne deletion, new physical model, golden/tolerance weakening, deployment or service changes.", "No public deployment/push, shared service changes or ungranted external operations; test servers use private ephemeral ports."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/HYS-ANALYSIS.toml"
 +++
 
 - Sources: docs/internals/superpowers/plans/2026-10-25-hosted-hzo-first-slice.md#go-seams-and-invariant-contract; docs/internals/adr/0005-unified-react-hosted-and-local.md
