@@ -44,6 +44,8 @@ func FormatMetric(metric experiment.Metric, unavailableReason string) Value {
 		spokenUnit = "nanoseconds"
 	case "dB":
 		spokenUnit = "decibels"
+	case "MV/cm":
+		spokenUnit = "megavolts per centimeter"
 	case "µC/cm²":
 		spokenUnit = "microcoulombs per square centimeter"
 	case "A":
@@ -72,6 +74,17 @@ func FormatMetric(metric experiment.Metric, unavailableReason string) Value {
 		Speakable:    spoken + " " + spokenUnit,
 		Availability: "available",
 	}
+}
+
+// FormatElectricField converts SI V/m for presentation only. The caller keeps
+// the original SI value; an explicit unavailable reason takes precedence.
+func FormatElectricField(si float64, unavailableReason string) Value {
+	return FormatMetric(experiment.Metric{Value: si * 1e-8, Unit: "MV/cm"}, unavailableReason)
+}
+
+// FormatPolarization converts SI C/m² to microcoulombs per square centimeter.
+func FormatPolarization(si float64, unavailableReason string) Value {
+	return FormatMetric(experiment.Metric{Value: si * 100, Unit: "µC/cm²"}, unavailableReason)
 }
 
 func unavailable(reason string) Value {
