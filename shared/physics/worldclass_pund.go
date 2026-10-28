@@ -1,6 +1,7 @@
 package physics
 
 import (
+	"context"
 	"fmt"
 	"math"
 )
@@ -73,6 +74,12 @@ func AnalyzePUND(programP, upU, negativeN, downD []PulseSample) (PUNDResult, err
 // The PreisachStack.Update method is rate-independent (no dt); sampleIntervalS
 // is used only for computing dP/dt from successive P values.
 func RunPUNDSimulation(stack *PreisachStack, amplitude_Vm, pulseWidthS, sampleIntervalS, area_m2 float64) (PUNDResult, [4][]PulseSample, error) {
+	return RunPUNDSimulationContext(context.Background(), stack, amplitude_Vm, pulseWidthS, sampleIntervalS, area_m2)
+}
+
+// RunPUNDSimulationContext preserves the legacy protocol and checks cancellation
+// before every polarization update. Cancellation never returns partial traces.
+func RunPUNDSimulationContext(ctx context.Context, stack *PreisachStack, amplitude_Vm, pulseWidthS, sampleIntervalS, area_m2 float64) (PUNDResult, [4][]PulseSample, error) {
 	if amplitude_Vm <= 0 {
 		return PUNDResult{}, [4][]PulseSample{}, fmt.Errorf("amplitude must be > 0, got %g", amplitude_Vm)
 	}
@@ -90,31 +97,39 @@ func RunPUNDSimulation(stack *PreisachStack, amplitude_Vm, pulseWidthS, sampleIn
 
 	// runPulse applies step field E for the pulse duration and collects current samples.
 	// Update(E) returns the new polarization P after applying E.
-	runPulse := func(E_Vm float64) []PulseSample {
+	runPulse := func(E_Vm float64) ([]PulseSample, error) {
 		samples := make([]PulseSample, nSamples)
 		prevP := stack.ComputePolarization(stack.LastE)
 		for i := 0; i < nSamples; i++ {
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
 			t := float64(i) * sampleIntervalS
 			curP := stack.Update(E_Vm)
 			dPdt := (curP - prevP) / sampleIntervalS
 			samples[i] = PulseSample{TimeS: t, CurrentA: area_m2 * dPdt}
 			prevP = curP
 		}
-		return samples
+		return samples, nil
 	}
 
-	// Preset: drive to -amplitude to initialize state
-	_ = runPulse(-amplitude_Vm)
+	// Preset: drive to -amplitude to initialize state.
+	if _, err := runPulse(-amplitude_Vm); err != nil {
+		return PUNDResult{}, [4][]PulseSample{}, err
+	}
+	var traces [4][]PulseSample
+	for i, e := range []float64{amplitude_Vm, amplitude_Vm, -amplitude_Vm, -amplitude_Vm} {
+		var err error
+		traces[i], err = runPulse(e)
+		if err != nil {
+			return PUNDResult{}, [4][]PulseSample{}, err
+		}
+	}
 
-	pTrace := runPulse(+amplitude_Vm)
-	uTrace := runPulse(+amplitude_Vm)
-	nTrace := runPulse(-amplitude_Vm)
-	dTrace := runPulse(-amplitude_Vm)
-
-	result, err := AnalyzePUND(pTrace, uTrace, nTrace, dTrace)
+	result, err := AnalyzePUND(traces[0], traces[1], traces[2], traces[3])
 	if err != nil {
 		return PUNDResult{}, [4][]PulseSample{}, fmt.Errorf("AnalyzePUND: %w", err)
 	}
 
-	return result, [4][]PulseSample{pTrace, uTrace, nTrace, dTrace}, nil
+	return result, traces, nil
 }

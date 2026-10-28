@@ -144,6 +144,82 @@ display/speech preserve sign, zero and exponents. Unavailable presentation value
 retain a reason instead of fabricating zero. Unsupported `FormatMetric` units
 still report unavailable; SI callers use the explicit conversion functions.
 
+## Independent diagnostics and read-only reference context
+
+[`workbench/hysteresis/analysis.go`](../workbench/hysteresis/analysis.go) exposes
+`NewAnalysis(AnalysisRequest)`, `AnalysisJob.Advance`, `Page` and `Result`. Supply a
+session snapshot in `Input` and `AnalysisPUND` or `AnalysisFORC` in `Kind`. The job
+copies the selected configuration and input revisions, resolves material values
+from the Go catalogue, and never advances or mutates the loop. It starts no
+background work: computation occurs only on explicit `Advance` calls.
+
+Both diagnostics identify **independent Preisach simulations**, even when the
+selected loop uses L-K. `Context` records the loop model, material, temperature
+and stress; these are **context only, not applied diagnostic conditions**.
+`Diagnostic` separately records the actual versioned profile, material and exact
+applied SI parameters. Evidence remains `simulation_only`, with experimental
+validation false.
+
+- PUND uses `legacy-pund-demo` version 1, material `hzo-demo`: Ec=3e7 V/m,
+  Ps=0.25 C/m², TanhEverett Delta=0.3×Ec, amplitude=5×Ec, width=100 ns,
+  sample interval=5 ns and area=1e-12 m². These are the fixed native GUI demo
+  parameters, **not** the selected material or the `DefaultHZO` preset. Results
+  retain P/U/N/D current traces and integrated/switching charges in coulombs.
+- FORC uses `gui-forc` version 1 and selected-material Ps, with defaults
+  **Emax=1 V/m**, 21 reversals and resolution 21. The extracted
+  `physics.GUIFORCEverett` retains the native weighted expression and clamps;
+  this is not the headless TanhEverett profile or an L-K FORC experiment. Results
+  retain descending sweep branches, reversal fields/pairs, the mixed-derivative
+  density, and the GUI nearest-index resampled matrix (rows=Eb, columns=Ea).
+  Reversals are limited to 3–64 (at most 64 recorded samples/curve), resolution
+  to 3–256; nonfinite/unrepresentable field or density scales are rejected.
+- `Advance(AnalysisBudget)` accepts 1–256 work units: one fixed PUND protocol
+  (105 polarization updates), one FORC curve (at most 65 updates), the bounded
+  density calculation (at most 64² cells), or one matrix row (at most 256 cells).
+  Shared loops check context cancellation internally. Cancellation is terminal;
+  create a new job to retry. Partial pages retain their running/cancelled state;
+  `Result` and artifacts return `ErrAnalysisIncomplete` until fully complete.
+  Pages require the current job revision, expose at most 32 rows and include
+  diagnostic identity. Results/pages are owned copies. These limits are safety
+  bounds, **not measured browser responsiveness or accessibility claims**.
+
+[`ParseReference`](../workbench/hysteresis/reference.go) accepts bytes, not paths:
+CSV columns `E_MV_cm,P_uC_cm2`, or JSON `source`, `material`, `E_V_m`, `P_C_m2`
+and optional `branch`. Each input must contain one strictly monotonic branch;
+input order, ascending/descending identity, source units and canonical SI values
+are retained. Split full loops into explicit branches rather than sorting them.
+Inputs are limited to 1 MiB total reference bytes/metadata per job, 32 branches
+and **4096 points total across all branches** (also the standalone parser limit).
+Aggregate admission is checked before expanding points into presentation records.
+Malformed, nonfinite, duplicate-key (including case variants), conflicting or
+unsupported inputs are rejected. Imported context is always `imported_unverified`, including
+cited or synthetic inputs; opening bytes never proves experimental validation.
+
+Go reference context includes a scoped model-background citation and labels the
+native Pr ±20% / Ec ±30% bands `simulation_default`: illustrative preset ranges,
+**not experimental uncertainty or measurement evidence**. Comparisons without
+verified branch-matched data are unavailable with a reason, never fabricated
+zero-valued fit metrics. The analysis API performs no fitting.
+
+[`Artifact`](../workbench/hysteresis/artifacts.go) serializes only complete results
+into in-memory bytes: `AnalysisJSON`, `PUNDCSV`, `FORCSweepCSV`, `FORCDensityCSV`.
+JSON includes reference provenance and unavailable reasons; diagnostic CSVs
+include profile/version/model, evidence, exact applied parameters and explicitly
+context-only loop settings/revisions. Serialized output is capped at 8 MiB;
+diagnostic-only CSVs do not copy reference points. These bounded admission/output
+limits do not qualify production Worker latency. This performs no file I/O, upload, download,
+persistence or stored-run verification; it does not authorize hosted exports.
+Legacy headless diagnostics retain their distinct profiles and compatibility guards.
+
+Focused diagnostic verification:
+
+```bash
+go test ./workbench/hysteresis -run TestAnalysis -count=1
+env CGO_ENABLED=1 xvfb-run -a go test ./module1-hysteresis/pkg/gui -run TestAnalysisGUIParity -count=1
+go test ./shared/physics -run 'TestPUND|TestFORC' -count=1
+go test ./shared/viewmodel/hysteresis ./validation/peloop -count=1
+```
+
 ## Testing
 
 ```bash
