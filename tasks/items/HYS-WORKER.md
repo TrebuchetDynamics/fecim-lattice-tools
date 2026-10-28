@@ -3,7 +3,7 @@ schema = 1
 id = "HYS-WORKER"
 title = "Qualify the production Go hysteresis Worker across native Node and Firefox"
 short = "Production Worker and exact parity"
-status = "open"
+status = "done"
 goal = "HYS-REACT"
 section = "Next"
 rank = 4000
@@ -16,6 +16,8 @@ scope = "Build production Go/WASM entry and JSON Worker bridge for all three rea
 acceptance = ["Given identical admitted core/programming/analysis commands, seeds, step schedule and build identity, when native, Node and real Firefox execute production code, then successful finite complete scientific JSON bytes are identical; TestHysteresisProductionParity preserves TestExampleResultsJSONNativeWASM and fails enabled missing prerequisites rather than skipping. Include unavailable time-resolved status and independent diagnostic-profile identity.", "Given invalid/oversize/unsupported protocol or cancellation/stale revisions, when the bridge runs, then Go rejects before allocation/state mutation, jobs yield, terminal states are truthful and terminated Workers cannot publish late results; TestHysteresisWorkerLifecycle uses real Worker happy paths and explicit fault injection only for failures.", "Given a cold cache and a private static test server/proxy shaping aggregate 10 Mbit/s plus 100 ms request RTT, when production Worker assets/default Sine loop run, then module/runtime payload and Worker-driver complete-result latency satisfy the plan guardrails; TestHysteresisWorkerBudgets records exact byte filter, shaping, marker, host/tools and measured per-operation admission. Full React-route budget is additionally HYS-UI's check, not claimed here. Never alter host-wide networking."]
 checks = ["env FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -count=1 -v", "go test ./workbench/hysteresis -count=1", "env CGO_ENABLED=1 go test -race ./validation/wasm ./workbench/hysteresis -count=1", "go test ./shared/physics ./module1-hysteresis/pkg/ferroelectric -count=1", "go test ./validation -run '^TestPhysicsRegressionCurves' -count=1", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Go owns science/defaults/display/speech; simulation-only evidence; no hosted scientific upload/persistence/localhost probing; existing CLI/Fyne/default builds remain. No launch-default change, Fyne deletion, new physical model, golden/tolerance weakening, deployment or service changes.", "No public deployment/push, shared service changes or ungranted external operations; test servers use private ephemeral ports."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/HYS-WORKER.toml"
 +++
 
 
