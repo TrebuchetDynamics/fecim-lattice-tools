@@ -117,6 +117,41 @@ export class Engine {
       await this.corePage(0);
     });
   }
+  // Collect Go-owned SI rows only after an explicit local operation. No
+  // numerical conversion/formatting or automatic persistence happens here.
+  async fileSnapshot() {
+    if (this.data.active)
+      throw new Error("Pause or cancel computation before local files");
+    await this.tail;
+    if (!this.data.core || this.data.failed)
+      throw new Error("Ready Go state required");
+    const core = this.data.core;
+    const rows: { Index: number; Time: number; E: number; P: number }[] = [];
+    for (
+      let offset = 0;
+      offset < core.ViewCount;
+      offset += this.data.catalogue!.PageSize
+    ) {
+      const page = await this.send<Page<CoreRow>>("core.page", {
+        Offset: offset,
+      });
+      if (page.Revision !== core.Revision)
+        throw new Error("State changed during export; pause and retry");
+      for (const row of page.Rows)
+        rows.push({
+          Index: row.Index,
+          Time: row.Time,
+          E: row.E.SI,
+          P: row.P.SI,
+        });
+    }
+    return {
+      Config: core.Config,
+      Rows: rows,
+      Calibration: this.data.program?.Calibration,
+      Analysis: this.data.analysis,
+    };
+  }
   dispose() {
     this.alive = false;
     this.generation++;

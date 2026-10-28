@@ -71,17 +71,15 @@ export default function Hysteresis() {
       </div>
       <aside className="notice" aria-label="Computation and privacy">
         <p>
-          Computations run in your browser using the Go model. Project and
-          result data is not uploaded. On-disk projects and edits, large sweeps,
-          run reuse, stored-run verification, EDA and file writes require the
-          local application: run fecim serve. This hosted build does not contact
-          localhost.
+          Computations run in your browser using the Go model.
+          {__FECIM_PROFILE__ === "hosted"
+            ? " Project and result data is not uploaded. On-disk projects and edits, large sweeps, run reuse, stored-run verification, EDA and file writes require the local application: run fecim-lattice-tools serve --root DIRECTORY (design shorthand: fecim serve). This hosted build does not contact localhost."
+            : " Explicit local file actions send browser snapshots only to this authenticated same-origin server and its launch-granted roots. They do not verify persisted studies. No automatic file writes."}
         </p>
         <p>
           Ordinary static asset requests still occur and the host can see HTTP
-          metadata. No analytics or remote solver. The local asset profile uses
-          these same views; its authenticated file adapter is not yet
-          implemented.
+          metadata. No analytics or remote solver. Hosted and local profiles use
+          the same Hysteresis views and browser Go Worker.
         </p>
       </aside>
       <p
@@ -476,7 +474,7 @@ export default function Hysteresis() {
           </details>
         </>
       )}
-      <LocalActions />
+      <LocalActions data={data} engine={engine.current} />
     </>
   );
 }

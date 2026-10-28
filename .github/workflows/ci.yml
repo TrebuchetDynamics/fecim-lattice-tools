@@ -39,12 +39,21 @@ jobs:
         run: npx playwright install --with-deps chromium firefox
         working-directory: web
 
+      - name: Install GUI build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
+
       - name: Hosted React workflows, isolation and route budgets
-        run: npm run test:e2e
+        run: npm run test:e2e -- test/e2e/fecim-web.spec.mjs test/e2e/hysteresis.spec.ts test/e2e/hosted-isolation.spec.ts
         working-directory: web
 
-      - name: Local profile with the same routes and browser contracts
-        run: npm run test:e2e
+      - name: Embedded authenticated local session and file workflows
+        run: npm run test:e2e -- test/e2e/hysteresis-local.spec.ts
+        working-directory: web
+
+      - name: Local static profile with the same shared routes and view contracts
+        run: npm run test:e2e -- test/e2e/fecim-web.spec.mjs test/e2e/hysteresis.spec.ts
         working-directory: web
         env:
           FECIM_WEB_PROFILE: local
@@ -62,11 +71,6 @@ jobs:
           name: react-browser-failures
           path: web/test-results
           if-no-files-found: ignore
-
-      - name: Install GUI build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
       - name: Run make ci
         run: make ci

@@ -68,6 +68,33 @@ Use that binary with the [workbench guide's](research-design-workbench.md) `proj
 
 **Launcher limitation:** [`launch.sh:29`](../../launch.sh) currently forces `CGO_ENABLED=0`, so it cannot launch the desktop. Use the explicit desktop build above instead. Recheck this guidance when the launcher or the CGO entry points change.
 
+## Optional local React Hysteresis application
+
+The additive command is **`fecim-lattice-tools serve --root DIRECTORY`**.
+The design's `fecim serve` is shorthand, not a separate installed executable.
+Default launch and existing CLI/Fyne entry points are unchanged.
+
+To build the embedded browser profile, install Node 24+, npm and the exact Go
+version in `go.mod`, plus the desktop build dependencies above, then run:
+
+```bash
+make build-browser
+./fecim-lattice-tools serve --root ./data --port 20200
+```
+
+Only grant directories you intend to read/write. Repeat `--root` for additional
+grants. Omit `--port` to select an available loopback port; Autowork checks use
+only the worker's assigned port range. Open the terminal's 60-second, single-use
+launch link. Type `renew` then Enter in that terminal if the link expires or was
+used. Use the local file panel to log out; Ctrl-C shuts down the server and
+revokes its session. Browser users need no runtime Node installation.
+
+Plain `go build` still compiles without generated browser assets; `serve`
+reports `browser-assets-unavailable` unless the matching profile is staged and
+pinned. Rebuild after changing Go or frontend source. Generated assets are not
+committed. See the [command and security reference](../../cmd/fecim-lattice-tools/README.md)
+for explicit save/load/export support, conflict recovery and trust limits.
+
 ## Equation SVG (Optional, Ubuntu/Debian)
 
 ```bash

@@ -63,6 +63,10 @@ for (const name of [
 ])
   uiHash.update(name).update(readFileSync(join(web, name)));
 const UI = uiHash.digest("hex");
+if (process.argv.includes("--fingerprint")) {
+  console.log(JSON.stringify({build, UI}));
+  process.exit(0);
+}
 const out = join(web, "node_modules/.fecim");
 mkdirSync(out, { recursive: true });
 const flags =

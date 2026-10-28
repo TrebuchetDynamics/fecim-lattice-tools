@@ -1,6 +1,6 @@
 # WASM parity gate — historical example and production qualification
 
-**Current scope:** [Shared React route qualification](#5-shared-react-route-qualification) adds actual hosted/local asset-profile, workflow, isolation and route-budget evidence. [Production hysteresis qualification](#4-production-hysteresis-worker-qualification) retains the preceding CORE/PROGRAM/ANALYSIS Worker checkpoint. Sections 1–3 and the historical verification retain the earlier **example-only** receipt; their unimplemented/next-scope statements describe those checkpoints, not current candidate status. No deployment, authenticated local-adapter or Orca qualification is inferred.
+**Current scope:** [Shared React route qualification](#5-shared-react-route-qualification) adds actual hosted/local asset-profile, workflow, isolation and route-budget evidence. [Production hysteresis qualification](#4-production-hysteresis-worker-qualification) retains the preceding CORE/PROGRAM/ANALYSIS Worker checkpoint. Sections 1–3 and the historical verification retain the earlier **example-only** receipt; their unimplemented/next-scope statements describe those checkpoints, not current candidate status. [Authenticated embedded local qualification](#6-authenticated-embedded-local-profile) records the additive serve/file boundary separately. No deployment or Orca qualification is inferred.
 
 Historical scope: prerequisites only, before any React feature implementation. Related: [gate/run instructions](../../../validation/wasm/README.md), [one-app decision](../adr/0005-unified-react-hosted-and-local.md), [package feasibility](../architecture/browser-wasm-feasibility.md) and [HZO first-slice plan](../superpowers/plans/2026-10-25-hosted-hzo-first-slice.md). No implementation of that slice or commit is authorized by this receipt.
 
@@ -204,4 +204,77 @@ Servers used assigned private ports: hosted 20100/20101, local 20110/20111, pari
 
 Real Orca + Firefox/Linux speech/keyboard qualification remains **NOT RUN** for hosted and authenticated local profiles. Automated DOM/focus/keyboard, narrow-width/200% text, quiet-progress and accessibility checks do not attest pronunciation or usable Orca table reading. The [manual acceptance owner](../superpowers/specs/2026-10-25-accessible-browser-workbench-orca-acceptance.md) must supply that evidence.
 
-HYS-LOCAL still owns the authenticated local adapter, embedded assets and serve/file workflows. The local asset profile alone grants no filesystem capability. Absent-adapter buttons give instructions without upload, persistence, download or localhost discovery. No public deployment, push, shared service change, Fyne retirement, launch-default change or hardware validation occurred. The coordinator owns merged-tree full-suite verification and shared task/history reconciliation.
+At this HYS-UI checkpoint, authenticated local adapter, embedding and serve/file workflows remained HYS-LOCAL work; section 6 records subsequent implementation. A static local asset profile alone grants no filesystem capability. Hosted buttons give instructions without upload, persistence, download or localhost discovery. No public deployment, push, shared service change, Fyne retirement, launch-default change or hardware validation occurred. The coordinator owns merged-tree full-suite verification and shared task/history reconciliation.
+
+## 6. Authenticated embedded local profile
+
+HYS-LOCAL adds `fecim-lattice-tools serve --root DIRECTORY` without changing
+legacy CLI/Fyne/default launches. The design's `fecim serve` remains executable
+shorthand. [Command/security reference](../../../cmd/fecim-lattice-tools/README.md)
+owns launch/renewal/logout, exact HTTP routes, file formats, conflicts and trust
+limits; [installation](../../guides/installation.md#optional-local-react-hysteresis-application)
+owns prerequisites. Both profiles retain the same Hysteresis components and Go
+Worker; local adds only a same-origin authenticated file adapter.
+
+### Source/build and security boundary
+
+`npm run build:local` stages generated assets under `internal/browserui/assets`;
+`npm run build:native` rejects source/UI drift and pins native UI/core identities.
+The server hashes every admitted asset before file operations. Plain Go builds
+compile with the checked-in sentinel and fail `serve` clearly with
+`browser-assets-unavailable`; no generated binary is committed. `make build-browser`
+builds both profiles and the embedded binary. CI installs native graphics build
+dependencies before real embedded tests.
+
+The loopback listener uses exact Host/Origin/Fetch Metadata, JSON/custom-header
+checks, bounded bodies/admission/timeouts, single-use 60-second fragment bootstrap,
+HttpOnly Strict session cookies and logout/shutdown revocation. A renewed link
+also removes/exchanges its fragment when already signed in. No request logging,
+CORS, external computation endpoint or public service configuration is added.
+
+Opaque launch-granted roots use the existing traversal-resistant `os.Root`
+primitive through read, staging and exclusive publication. Existing destinations
+conflict rather than overwrite. Reads enforce an 8 MiB stat-before-read cap and
+bounded recheck on the opened file. Typed enumerated exports use Go serialization
+and numeric SVG generation, not arbitrary HTML/SVG. Browser snapshots and imported
+references remain unverified simulation data; client experimental-validation flags
+are not promoted. Existing preset engine names and version-4 calibration JSON
+are retained; legacy version-1 calibration is also admitted read-only. Non-default stress, seed and history settings round-trip in optional
+preset keys. Loaded calibration is explicitly read-only/imported-unverified, not
+installed as fresh programming calibration; users explicitly recalibrate.
+
+### Executed candidate checks
+
+- `env CGO_ENABLED=1 xvfb-run -a go test ./cmd/fecim-lattice-tools ./workbench/server ./internal/browserui -count=1`: pass, including default Fyne repo-surface guards.
+- `env CGO_ENABLED=1 go test -race ./workbench/server -count=1`: pass.
+- `cd web && npm run build:hosted && npm run build:local && npm run test:e2e -- test/e2e/hysteresis-local.spec.ts`: **10 passed**, across desktop/compact/mobile/small Chromium and desktop Firefox.
+- `go test ./workbench/hysteresis -count=1`: pass; serializer extraction retains existing producer behavior.
+- `cd web && npm run typecheck && npm test`: pass.
+
+`TestHysteresisLocalSession` started RED (missing server API), then passed asset
+absence/drift, foreign Host/Origin/CSRF, expiry/replay/logout and oversize checks.
+A chunked trailing-body regression started RED (400 instead of 413), then passed.
+`TestHysteresisLocalFiles` checks every admitted artifact kind, existing formats,
+8 MiB pre-read rejection, temporary-root traversal/link/absolute/reserved names,
+no outside writes, conflicts, invalid diagnostics and unverified provenance.
+Review reproduced preset stress loss; its non-default L-K round-trip started RED
+and now preserves stress/seed/history. Authenticated renewal's real-browser RED
+retained the fragment; the regression now reaches the token-free Hysteresis route.
+
+The integration test builds/embeds **real** local assets, starts the actual CLI
+with a temporary root on assigned private port 20210, uses actual Go Worker
+preset/calibration/PUND/loop data, explicitly saves/loads/exports, rejects
+conflict/traversal, verifies replay/logout/renewal, no HTTP token leakage and no
+browser storage. Its hosted case makes no local API request. Final run logs are
+worker scratch `required-go.log` and `required-browser.log` under the assigned
+`TMPDIR`; these are not public deployment evidence. Tested source fingerprint:
+`f2fc8fa49afeea96b5bb22e7b89ae4820a30a24879bcc1e24d02c5f52a4590c3`;
+UI: `fde1de15c96828f7c7313e64e816a4dc10dc5957ab4f4e66f04bf58289c3c715`.
+Generated profiles must be rebuilt for different bytes/tools.
+
+**Remaining:** real Orca + Firefox/Linux speech/keyboard qualification for both
+profiles is NOT RUN. Automated browser workflows do not supply that manual gate,
+physical-device evidence, power-loss durability, stored-study verification or a
+sandbox against same-user software. No Fyne retirement/default switch, public
+deployment or scientific golden/tolerance change is claimed. The coordinator
+owns merged-tree full-suite verification and task/history closeout.

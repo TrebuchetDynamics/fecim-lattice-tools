@@ -45,7 +45,86 @@ func (j *AnalysisJob) Artifact(kind AnalysisArtifact) ([]byte, error) {
 	}
 	// Serialize under the job lock rather than cloning every reference point,
 	// especially for diagnostic CSVs which do not include references at all.
-	r := j.result
+	return analysisArtifact(j.result, kind)
+}
+
+// BrowserAnalysisArtifact serializes an untrusted browser result, not a verified
+// stored run. Validate dimensions before the shared table serializer indexes it.
+func BrowserAnalysisArtifact(r AnalysisResult, kind AnalysisArtifact) ([]byte, error) {
+	if _, err := validateConfig(r.Context.Config, Catalogue()); err != nil {
+		return nil, err
+	}
+	if r.Kind == AnalysisPUND {
+		if r.PUND == nil || r.FORC != nil {
+			return nil, errors.New("invalid PUND result")
+		}
+		for _, trace := range r.PUND.Traces {
+			if len(trace) == 0 || len(trace) > 10000 {
+				return nil, errors.New("invalid PUND trace size")
+			}
+		}
+	} else if r.Kind == AnalysisFORC {
+		if r.FORC == nil || r.PUND != nil {
+			return nil, errors.New("invalid FORC result")
+		}
+		f := r.FORC
+		if len(f.Sweep.Curves) == 0 || len(f.Sweep.Curves) > MaxFORCReversals {
+			return nil, errors.New("invalid FORC curves")
+		}
+		for _, c := range f.Sweep.Curves {
+			if len(c.AppliedField_Vm) != len(c.Polarization_Cm2) || len(c.AppliedField_Vm) > MaxFORCResolution {
+				return nil, errors.New("invalid FORC curve dimensions")
+			}
+		}
+		m := f.Matrix
+		if m.Rows < 1 || m.Cols < 1 || m.Rows > MaxFORCResolution || m.Cols > MaxFORCResolution || len(m.Density) != m.Rows || len(m.EaAxis) != m.Cols || len(m.EbAxis) != m.Rows {
+			return nil, errors.New("invalid FORC matrix dimensions")
+		}
+		for _, row := range m.Density {
+			if len(row) != m.Cols {
+				return nil, errors.New("invalid FORC matrix row")
+			}
+		}
+	} else {
+		return nil, errors.New("unsupported diagnostic")
+	}
+	r.Evidence = "browser simulation data; unverified supplied snapshot, not a verified persisted study"
+	r.ExperimentalValidation = false
+	// Contextual client text is not a server assertion of provenance or physics.
+	r.ScientificValues = nil
+	r.AppliedParameters = nil
+	r.Notices = []string{r.Evidence}
+	if len(r.References) > 32 {
+		return nil, errors.New("too many reference branches")
+	}
+	r.References = append([]Reference(nil), r.References...)
+	points := 0
+	for i := range r.References {
+		ref := &r.References[i]
+		points += len(ref.Points)
+		if points > MaxReferencePoints {
+			return nil, errors.New("too many reference points")
+		}
+		ref.Evidence = "imported_unverified"
+		ref.ExperimentalValidation = false
+		ref.Comparison = ComparisonAvailability{Reason: "Supplied browser reference; no server verification"}
+		ref.Points = append([]ReferencePoint(nil), ref.Points...)
+		for k, point := range ref.Points {
+			if !finite(point.E.SI) || !finite(point.P.SI) {
+				return nil, errors.New("nonfinite reference point")
+			}
+			ref.Points[k] = ReferencePoint{field(point.E.SI), polarization(point.P.SI)}
+		}
+	}
+	for _, material := range Catalogue() {
+		if material.ID == r.Context.Config.MaterialID {
+			r.ReferenceContext = materialReferenceContext(material)
+			break
+		}
+	}
+	return analysisArtifact(r, kind)
+}
+func analysisArtifact(r AnalysisResult, kind AnalysisArtifact) ([]byte, error) {
 	if kind == AnalysisJSON {
 		var buf artifactBuffer
 		encoder := json.NewEncoder(&buf)
