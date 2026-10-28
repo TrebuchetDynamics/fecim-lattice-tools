@@ -117,6 +117,8 @@ type Session struct {
 	history                     []sample
 	head, count, dropped, steps int
 	lastHistory                 float64
+	owner                       *Programmer // active programmer is the only drive/solver writer
+	calibrationRevision         uint64      // scientific calibration identity, including change-and-revert
 }
 
 func NewSession(c Config) (*Session, error) {
@@ -209,6 +211,13 @@ func (s *Session) at(i int) sample { return s.history[(s.head+i)%len(s.history)]
 func (s *Session) Apply(c Command) (Snapshot, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.owner != nil && c.Kind != SetView {
+		return s.snapshot(), ErrDriveOwned
+	}
+	return s.apply(c)
+}
+
+func (s *Session) apply(c Command) (Snapshot, error) {
 	fail := func(reason string) (Snapshot, error) { return s.snapshot(), errors.New(reason) }
 	if (c.Kind != Configure && c.Config != (Config{})) || (c.Kind != SetField && (c.Field != 0 || math.Signbit(c.Field))) || (c.Kind != SetView && c.View != "") {
 		return fail("unexpected command payload")
@@ -223,6 +232,9 @@ func (s *Session) Apply(c Command) (Snapshot, error) {
 			return s.snapshot(), nil
 		}
 		old := s.config
+		if old.MaterialID != c.Config.MaterialID || old.Model != c.Config.Model || old.Levels != c.Config.Levels || old.RangeFraction != c.Config.RangeFraction || old.Temperature != c.Config.Temperature || old.Stress != c.Config.Stress || old.Seed != c.Config.Seed {
+			s.calibrationRevision++
+		}
 		s.config = c.Config
 		if old.MaterialID != s.config.MaterialID {
 			s.material = m
@@ -316,6 +328,9 @@ func (s *Session) Apply(c Command) (Snapshot, error) {
 func (s *Session) Advance(b Budget) (Snapshot, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.owner != nil {
+		return s.snapshot(), ErrDriveOwned
+	}
 	if b.Steps < 1 || b.Steps > MaxSteps || !finite(b.DT) || b.DT <= 0 || b.DT > 1 {
 		return s.snapshot(), errors.New("budget needs 1–256 steps and physical dt in (0,1] seconds")
 	}

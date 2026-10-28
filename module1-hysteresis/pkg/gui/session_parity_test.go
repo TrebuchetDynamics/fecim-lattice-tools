@@ -1,7 +1,11 @@
 package gui
 
 import (
+	"reflect"
 	"testing"
+
+	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/shared/physics"
@@ -16,6 +20,140 @@ func TestWorkbenchSessionCharacterization(t *testing.T) {
 	nativeMaterials := ferroelectric.AllMaterials()
 	preferred, _ := defaultMaterialSelection(nativeMaterials)
 	defaults := hysteresis.DefaultConfig()
+	t.Run("programming shares native phase and drive history", func(t *testing.T) {
+		for _, tc := range []struct {
+			model   hysteresis.Model
+			mode    hysteresis.ProgramMode
+			domains int
+		}{
+			{hysteresis.Preisach, hysteresis.TargetWrite, 1}, {hysteresis.Preisach, hysteresis.WriteRead, 1},
+			{hysteresis.Landau, hysteresis.TargetWrite, 1}, {hysteresis.Landau, hysteresis.WriteRead, 1}, {hysteresis.Landau, hysteresis.WriteRead, 4},
+		} {
+			for _, method := range []hysteresis.ISPPMethod{hysteresis.LinearISPP, hysteresis.LogarithmicISPP} {
+				c := defaults
+				c.Mode = hysteresis.Manual
+				c.Model = tc.model
+				c.Seed = 42
+				s, err := hysteresis.NewSession(c)
+				if err != nil {
+					t.Fatal(err)
+				}
+				pc := hysteresis.DefaultProgramConfig()
+				pc.Mode = tc.mode
+				pc.Method = method
+				pc.Domains = tc.domains
+				p, err := hysteresis.NewProgrammer(s, pc)
+				if err != nil {
+					t.Fatal(err)
+				}
+				a := &App{material: preferred, preisach: ferroelectric.NewPreisachModel(preferred), lkSolver: physics.NewLKSolver(), numLevels: 30, wrdRangeFrac: c.RangeFraction, wrdGuardFrac: pc.GuardFraction, physicsEngine: PhysicsPreisach, frequency: c.Frequency, waveform: WaveformManual, manualAnimating: true, manualTargetLevel: 22, maxHistory: 50000, lastHistorySample: -1}
+				a.lkSolver.ConfigureFromMaterial(preferred)
+				a.lkSolver.UseNLS = false
+				a.lkSolver.EnableNoise = false
+				if tc.model == hysteresis.Landau {
+					a.physicsEngine = PhysicsLandau
+					a.lkSolver.SetState(a.lkDefaultPolarization())
+					a.polarization = a.lkSolver.GetState()
+				}
+				a.syncDiscreteLevelLocked()
+				a.writeController = controller.NewWriteController(30, a.effectiveEc(), a.effectiveEc()*2.5, nil)
+				a.writeController.StepMode = string(method)
+				if tc.mode == hysteresis.WriteRead {
+					a.waveform = WaveformWriteReadDemo
+					a.autoMode = true
+					a.wrdTargetLevel = 22
+					a.wrdSkipPrep = tc.model == hysteresis.Preisach
+				}
+				if tc.domains > 1 {
+					a.lkISPPPolydomainEnabled = true
+					a.lkISPPPolydomainDomains = tc.domains
+					a.lkISPPPolydomainSeed = c.Seed
+					a.syncLKSolverDomainModeLocked()
+				}
+				if _, err = p.Apply(hysteresis.ProgramCommand{Kind: hysteresis.WriteTarget, Target: 22}); err != nil {
+					t.Fatal(err)
+				}
+				for i := 0; i < 1800; i++ {
+					if i == 5 && tc.mode == hysteresis.WriteRead {
+						a.wrdNextTargetLevel = 8
+						p.Apply(hysteresis.ProgramCommand{Kind: hysteresis.WriteTarget, Target: 8})
+					}
+					a.UpdatePhysics(0.01)
+					v, err := p.Advance(hysteresis.Budget{Steps: 1, DT: 0.01})
+					if err != nil {
+						t.Fatal(err)
+					}
+					if v.Core.E.SI != a.electricField || v.Core.P.SI != a.polarization || v.Core.Level != a.discreteLevel || v.Controller.Phase != a.writeController.State || v.Controller.GuardPulses != a.writeController.GuardPulseCount || v.Controller.Overshoots != a.writeController.OvershootCount {
+						t.Fatalf("%s/%s/%s step %d: workbench E/P/L/state=%g/%g/%d/%s native=%g/%g/%d/%s", tc.model, tc.mode, method, i, v.Core.E.SI, v.Core.P.SI, v.Core.Level, v.Controller.Phase, a.electricField, a.polarization, a.discreteLevel, a.writeController.State)
+					}
+					nativePhase := hysteresis.PrepPhase
+					if tc.mode == hysteresis.TargetWrite {
+						if a.manualPhase == 1 {
+							nativePhase = hysteresis.WritePhase
+						}
+						if a.manualPhase == 2 {
+							nativePhase = hysteresis.DisplayPhase
+						}
+					} else {
+						if a.wrdPhase == 2 {
+							nativePhase = hysteresis.WritePhase
+						}
+						if a.wrdPhase == 5 {
+							nativePhase = hysteresis.DisplayPhase
+						}
+					}
+					if v.Status == hysteresis.ProgramRunning && v.Phase != nativePhase {
+						t.Fatalf("phase differs at %d: got %s native %s", i, v.Phase, nativePhase)
+					}
+					if v.Status != hysteresis.ProgramRunning || (tc.mode == hysteresis.WriteRead && tc.domains == 1 && v.Target == 8) {
+						break
+					}
+				}
+				a.resetAllStateLocked()
+				v, err := p.Apply(hysteresis.ProgramCommand{Kind: hysteresis.ResetProgram})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if v.Core.E.SI != a.electricField || v.Core.P.SI != a.polarization || v.Core.Level != a.discreteLevel || v.Core.Count != a.historyLengthLocked() {
+					t.Fatal("reset differs from native")
+				}
+
+			}
+		}
+	})
+	t.Run("bounded calibration preserves native tables", func(t *testing.T) {
+		for _, landau := range []bool{false, true} {
+			a := &App{material: preferred, preisach: ferroelectric.NewPreisachModel(preferred), lkSolver: physics.NewLKSolver(), numLevels: 2, wrdRangeFrac: rangeFracForMaterial(preferred), physicsEngine: PhysicsPreisach, calibManager: algo.NewCalibrationManager(2)}
+			a.lkSolver.ConfigureFromMaterial(preferred)
+			a.running.Store(true)
+			if landau {
+				a.physicsEngine = PhysicsLandau
+			}
+			a.calibrateLevels()
+			// Captured from the independent native implementation before extraction.
+			wantField := 9.775e7
+			if landau {
+				wantField = 1.547e8
+			}
+			if !reflect.DeepEqual(a.calibrationUp, []float64{0, wantField}) || !reflect.DeepEqual(a.calibrationDown, []float64{-wantField, 0}) {
+				t.Fatal("native two-level calibration changed")
+			}
+			job, err := controller.NewLevelCalibration(*preferred, landau, 2, a.wrdRangeFrac, 300, 1e9)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for i := 0; !job.Done() && i < 2100000; i++ {
+				job.Step()
+			}
+			got, err := job.Result()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(got, a.calibManager) {
+				t.Fatalf("bounded calibration differs from native (LK=%v): got %+v want %+v", landau, got, a.calibManager)
+			}
+		}
+	})
 	t.Run("material transitions preserve native solver fallback configuration", func(t *testing.T) {
 		// ConfigureFromMaterial intentionally retains fallback fields omitted by
 		// incomplete presets. Test transitions as well as fresh constructors.

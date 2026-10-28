@@ -70,6 +70,10 @@ func (s *Session) snapshot() Snapshot {
 	if !manual.Enabled {
 		manual.Reason = "Automatic waveform owns the field; select Manual for direct field control"
 	}
+	if s.owner != nil {
+		manual.Enabled = false
+		manual.Reason = "Programming owns the drive; cancel or reset through Programmer"
+	}
 	temp := Control{Enabled: s.config.Model == Landau, Unit: "K", Min: 200, Max: 700, Step: 25}
 	stress := Control{Enabled: s.config.Model == Landau, Unit: "Pa", Min: 0, Max: 5e9, Step: 1e8}
 	if !temp.Enabled {
@@ -79,7 +83,7 @@ func (s *Session) snapshot() Snapshot {
 	start, end := s.viewBounds()
 	v := Snapshot{Revision: s.revision, ConfigRevision: s.configRevision, Config: s.config, State: s.state, View: s.view, Material: s.material, Catalogue: append([]Material(nil), s.catalogue...), Models: []Model{Preisach, Landau}, Modes: []Mode{Manual, Sine, Triangle}, Evidence: "simulation_only", Assumptions: []string{
 		"Material presets are educational simulation parameters, not validated device measurements",
-		"Interactive L-K is deterministic single-domain; NLS and noise are disabled",
+		"Interactive L-K disables NLS and noise; programming can explicitly select seeded polydomain dynamics",
 		"Discrete levels are configurable educational bins, not demonstrated device states",
 	}, Controls: Controls{ManualField: manual, Frequency: Control{Enabled: true, Unit: "Hz", Min: 0, MinExclusive: true, Max: math.MaxFloat64 / (2 * math.Pi * maxTime), SliderMin: 0.01, SliderMax: 1}, TimeScale: Control{Enabled: true, Unit: "ratio", Min: 1e-9, Max: 1}, Temperature: temp, Stress: stress, Levels: Control{Enabled: true, Unit: "levels", Min: 2, Max: 64, Step: 1}, RangeFraction: Control{Enabled: true, Unit: "ratio", Min: 0.5, Max: 1}, History: Control{Enabled: true, Unit: "samples", Min: 1000, Max: MaxSamples, Step: 1}}, E: field(s.e), P: polarization(s.p), Time: s.time, Level: s.level, Count: s.count, Dropped: s.dropped, SolverSteps: s.steps, ViewCount: end - start}
 	// Include both ends using bounded index selection; all omitted plot points
