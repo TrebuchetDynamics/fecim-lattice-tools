@@ -1,7 +1,7 @@
 ### Build Instructions
 
 **Prerequisites:**
-- Go 1.25+ (https://go.dev/dl/)
+- Go 1.26.10+ (patched minimum in [`go.mod`](go.mod); https://go.dev/dl/)
 - Git
 - Node.js/npm (only for the Astro web landing page)
 
@@ -11,9 +11,11 @@ The Fyne desktop app requires CGO, a C compiler, and native graphics development
 ```bash
 git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
 cd fecim-lattice-tools
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+CGO_ENABLED=1 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools
 ```
+
+Alternatively, `./launch.sh` builds and starts the default Fyne desktop app. It defaults unset or empty `CGO_ENABLED` to `1` and preserves explicit caller settings. Use `CGO_ENABLED=0 ./launch.sh --help` for headless use, not desktop startup. See [installation and launcher behavior](docs/guides/installation.md#build-and-run) for headless subcommands, argument forwarding, and `--clear` cleanup scope.
 
 ### Verify Installation
 ```bash
