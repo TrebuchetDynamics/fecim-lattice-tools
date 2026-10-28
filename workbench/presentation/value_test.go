@@ -11,6 +11,50 @@ import (
 	"fecim-lattice-tools/workbench/presentation"
 )
 
+// TestHysteresisValues checks SI conversion independently of the session/GUI.
+func TestHysteresisValues(t *testing.T) {
+	for _, tt := range []struct {
+		name                  string
+		format                func(float64, string) presentation.Value
+		si, factor            float64
+		unit, speech, missing string
+	}{
+		{"negative E", presentation.FormatElectricField, -1.25e8, 1e-8, "MV/cm", "minus 1 point 2 5 megavolts per centimeter", ""},
+		{"zero E", presentation.FormatElectricField, 0, 1e-8, "MV/cm", "0 megavolts per centimeter", ""},
+		{"signed zero P", presentation.FormatPolarization, math.Copysign(0, -1), 100, "µC/cm²", "minus 0 microcoulombs per square centimeter", ""},
+		{"negative P", presentation.FormatPolarization, -0.25, 100, "µC/cm²", "minus 25 microcoulombs per square centimeter", ""},
+		{"exponent E", presentation.FormatElectricField, 1e-12, 1e-8, "MV/cm", "1 times 10 to the minus 20 megavolts per centimeter", ""},
+		{"exponent P", presentation.FormatPolarization, 1e20, 100, "µC/cm²", "1 times 10 to the plus 22 microcoulombs per square centimeter", ""},
+		{"missing", presentation.FormatPolarization, 0, 100, "µC/cm²", "", "No sample was produced"},
+		{"nonfinite", presentation.FormatElectricField, math.NaN(), 1e-8, "MV/cm", "", ""},
+		{"overflow", presentation.FormatPolarization, math.MaxFloat64, 100, "µC/cm²", "", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			bits := math.Float64bits(tt.si)
+			got := tt.format(tt.si, tt.missing)
+			if math.Float64bits(tt.si) != bits {
+				t.Fatal("canonical SI changed")
+			}
+			if tt.missing != "" || math.IsNaN(tt.si) || math.IsInf(tt.si*tt.factor, 0) {
+				if got.Availability != "unavailable" || got.Reason == "" || !strings.Contains(got.Speakable, got.Reason) {
+					t.Fatalf("missing reason: %+v", got)
+				}
+				if tt.missing != "" && got.Reason != tt.missing {
+					t.Fatal("reason lost")
+				}
+				return
+			}
+			want := strconv.FormatFloat(tt.si*tt.factor, 'g', -1, 64) + " " + tt.unit
+			if got.Display != want || got.Speakable != tt.speech || got.Availability != "available" {
+				t.Fatalf("got %+v want %q / %q", got, want, tt.speech)
+			}
+		})
+	}
+	if got := presentation.FormatMetric(experiment.Metric{Value: 1, Unit: "V/m"}, ""); got.Reason != `Unsupported metric unit "V/m"` {
+		t.Fatal("unsupported-unit compatibility changed")
+	}
+}
+
 // These synthetic fixtures catch lost signs, scale, precision, unit vocabulary,
 // fabricated missing values and mutation of the scientific record. They do not
 // qualify actual Orca pronunciation.
