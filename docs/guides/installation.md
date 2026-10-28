@@ -66,7 +66,9 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools-cli ./cmd/fecim-lattice-tools
 
 Use that binary with the [workbench guide's](research-design-workbench.md) `project validate`, `experiment run`, and `report generate` subcommands. Running it without a headless subcommand requests the desktop and fails.
 
-**Launcher limitation:** [`launch.sh:29`](../../launch.sh) currently forces `CGO_ENABLED=0`, so it cannot launch the desktop. Use the explicit desktop build above instead. Recheck this guidance when the launcher or the CGO entry points change.
+Alternatively, [`./launch.sh`](../../launch.sh) builds and starts the default Fyne desktop app. It defaults an unset or empty `CGO_ENABLED` to `1` and preserves an explicit caller value. For headless commands, use `CGO_ENABLED=0 ./launch.sh --help` or the subcommands above; there is no automatic headless fallback if the desktop build fails.
+
+The launcher forwards arguments unchanged except for `--clear`, which deletes only `logs/` and `docs/assets/screenshots/` relative to the script before building. It replaces the root `fecim-lattice-tools` binary on each run, never launches after a failed build, and returns the application's exit status. See [`launch.sh:9–36`](../../launch.sh) and the display-free [launcher contract test](../../scripts/launch_contract_test.go). Recheck this guidance when the launcher or the CGO entry points change.
 
 ## Optional local React Hysteresis application
 
