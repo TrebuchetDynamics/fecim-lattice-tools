@@ -50,6 +50,46 @@ func FormatMetric(metric experiment.Metric, unavailableReason string) Value {
 		spokenUnit = "microcoulombs per square centimeter"
 	case "A":
 		spokenUnit = "amperes"
+	case "s":
+		spokenUnit = "seconds"
+	case "C":
+		spokenUnit = "coulombs"
+	case "C/V²":
+		spokenUnit = "coulombs per square volt"
+	case "m²":
+		spokenUnit = "square meters"
+	case "m":
+		spokenUnit = "meters"
+	case "J":
+		spokenUnit = "joules"
+	case "V":
+		spokenUnit = "volts"
+	case "S":
+		spokenUnit = "siemens"
+	case "Ω·m":
+		spokenUnit = "ohm meters"
+	case "V·m/C":
+		spokenUnit = "volt meters per coulomb"
+	case "J·m⁵/C⁴":
+		spokenUnit = "joule meters to the fifth power per coulombs to the fourth power"
+	case "J·m⁹/C⁶":
+		spokenUnit = "joule meters to the ninth power per coulombs to the sixth power"
+	case "V/(m·K)":
+		spokenUnit = "volts per meter per kelvin"
+	case "C/(m²·K)":
+		spokenUnit = "coulombs per square meter per kelvin"
+	case "m⁴/C²":
+		spokenUnit = "meters to the fourth power per square coulomb"
+	case "cycles":
+		spokenUnit = "cycles"
+	case "Hz":
+		spokenUnit = "hertz"
+	case "K":
+		spokenUnit = "kelvin"
+	case "Pa":
+		spokenUnit = "pascals"
+	case "ratio":
+		spokenUnit = "ratio"
 	case "Ω":
 		spokenUnit = "ohms"
 	case "":

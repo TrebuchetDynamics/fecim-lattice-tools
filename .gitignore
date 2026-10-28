@@ -119,6 +119,7 @@ output/regression/
 web/fecim.wasm
 web/.astro/
 web/dist/
+web/dist-local/
 # Dependency installs for the marketing site and future React workbench.
 node_modules/
 web/test-results/

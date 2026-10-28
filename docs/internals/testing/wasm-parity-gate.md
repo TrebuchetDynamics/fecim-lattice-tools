@@ -1,6 +1,6 @@
 # WASM parity gate — historical example and production qualification
 
-**Current scope:** [Production hysteresis qualification](#4-production-hysteresis-worker-qualification) adds real CORE/PROGRAM/ANALYSIS Worker evidence. Sections 1–3 and the historical verification below retain the earlier **example-only** receipt; their unimplemented/next-scope statements describe that earlier checkpoint, not current production status. No React-route, deployment or Orca qualification is inferred.
+**Current scope:** [Shared React route qualification](#5-shared-react-route-qualification) adds actual hosted/local asset-profile, workflow, isolation and route-budget evidence. [Production hysteresis qualification](#4-production-hysteresis-worker-qualification) retains the preceding CORE/PROGRAM/ANALYSIS Worker checkpoint. Sections 1–3 and the historical verification retain the earlier **example-only** receipt; their unimplemented/next-scope statements describe those checkpoints, not current candidate status. No deployment, authenticated local-adapter or Orca qualification is inferred.
 
 Historical scope: prerequisites only, before any React feature implementation. Related: [gate/run instructions](../../../validation/wasm/README.md), [one-app decision](../adr/0005-unified-react-hosted-and-local.md), [package feasibility](../architecture/browser-wasm-feasibility.md) and [HZO first-slice plan](../superpowers/plans/2026-10-25-hosted-hzo-first-slice.md). No implementation of that slice or commit is authorized by this receipt.
 
@@ -152,4 +152,56 @@ Retained receipts under `/var/tmp/aw-1000-bc334d01-1/final-evidence/`:
 
 Detailed logs are in that scratch directory's parent (`final-parity.log`, `final-race.log`, `final-numerical.log`, `final-bridge.log`, `final-curves.log`). Scratch retention is host-local; rerun the documented gate when qualifying different bytes/tools. These are not deployed artifacts or durable public measurements.
 
-**Remaining separate gates:** HYS-UI owns the complete React-route 2 MiB Brotli transfer and cold usable-route budget, rendering/focus/speech behavior and real Orca/keyboard qualification. No hosted upload/persistence, local capability escalation, Fyne removal, launch-default change or hardware validation is asserted here.
+**Remaining at this Worker checkpoint** (see section 5 for subsequent automated React evidence): HYS-UI owns the complete React-route 2 MiB Brotli transfer and cold usable-route budget, rendering/focus/speech behavior and real Orca/keyboard qualification. No hosted upload/persistence, local capability escalation, Fyne removal, launch-default change or hardware validation is asserted here.
+
+## 5. Shared React route qualification
+
+The HYS-UI candidate replaces Astro with one React/TypeScript/Vite route tree: public home and `/hysteresis`, built as hosted `web/dist` and local `web/dist-local` asset profiles. The production Worker shim is unchanged. [web/README.md](../../../web/README.md) owns setup, operation and capability limits. Source owners: [shared routes](../../../web/src/main.tsx), [lifecycle scheduler](../../../web/src/hysteresis/engine.ts), [Go asset builder](../../../web/src/build/build.mjs) and [Go-generated catalogue](../../../web/src/build/catalog.go). This is automated candidate evidence, not deployment or manual screen-reader acceptance.
+
+### Scope and scientific ownership
+
+Go supplies materials, defaults, controls, availability, diagnostic identity, computation and scientific display/speech. The interface covers CORE, target/write-read programming, in-memory calibration, unavailable time-resolved status, independent PUND/FORC and imported unverified reference context through production envelopes. Native 32-row pages retain revisions, headers, Go speech and canonical SI access; the bounded plot is supplementary. There is no TypeScript solver, unit conversion or derived metric.
+
+Additive Go presentation fields (`TimeValue`, `CurrentValue`, `DensityValue`, `ScientificValues`, `AppliedParameters`) expose previously raw scalar values using the existing formatter. Material physical parameters also receive Go units/speech; Ea and StressGPa are presented as SI joules and pascals without altering their source preset fields. Canonical numerical fields, equations, defaults, diagnostic protocols, goldens and tolerances are unchanged. The Go catalogue selects applicable diagnostic columns instead of displaying unrelated struct zero values.
+
+### Actual route and parity measurements
+
+`web/test/e2e/hosted-isolation.spec.ts` measures the complete compiled route, not just the Worker driver. Three fresh Chromium contexts time navigation through explicit Advance batch, paused Go-default Sine results and the first complete signed 32-row page. Actual HTTP assets include HTML, JS/CSS, lazy Hysteresis code, manifest, Worker, WASM and runtime; same-origin Blob execution transfers no HTTP bytes. The private server negotiates Brotli, uses no-store responses, adds 100 ms request RTT and schedules chunks over one aggregate 10,000,000 bit/s link. Compression is precomputed server-side; no host-wide networking is changed.
+
+| Asset profile | Complete route Brotli bytes | Cold completed-result times (ms) |
+|---|---:|---|
+| Hosted | 1,243,900 | 2,252 / 2,245 / 2,264 |
+| Local assets, no local adapter | 1,243,984 | 2,248 / 2,254 / 2,293 |
+
+Both pass the 2 MiB Brotli route and 5 s per cold result guardrails. Module/runtime/Worker totals: 5,736,889 raw, 1,171,023 Brotli-11 and 1,581,766 gzip-9 bytes, below the independent 6 MiB / 1.5 MiB / 2 MiB caps. These are controlled private-host measurements, not CDN, low-end-device, peak-memory or real-time guarantees.
+
+Test host: Linux x86-64, AMD Ryzen 9 5900X (24 logical CPUs), Node 24.19.0, Go 1.26.10, Playwright 1.60.0, Chromium 152.0.7977.75 and compatible Firefox 150.0.2. Chromium performs the controlled budget measurement; both engines exercise workflow/DOM/accessibility contracts.
+
+Tested source/runtime build identity: `e102ef610c8d0ed4b006c1720d2f2a275c885a0fb5f3872e0e48f71b0aba512d`; frontend content: `81fa00d18a24863e3f68e6e17cdedc6ef059b54f14c06d6fbe6c520d6258ebe7`. Protocol/model remain `fecim-hysteresis/1` and `hysteresis-producers/1`. Both profiles emit the same Go identity/catalogue; the local callback profile changes compiled JS, not scientific code or views.
+
+The enabled native/Node/Firefox gate compared 2,346,420 original production transcript bytes in each runtime; each SHA-256 is `9492eab33efc259d7c275a6872159ff0e61d9f096203a65e413963d1b1feaf48`. Independent example parity, Worker lifecycle and admission budgets also pass. No field stripping, parsed-object comparison, rounding or tolerance weakening was used.
+
+### RED/GREEN and verification
+
+The retry observed RED at the independent landing contract (missing React home), real browser workflow (missing Material input), and producer JSON scalar contract (missing Go TimeValue/units/speech). GREEN uses the shared React app and actual Go envelopes. Reapplying the prior CI step rename reproduced `TestCIRunsWebTestsAndProductionBuild` failure; GREEN preserves its exact original required install/test/build step and adds typecheck/explicit dual-profile builds, both browser profiles and enabled scientific parity alongside it. No independent CI guard was weakened.
+
+Fresh read-only review reproduced an earlier rejected command stranding a newer Run, pending reference reads undoing Clear, missing material units/speech, valid JSON provenance rejected by invented UI metadata, and edited diagnostic inputs leaving old results unmarked. Each has a focused RED→GREEN regression (five browser cases and the extended Go JSON scalar test). Command errors now retire only their own pump; reference reads are generation-bound, catch read errors and gate Analyze; JSON provenance stays with Go; material presentation stays Go-owned; retained diagnostics label edited inputs stale. Metadata exposes Go speech as readable text rather than relying on an aria-label on an unnamed span.
+
+Fresh checks on the source identities above:
+
+- `cd web && npm ci && npm test`: pass, locked installation and retained React/content/deployment/no-Fyne guards.
+- `cd web && npm run typecheck && npm run build:hosted && npm run build:local`: pass.
+- `cd web && npm run test:e2e -- test/e2e/hysteresis.spec.ts test/e2e/hosted-isolation.spec.ts`: 51 passed, 4 measurement-only skips (one controlled Chromium measurement per profile).
+- `cd web && npm run test:e2e -- test/e2e/fecim-web.spec.mjs`: 19 passed, 6 viewport-specific skips; existing home/content/layout/navigation checks retained.
+- `cd web && FECIM_WEB_PROFILE=local npm run test:e2e`: 70 passed, 10 documented measurement/viewport skips.
+- `FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -count=1`: pass with compatible Firefox and retained artifacts.
+- `go test ./workbench/hysteresis ./workbench/presentation -count=1` and the same packages with `-race`: pass.
+- `go test ./scripts -run 'TestCI|TestExternalValidationWorkflowRejectsNonGatingMutations' -count=1`: pass, including the previously held CI contract.
+
+Servers used assigned private ports: hosted 20100/20101, local 20110/20111, parity 20120/20121. Logs/artifacts under `/var/tmp/aw-1000-bc334d01-1/`: `ui-required-hosted-final.log`, `ui-home-final.log`, `ui-local-final.log`, `ui-parity-final.log`, `ui-parity-final/`, `ui-race-final.log`. Playwright emits source-bound `ROUTE_BUDGET` log records and `route-budget.json` attachments. Scratch evidence is host-local, not a durable public endpoint; rerun for different source/tools.
+
+### Remaining separate gates
+
+Real Orca + Firefox/Linux speech/keyboard qualification remains **NOT RUN** for hosted and authenticated local profiles. Automated DOM/focus/keyboard, narrow-width/200% text, quiet-progress and accessibility checks do not attest pronunciation or usable Orca table reading. The [manual acceptance owner](../superpowers/specs/2026-10-25-accessible-browser-workbench-orca-acceptance.md) must supply that evidence.
+
+HYS-LOCAL still owns the authenticated local adapter, embedded assets and serve/file workflows. The local asset profile alone grants no filesystem capability. Absent-adapter buttons give instructions without upload, persistence, download or localhost discovery. No public deployment, push, shared service change, Fyne retirement, launch-default change or hardware validation occurred. The coordinator owns merged-tree full-suite verification and shared task/history reconciliation.

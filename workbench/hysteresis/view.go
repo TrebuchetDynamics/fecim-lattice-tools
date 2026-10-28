@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 
+	"fecim-lattice-tools/shared/constants"
+	"fecim-lattice-tools/workbench/experiment"
 	"fecim-lattice-tools/workbench/presentation"
 )
 
@@ -15,16 +17,54 @@ type Quantity struct {
 	Presentation presentation.Value
 }
 
+func scalar(si float64, unit string) Quantity {
+	return Quantity{si, unit, presentation.FormatMetric(experiment.Metric{Value: si, Unit: unit}, "")}
+}
+func configValues(c Config, prefix string) map[string]Quantity {
+	return map[string]Quantity{
+		prefix + "Frequency": scalar(c.Frequency, "Hz"), prefix + "TimeScale": scalar(c.TimeScale, "ratio"),
+		prefix + "Temperature": scalar(c.Temperature, "K"), prefix + "Stress": scalar(c.Stress, "Pa"),
+		prefix + "RangeFraction": scalar(c.RangeFraction, "ratio"),
+	}
+}
+
+// materialValues presents the original preset in explicit SI units, without
+// changing the producer parameters (Ea is stored in eV, StressGPa in GPa).
+func materialValues(m Material, prefix string) map[string]Quantity {
+	p := m.Parameters
+	return map[string]Quantity{
+		prefix + "Pr": polarization(p.Pr), prefix + "Ps": polarization(p.Ps), prefix + "Ec": field(p.Ec),
+		prefix + "Epsilon": scalar(p.Epsilon, "ratio"), prefix + "EpsilonLF": scalar(p.EpsilonLF, "ratio"), prefix + "LossAngle": scalar(p.LossAngle, "ratio"),
+		prefix + "Thickness": scalar(p.Thickness, "m"), prefix + "Area": scalar(p.Area, "m²"),
+		prefix + "Tau": scalar(p.Tau, "s"), prefix + "Tau0": scalar(p.Tau0, "s"),
+		prefix + "Ea": scalar(p.Ea*constants.ElectronChargeC, "J"), prefix + "Alpha": scalar(p.Alpha, "ratio"),
+		prefix + "K_dep":      scalar(p.K_dep, "V·m/C"),
+		prefix + "BetaLandau": scalar(p.BetaLandau, "J·m⁵/C⁴"), prefix + "GammaLandau": scalar(p.GammaLandau, "J·m⁹/C⁶"),
+		prefix + "RhoViscosity": scalar(p.RhoViscosity, "Ω·m"), prefix + "SeriesResistanceOhm": scalar(p.SeriesResistanceOhm, "Ω"),
+		prefix + "CurieTemp": scalar(p.CurieTemp, "K"), prefix + "CurieConst": scalar(p.CurieConst, "K"),
+		prefix + "TempCoeffEc": scalar(p.TempCoeffEc, "V/(m·K)"), prefix + "TempCoeffPr": scalar(p.TempCoeffPr, "C/(m²·K)"),
+		prefix + "StressGPa": scalar(p.StressGPa*1e9, "Pa"), prefix + "EnduranceCycles": scalar(p.EnduranceCycles, "cycles"),
+		prefix + "RetentionTime": scalar(p.RetentionTime, "s"), prefix + "ImrintField": field(p.ImrintField),
+		prefix + "TargetRangeFrac": scalar(p.TargetRangeFrac, "ratio"), prefix + "Tau0NLS": scalar(p.Tau0NLS, "s"),
+		prefix + "EaNLS": field(p.EaNLS), prefix + "NLSSigma": scalar(p.NLSSigma, "ratio"),
+		prefix + "Gmin": scalar(p.Gmin, "S"), prefix + "Gmax": scalar(p.Gmax, "S"),
+		prefix + "KvT": scalar(p.KvT, "V"), prefix + "VGSReadV": scalar(p.VGSReadV, "V"), prefix + "VT0V": scalar(p.VT0V, "V"),
+		prefix + "C2CSigmaBase": scalar(p.C2CSigmaBase, "ratio"), prefix + "C2CExponent": scalar(p.C2CExponent, "ratio"),
+		prefix + "Q11": scalar(p.Q11, "m⁴/C²"), prefix + "Q12": scalar(p.Q12, "m⁴/C²"),
+	}
+}
+
 func field(si float64) Quantity { return Quantity{si, "V/m", presentation.FormatElectricField(si, "")} }
 func polarization(si float64) Quantity {
 	return Quantity{si, "C/m²", presentation.FormatPolarization(si, "")}
 }
 
 type Row struct {
-	Index  int
-	Time   float64
-	Branch string
-	E, P   Quantity
+	TimeValue Quantity
+	Index     int
+	Time      float64
+	Branch    string
+	E, P      Quantity
 }
 type PlotPoint struct {
 	Index      int
@@ -46,6 +86,7 @@ type Controls struct{ ManualField, Frequency, TimeScale, Temperature, Stress, Le
 // settings invalidation for consumers such as calibration/export eligibility;
 // Revision binds every state/view mutation and each completed numerical step.
 type Snapshot struct {
+	ScientificValues                       map[string]Quantity
 	Revision, ConfigRevision               uint64
 	Config                                 Config
 	State                                  string
@@ -86,6 +127,11 @@ func (s *Session) snapshot() Snapshot {
 		"Interactive L-K disables NLS and noise; programming can explicitly select seeded polydomain dynamics",
 		"Discrete levels are configurable educational bins, not demonstrated device states",
 	}, Controls: Controls{ManualField: manual, Frequency: Control{Enabled: true, Unit: "Hz", Min: 0, MinExclusive: true, Max: math.MaxFloat64 / (2 * math.Pi * maxTime), SliderMin: 0.01, SliderMax: 1}, TimeScale: Control{Enabled: true, Unit: "ratio", Min: 1e-9, Max: 1}, Temperature: temp, Stress: stress, Levels: Control{Enabled: true, Unit: "levels", Min: 2, Max: 64, Step: 1}, RangeFraction: Control{Enabled: true, Unit: "ratio", Min: 0.5, Max: 1}, History: Control{Enabled: true, Unit: "samples", Min: 1000, Max: MaxSamples, Step: 1}}, E: field(s.e), P: polarization(s.p), Time: s.time, Level: s.level, Count: s.count, Dropped: s.dropped, SolverSteps: s.steps, ViewCount: end - start}
+	v.ScientificValues = configValues(s.config, "Config / ")
+	v.ScientificValues["Time"] = scalar(s.time, "s")
+	for key, value := range materialValues(s.material, "Material / Parameters / ") {
+		v.ScientificValues[key] = value
+	}
 	// Include both ends using bounded index selection; all omitted plot points
 	// remain accessible through the revision-bound table.
 	n := min(MaxPlotPoints, end-start)
@@ -155,7 +201,7 @@ func (s *Session) Page(q PageQuery) (Page, error) {
 	p := Page{Revision: s.revision, Offset: q.Offset, Total: total, Rows: make([]Row, 0, n)}
 	for i := 0; i < n; i++ {
 		r := s.at(start + q.Offset + i)
-		p.Rows = append(p.Rows, Row{Index: r.Index, Time: r.Time, Branch: r.Branch, E: field(r.E), P: polarization(r.P)})
+		p.Rows = append(p.Rows, Row{TimeValue: scalar(r.Time, "s"), Index: r.Index, Time: r.Time, Branch: r.Branch, E: field(r.E), P: polarization(r.P)})
 	}
 	if n == 0 {
 		p.Position = fmt.Sprintf("No rows; %d retained samples in this view", total)

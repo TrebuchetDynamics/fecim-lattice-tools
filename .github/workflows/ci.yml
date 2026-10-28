@@ -21,20 +21,52 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Setup pinned Go for browser assets
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
       - name: Test and build web app
         run: npm ci && npm test && npm run build
         working-directory: web
+
+      - name: Typecheck and build both shared React profiles
+        run: npm run typecheck && npm run build:hosted && npm run build:local
+        working-directory: web
+
+      - name: Install locked browser engines
+        run: npx playwright install --with-deps chromium firefox
+        working-directory: web
+
+      - name: Hosted React workflows, isolation and route budgets
+        run: npm run test:e2e
+        working-directory: web
+
+      - name: Local profile with the same routes and browser contracts
+        run: npm run test:e2e
+        working-directory: web
+        env:
+          FECIM_WEB_PROFILE: local
+
+      - name: Exact native Node Firefox scientific parity and Worker budgets
+        run: go test ./validation/wasm -count=1 -v
+        env:
+          FECIM_WASM_PARITY: '1'
+          CGO_ENABLED: '1'
+
+      - name: Retain browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: react-browser-failures
+          path: web/test-results
+          if-no-files-found: ignore
 
       - name: Install GUI build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
-
-      - name: Setup Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: go.mod
-          cache: true
 
       - name: Run make ci
         run: make ci

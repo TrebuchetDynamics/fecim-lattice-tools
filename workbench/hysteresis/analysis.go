@@ -71,6 +71,8 @@ type FORCDiagnostic struct {
 	Matrix FORCMatrix
 }
 type AnalysisResult struct {
+	ScientificValues       map[string]Quantity
+	AppliedParameters      map[string]any
 	Revision               uint64
 	Kind                   AnalysisKind
 	Context                AnalysisContext
@@ -265,6 +267,25 @@ func (j *AnalysisJob) Result() (AnalysisResult, error) {
 		return AnalysisResult{}, ErrAnalysisIncomplete
 	}
 	r := j.result
+	r.ScientificValues = configValues(r.Context.Config, "Context / Config / ")
+	a := r.Diagnostic.Applied
+	if r.Kind == AnalysisPUND {
+		r.AppliedParameters = map[string]any{"EcVm": a.EcVm, "PsCm2": a.PsCm2, "DeltaVm": a.DeltaVm, "AmplitudeVm": a.AmplitudeVm, "PulseWidthS": a.PulseWidthS, "SampleIntervalS": a.SampleIntervalS, "AreaM2": a.AreaM2}
+		for key, value := range map[string]Quantity{
+			"EcVm": field(a.EcVm), "PsCm2": polarization(a.PsCm2), "DeltaVm": field(a.DeltaVm), "AmplitudeVm": field(a.AmplitudeVm),
+			"PulseWidthS": scalar(a.PulseWidthS, "s"), "SampleIntervalS": scalar(a.SampleIntervalS, "s"), "AreaM2": scalar(a.AreaM2, "m²"),
+		} {
+			r.ScientificValues["Diagnostic / Applied / "+key] = value
+		}
+		c := r.PUND.Charges
+		for key, value := range map[string]float64{"QP_C": c.QP_C, "QU_C": c.QU_C, "QN_C": c.QN_C, "QD_C": c.QD_C, "SwitchingPositive_C": c.SwitchingPositive_C, "SwitchingNegative_C": c.SwitchingNegative_C} {
+			r.ScientificValues["PUNDCharges / "+key] = scalar(value, "C")
+		}
+	} else {
+		r.AppliedParameters = map[string]any{"PsCm2": a.PsCm2, "EmaxVm": a.EmaxVm, "Reversals": a.Reversals, "Resolution": a.Resolution}
+		r.ScientificValues["Diagnostic / Applied / PsCm2"] = polarization(a.PsCm2)
+		r.ScientificValues["Diagnostic / Applied / EmaxVm"] = field(a.EmaxVm)
+	}
 	r.Notices = append([]string(nil), r.Notices...)
 	r.ReferenceContext.Citations = append([]Citation(nil), r.ReferenceContext.Citations...)
 	r.References = append([]Reference(nil), r.References...)
@@ -318,10 +339,11 @@ type AnalysisPageQuery struct {
 	Offset   int
 }
 type AnalysisRow struct {
-	Index                    int
-	Pulse, Branch            string
-	TimeS, CurrentA, Density float64
-	E, P, Ea, Eb, Reversal   Quantity
+	TimeValue, CurrentValue, DensityValue Quantity
+	Index                                 int
+	Pulse, Branch                         string
+	TimeS, CurrentA, Density              float64
+	E, P, Ea, Eb, Reversal                Quantity
 }
 type AnalysisPage struct {
 	Context       AnalysisContext
@@ -393,6 +415,8 @@ func analysisRow(r AnalysisResult, table AnalysisTable, index int) AnalysisRow {
 				row.Pulse = []string{"P", "U", "N", "D"}[i]
 				row.TimeS = s.TimeS
 				row.CurrentA = s.CurrentA
+				row.TimeValue = scalar(s.TimeS, "s")
+				row.CurrentValue = scalar(s.CurrentA, "A")
 				break
 			}
 			index -= len(trace)
@@ -414,6 +438,7 @@ func analysisRow(r AnalysisResult, table AnalysisTable, index int) AnalysisRow {
 		row.Ea = field(m.EaAxis[c])
 		row.Eb = field(m.EbAxis[i])
 		row.Density = m.Density[i][c]
+		row.DensityValue = scalar(row.Density, "C/V²")
 	}
 	return row
 }

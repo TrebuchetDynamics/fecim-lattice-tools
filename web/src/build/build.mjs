@@ -1,0 +1,103 @@
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const web = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repo = resolve(web, "..");
+const pin = readFileSync(join(repo, "go.mod"), "utf8").match(/^go (\S+)/m)[1];
+const env = { ...process.env, GOTOOLCHAIN: "go" + pin };
+const go = (args) =>
+  execFileSync("go", args, { cwd: repo, env, maxBuffer: 16 * 1024 * 1024 });
+if (go(["version"]).toString().split(" ")[2] !== "go" + pin)
+  throw new Error("Pinned Go toolchain required");
+const root = go(["env", "GOROOT"]).toString().trim();
+const runtime = readFileSync(join(root, "lib/wasm/wasm_exec.js"));
+const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const names = execFileSync(
+  "git",
+  [
+    "ls-files",
+    "--cached",
+    "--others",
+    "--exclude-standard",
+    "*.go",
+    "go.mod",
+    "go.sum",
+  ],
+  { cwd: repo },
+)
+  .toString()
+  .trim()
+  .split("\n");
+names.push(
+  "config/constants.yaml",
+  "config/materials.yaml",
+  "web/src/worker/hysteresis-worker.mjs",
+  "wasm_exec.js",
+);
+const hash = createHash("sha256");
+for (const name of [...new Set(names)].sort())
+  hash
+    .update(name)
+    .update(name === "wasm_exec.js" ? runtime : readFileSync(join(repo, name)));
+const build = hash.digest("hex");
+const uiHash = createHash("sha256");
+function visit(dir) {
+  for (const item of readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )) {
+    const path = join(dir, item.name);
+    if (item.isDirectory()) visit(path);
+    else uiHash.update(path.slice(web.length)).update(readFileSync(path));
+  }
+}
+visit(join(web, "src"));
+for (const name of [
+  "package.json",
+  "package-lock.json",
+  "index.html",
+  "vite.config.ts",
+  "tsconfig.json",
+])
+  uiHash.update(name).update(readFileSync(join(web, name)));
+const UI = uiHash.digest("hex");
+const out = join(web, "node_modules/.fecim");
+mkdirSync(out, { recursive: true });
+const flags =
+  "-s -w -X fecim-lattice-tools/workbench/hysteresis.BuildID=" + build;
+execFileSync(
+  "go",
+  [
+    "build",
+    "-buildvcs=false",
+    "-trimpath",
+    "-ldflags=" + flags,
+    "-o",
+    join(out, "hysteresis.wasm"),
+    "./cmd/fecim-hysteresis-wasm",
+  ],
+  {
+    cwd: repo,
+    env: { ...env, GOOS: "js", GOARCH: "wasm", CGO_ENABLED: "0" },
+    stdio: "inherit",
+  },
+);
+const Catalogue = JSON.parse(
+  go([
+    "run",
+    "-buildvcs=false",
+    "-trimpath",
+    "-ldflags=" + flags,
+    "./web/src/build/catalog.go",
+  ]).toString(),
+);
+const driver = readFileSync(join(web, "src/worker/hysteresis-worker.mjs"));
+writeFileSync(join(out, "wasm_exec.js"), runtime);
+writeFileSync(join(out, "hysteresis-worker.mjs"), driver);
+const manifest = { UI, Catalogue, identity: Catalogue.Identity, assets: {} };
+for (const name of ["hysteresis.wasm", "wasm_exec.js", "hysteresis-worker.mjs"])
+  manifest.assets[name] = sha(readFileSync(join(out, name)));
+writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest));
+console.log("Pinned Go " + pin + "; core " + build + "; UI " + UI);
