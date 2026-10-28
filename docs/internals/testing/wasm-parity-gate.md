@@ -278,3 +278,188 @@ physical-device evidence, power-loss durability, stored-study verification or a
 sandbox against same-user software. No Fyne retirement/default switch, public
 deployment or scientific golden/tolerance change is claimed. The coordinator
 owns merged-tree full-suite verification and task/history closeout.
+
+## 7. Combined post-LOCAL automated checkpoint
+
+This checkpoint re-executes the existing gates on candidate
+`dbd49104bebb2930cadf50b63fede04cc99e0d9d` (2026-10-28). It follows the
+[final-candidate plan](../../tasks/HYS-NEXT-PLAN.md#chosen-frontier-final-candidate-automated-evidence)
+and [ADR 0005 acceptance](../adr/0005-unified-react-hosted-and-local.md#required-acceptance).
+Sections 4–6 remain historical evidence, not substitutes for these runs.
+The HYS-UI and HYS-LOCAL reports were read in place from the main repository's
+execution common directory. Their commits are `525eed4cbfc589eb8f2932f3e7bb9e6599b357c9`
+and `1cb09424cae1af4b914fdeac443c26f9c3eef0db`.
+
+**Automated result: PASS for the selected gates below.** No failed or incomplete
+automated gate occurred in this run. No product repair was inferred or made.
+This checkpoint changes documentation only. TDD: N/A, because no behavior,
+fixture, assertion, equation, threshold, golden or build input changes.
+The documentation commit has the same scientific/frontend inputs as the candidate.
+This is not a task receipt, manual qualification, goal-met claim or deployment.
+
+### Candidate and build coherence
+
+Setup follows [web/README.md](../../../web/README.md#build-and-develop) and the
+[enabled parity instructions](../../../validation/wasm/README.md#run).
+The locked install used Node **24.19.0**, npm **11.17.0**, Playwright **1.60.0**,
+Go **1.26.10** exactly as pinned in `go.mod`, and that Go toolchain's runtime.
+Firefox **150.0.2** came from the existing `playwright-1.60.0/firefox-1522` cache.
+The browser configuration selected `/usr/bin/chromium`, version **152.0.7977.75**.
+Host: Linux x86-64, AMD Ryzen 9 5900X, 24 logical CPUs. No CPU throttling,
+shared-service change or host-network shaping was performed.
+
+| Identity | Value |
+|---|---|
+| Protocol / model | `fecim-hysteresis/1` / `hysteresis-producers/1` |
+| Core/runtime-bound build | `f2fc8fa49afeea96b5bb22e7b89ae4820a30a24879bcc1e24d02c5f52a4590c3` |
+| Frontend content | `fde1de15c96828f7c7313e64e816a4dc10dc5957ab4f4e66f04bf58289c3c715` |
+| Engine manifest SHA-256 | `423f729ba144cd3a186fc91a2de2402eefd080bead22f28501c61111432ad857` |
+| Embedded local manifest SHA-256 | `6e3486ada7c3a260943954e1115e8a9f522d9180455dbd67c93ef4223e459211` |
+
+`node src/build/build.mjs --fingerprint` reproduced these core/UI identities.
+Readback compared the complete generated `web/node_modules/.fecim/manifest.json`
+with hosted, local and embedded `engine/manifest.json`: all four are byte-identical.
+Every engine asset hash agrees with each production parity/lifecycle/budget bundle.
+The embedded local manifest identifies the same core/UI and hashes all **10**
+staged files, each byte-identical to `web/dist-local`. Both profiles were rebuilt,
+not copied from historical reports. Native embedding's existing drift check ran
+before the real authenticated browser tests.
+
+### Original-byte parity, lifecycle and admission
+
+`FECIM_WASM_PARITY=1` explicitly enabled all four independent gates:
+`TestHysteresisProductionParity`, `TestHysteresisWorkerLifecycle`,
+`TestHysteresisWorkerBudgets` and `TestExampleResultsJSONNativeWASM`.
+All passed, with **zero skips** in the enabled package's nine tests.
+The incomplete-science, example numerical-results, first-difference and
+subprocess-cleanup guards also passed. Default-suite skips did not supply this proof.
+
+Each production gate retained **225 replies / 2,346,420 original bytes** per
+runtime. Native, Node and Firefox files are byte-identical in all three bundles,
+SHA-256 `7e2c6ea050a1426d775893826e0748d0f138982019a738233d56dcc61ac39919`.
+The unchanged trace covers the finite successful science and modes described in
+section 4, including complete target programming/calibration and maximum FORC.
+Native request arrays are **69,038 bytes**, SHA-256
+`67aaacdf41efb00398663bdacf9b41b7ecf744849eb63edf37ec0657ad0f6bae`.
+Readback also checked that JS transport fixtures retain those original request strings.
+No parsed-object comparison, field stripping or normalization replaced byte equality.
+
+The independent eight-run example produced **21,972 original bytes** in each
+runtime, SHA-256 `aa7a3ee41f95b44c9200d604db67a42578b4078892f8ce438586802a96061da8`.
+Its existing guard requires eight successful runs with four finite metrics each.
+Its report revision is the candidate above, not the later documentation-only commit.
+
+The lifecycle bundle records real cooperative cancel, unsupported-operation and
+stale-request rejection, pending termination, recreation, same-turn retired-send
+and retired-generation rejection, injected stale replies, independent asset hash
+drift, build drift and missing-asset rejection. No fault fixture supplies science.
+Dedicated budget maxima (ms) were:
+
+| Operation | Maximum | Operation | Maximum |
+|---|---:|---|---:|
+| session.new | 115 | core.snapshot | 9 |
+| core.apply | 29 | core.advance | 13 |
+| core.page | 8 | program.new | 13 |
+| program.apply | 156 | program.advance | 262 |
+| program.snapshot | 7 | analysis.new | 111 |
+| analysis.advance | 3 | analysis.result | 94 |
+| analysis.page | 8 | job.cancel | 11 |
+
+All registry operations meet the existing **1,000 ms** dispatch bound and
+**500 ms** cancellation bound at the unchanged admitted caps in section 4.
+This does not prove full LK calibration convergence or a real-time guarantee.
+
+### Payload and complete-route measurements
+
+| Production asset | Raw bytes | Brotli-11 | gzip-9 | SHA-256 |
+|---|---:|---:|---:|---|
+| `hysteresis.wasm` | 5,712,064 | 1,165,895 | 1,575,075 | `d83a655b941ad4888e936a2f880473bc2d0b137812e85516e2834ad4e325f603` |
+| `wasm_exec.js` | 16,992 | 3,752 | 4,348 | `0c949f4996f9a89698e4b5c586de32249c3b69b7baadb64d220073cc04acba14` |
+| Worker/client | 7,831 | 1,993 | 2,346 | `9bf274cc57c3e047e956a20b61684298d767d127a58d3b909829c0e2b8b80373` |
+| **Total** | **5,736,887** | **1,171,640** | **1,581,769** | — |
+
+The totals satisfy **6 MiB raw / 1.5 MiB Brotli / 2 MiB gzip**.
+Worker-driver cold signed Sine completion took **1,573 / 1,566 / 1,564 ms**.
+Each transferred **1,173,633 Brotli bytes**, including two Worker/client fetches,
+module and runtime, excluding only the empty HTML navigation before its marker.
+
+The existing [complete-route case](../../../web/test/e2e/hosted-isolation.spec.ts)
+then measured both compiled React profiles separately:
+
+| Profile | Complete route Brotli bytes, each run | Cold completed-result times (ms) |
+|---|---:|---|
+| Hosted | 1,244,745 | 2,248.331 / 2,260.701 / 2,292.294 |
+| Local static assets with local adapter | 1,245,725 | 2,269.724 / 2,258.116 / 2,247.156 |
+
+All six route runs meet **2 MiB Brotli** and **5,000 ms** bounds.
+These are three fresh contexts per profile with no-store responses, private-server
+100 ms request RTT and one aggregate 10,000,000 bit/s chunk schedule.
+Route timing starts at navigation and ends at the paused Go Sine result with its
+complete signed 32-row first page. The filter includes HTML, CSS, main/lazy JS,
+manifest, Worker, WASM and runtime. Local additionally records adapter JS and its
+intentional `/api/v1/roots` request. The static server returns 404 for that API
+(no asset-byte header), not authenticated file capability. Real file workflows
+were tested separately against the embedded binary. These measurements are not
+CDN, low-end-device, paint, physical-device or authenticated-route latency claims.
+
+### Executed commands and selected coverage
+
+Commands ran on unchanged candidate sources. Long groups used `autowork-run`
+and explicit `timeout` bounds. Browser servers used assigned ports **20100/20101**,
+embedded launch **20110**, and enabled parity **20120/20121**.
+
+| Command (from repository root unless prefixed) | Actual result |
+|---|---|
+| `cd web && npm ci --cache "$AUTOWORK_CACHE/npm-node24" && npm test && npm run typecheck && npm run build:hosted && npm run build:local` | PASS, locked install, 1 web contract test, typecheck, both profiles and local staging |
+| `env FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -count=1 -v` | PASS, 9 tests, no skips, retained native/Node/Firefox production and example outputs |
+| `cd web && npm run test:e2e -- test/e2e/hysteresis.spec.ts test/e2e/hosted-isolation.spec.ts test/e2e/hysteresis-local.spec.ts` | PASS, 65 selected: 61 passed, 4 intentional measurement skips |
+| `cd web && FECIM_WEB_PROFILE=local npm run test:e2e -- test/e2e/hysteresis.spec.ts` | PASS, 45 selected/passed, no skips |
+| `cd web && FECIM_WEB_PROFILE=local npm run test:e2e -- test/e2e/hosted-isolation.spec.ts --grep 'complete real route transfer and cold Go sine result meet the production guardrails$' --project=desktop-chromium` | PASS, exactly 1 selected/passed, no skips, also confirmed by `--list` |
+| `env CGO_ENABLED=1 xvfb-run -a go test ./cmd/fecim-lattice-tools ./workbench/server ./internal/browserui -count=1` | PASS, CLI/default-Fyne guards and authenticated session/files tests, browserui compiles (no test files) |
+| `env CGO_ENABLED=1 go test -race ./validation/wasm ./workbench/hysteresis ./workbench/server -count=1` | PASS, producer/server and harness checks, 4 opt-in browser gates skipped only in this separate default race run |
+| `go test ./shared/physics ./module1-hysteresis/pkg/ferroelectric -count=1` | PASS, no scientific changes or golden regeneration |
+| `go test ./validation -run '^TestPhysicsRegressionCurves' -count=1` | PASS |
+
+Both browser workflow groups selected all five configured projects:
+`desktop-chromium`, `desktop-compact-chromium`, `mobile-chromium`,
+`mobile-small-chromium` and `desktop-firefox`. Hosted's four skips are only the
+complete-route measurement on non-desktop-Chromium projects, as the existing case
+requires one controlled measurement per profile. The hosted group includes **five
+real embedded local sessions**, one per project, plus five hosted instruction-only
+file cases. Real sessions used actual Go Worker data and temporary granted roots
+for preset/calibration save/load, loop/diagnostic exports, conflicts, traversal,
+replay, signed-in renewal, logout and no browser storage/token-request leakage.
+Each session stopped its child server and removed its temporary root.
+The hosted-only isolation workflow was not misapplied to the local adapter.
+
+### Retained evidence and remaining limits
+
+Private host-local evidence parent:
+`/var/tmp/aw-1000-bc334d01-1/t015-evidence/`.
+`FECIM_WASM_ARTIFACT_DIR` was set to its `wasm/` subdirectory, with the locked
+Playwright browser cache selected through `PLAYWRIGHT_BROWSERS_PATH`.
+No runtime bundle, trace, launch token or temporary grant is committed.
+
+- `wasm/hysteresis-parity-3983452131/`,
+  `wasm/hysteresis-lifecycle-2514327016/` and
+  `wasm/hysteresis-budgets-354685648/`: exact requests/replies, native/WASM
+  executables and `measurements-*.json`, including every admission input/timing.
+- `wasm/parity-2021736445/`: independent resolved example/native project,
+  original three-runtime reports, private module and measurements.
+- `build.log`, `parity.log`, `hosted.log`, `local-shared.log`,
+  `local-budget.log`, `focused-go.log` and matching `.exit` files: complete
+  command results. `hosted-route-budget.json` and `local-budget-route-budget.json`
+  retain the exact `ROUTE_BUDGET` records, including unrounded timings/resources.
+- `verify-assets.py`, `identity-readback.json` and `identity-readback.log`:
+  source fingerprint, all manifests/asset hashes, original-byte comparisons and
+  transcript/request lengths/hashes. Scratch evidence is not a public endpoint
+  or a durable qualification for later changed sources/tools.
+
+**Still NOT RUN:** real Orca + Firefox/Linux speech and keyboard qualification
+for **both hosted and authenticated local profiles**. [HYS-ORCA's manual gate](../superpowers/specs/2026-10-25-accessible-browser-workbench-orca-acceptance.md)
+remains with its real tester/owner. Automated keyboard/focus/DOM/accessibility
+checks cannot supply that evidence. No human sign-off, Fyne retirement,
+launch-default switch, deployment, push or hardware validation is asserted.
+All results remain simulation-only. The coordinator owns the merged full check,
+task receipts, shared-history closeout and final planning. Rebuild and rerun affected
+gates if any bound Go, frontend, Worker, dependency or runtime input changes.
