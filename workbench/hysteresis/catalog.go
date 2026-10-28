@@ -3,6 +3,7 @@ package hysteresis
 import (
 	"strings"
 
+	"fecim-lattice-tools/config"
 	"fecim-lattice-tools/shared/physics"
 )
 
@@ -19,7 +20,11 @@ type Material struct {
 
 // Catalogue preserves native picker order without exposing cached preset pointers.
 func Catalogue() []Material {
-	presets := physics.AllMaterials()
+	cfg, err := config.Hysteresis()
+	if err != nil {
+		panic(err)
+	} // malformed compiled assets are a build defect
+	presets := physics.AllMaterialsFromConfig(cfg)
 	out := make([]Material, 0, len(presets))
 	for _, p := range presets {
 		if p != nil {

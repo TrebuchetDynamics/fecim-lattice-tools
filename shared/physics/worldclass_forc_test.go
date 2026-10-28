@@ -6,6 +6,16 @@ import (
 	"testing"
 )
 
+// Retained maximum-FORC sweep sample: preserve the portable Go/WASM
+// Gaussian evaluation, rather than selecting a native assembly Exp polynomial.
+// This is the exact same equation/width and binary64 input as the production RED.
+func TestGUIFORCEverettReproducibleGaussian(t *testing.T) {
+	e := GUIFORCEverett{SaturationE: 1, Ps: 0.27}
+	if got := e.Calculate(1, -0.2698412698412699); got != 0.03239907592753201 {
+		t.Fatalf("Gaussian evaluation: %.17g, want %.17g", got, 0.03239907592753201)
+	}
+}
+
 func TestFORC_ReversalCurvesMonotonic(t *testing.T) {
 	sat := 1.0
 	ps := NewPreisachStack(sat, simpleUniformEverett{sat: sat})

@@ -22,7 +22,7 @@ func (e GUIFORCEverett) Calculate(alpha, beta float64) float64 {
 		x = 1
 	}
 	center := (alpha + beta) / (2 * e.SaturationE)
-	weight := math.Exp(-(center * center) / (2 * 0.2 * 0.2))
+	weight := preisachExp(-(center * center) / (2 * 0.2 * 0.2))
 	return e.Ps * x * weight
 }
 
