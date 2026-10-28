@@ -3,7 +3,7 @@ schema = 1
 id = "HYS-CORE"
 title = "Preserve interactive hysteresis state in a UI-free Go session"
 short = "Stateful Go hysteresis controls"
-status = "open"
+status = "done"
 goal = "HYS-REACT"
 section = "Next"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Extract reusable stateful material/model/manual/sine/triangle stepping 
 acceptance = ["Given fixed material/model/input/step sequences, when native session and legacy GUI characterization execute, then E/P/history/reset/engine-control behavior agrees; add TestWorkbenchSessionCharacterization in module1-hysteresis/pkg/gui/session_parity_test.go and TestSession in workbench/hysteresis/session_test.go. No new coefficients or target-specific math.", "Given manual reversals, invalid/overflow settings or a stale page revision, when Apply/Advance/Page runs, then history is retained, invalid state changes are rejected atomically and 32-row revision-bound pages expose every retained sample; TestSession covers these branches and allocation/work limits.", "Given signed/zero/exponent SI E/P and unavailable values, when Go builds its snapshot, then canonical values remain intact and MV/cm uses 1e-8 and microcoulombs per square centimeter uses 100 with correct speech/reasons; extend workbench/presentation/value_test.go::TestHysteresisValues."]
 checks = ["go test ./workbench/hysteresis ./workbench/presentation -count=1", "env CGO_ENABLED=1 xvfb-run -a go test ./module1-hysteresis/pkg/gui -run 'TestWorkbenchSessionCharacterization|TestResetAllStateLocked_IsDeterministic|TestWaveformSwitch|TestLastCompleteCycle' -count=1", "env CGO_ENABLED=1 go test -race ./workbench/hysteresis ./workbench/presentation -count=1"]
 exclusions = ["Go owns science/defaults/display/speech; simulation-only evidence; no hosted scientific upload/persistence/localhost probing; existing CLI/Fyne/default builds remain. No launch-default change, Fyne deletion, new physical model, golden/tolerance weakening, deployment or service changes.", "No public deployment/push, shared service changes or ungranted external operations; test servers use private ephemeral ports."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/HYS-CORE.toml"
 +++
 
 - Sources: docs/internals/superpowers/plans/2026-10-25-hosted-hzo-first-slice.md#go-seams-and-invariant-contract; docs/internals/adr/0005-unified-react-hosted-and-local.md
