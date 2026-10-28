@@ -1,0 +1,9 @@
+schema = 1
+task = "MAIN-M2-YIELD"
+candidate = "fb1432b301efe81358f24f84012b71fd064ff85c"
+integration = "b8022994bc954d4857323389eec06bbcc75b0571"
+tree = "e1febafe89a873003e1727dbc92e4b95c673defa"
+contract_hash = "f022b566e0aa977fd56185dbfd406e2b357b7417fcb139d439b613fb4284cc9d"
+checks = ["<path>", "<path>", "--verify", "<path>", "MAIN-M2-YIELD"]
+result = "pass"
+review = "passed"

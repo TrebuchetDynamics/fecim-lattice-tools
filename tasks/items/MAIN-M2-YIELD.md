@@ -3,7 +3,7 @@ schema = 1
 id = "MAIN-M2-YIELD"
 title = "Restore the full-check process-variation yield regression"
 short = "Repair process-variation yield validation"
-status = "open"
+status = "done"
 goal = "MAIN-CHECK"
 section = "Now"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Diagnose TestM2_PV_03_YieldDecreasesWithNoiseLevel from the named main 
 acceptance = ["A deterministic failing automated regression exposes the diagnosed validation/fixture defect before the minimum repair; record causal evidence and RED/GREEN. Preserve the 8x8 workload, 0.85 weights/unit inputs, sigmas 0.01/0.10/0.30, 200 trials, 12-bit ADC/DAC, 300 K, ideal/variation comparison, IR-drop/sneak disabled, per-output less-than-10% relative-error yield, strict yield ordering and both existing 0.5 sanity bounds. Controlled fixtures plus separate replayable stochastic coverage are allowed with evidence, not lucky-seed selection, skips, loosened thresholds, removed coverage or retry-until-pass.", "The focused test passes repeatedly uncached, shared/crossbar passes uncached and the unchanged Full check completes and passes. If WASM validation changes, preserve exact native/Node/Firefox bytes, production lifecycle/budgets, original example parity and owned-process cleanup and run the enabled gate with locked prerequisites. Report revision/rerun evidence honestly: the original bundle contains no isolated reruns or three-revision flake evidence. Report unrelated failures without altering other task contracts."]
 checks = ["env CGO_ENABLED=1 go test ./shared/crossbar -run '^TestM2_PV_03_YieldDecreasesWithNoiseLevel$' -count=20 -v", "env CGO_ENABLED=1 go test ./shared/crossbar -count=1", "env CGO_ENABLED=1 go test ./validation/wasm -count=1", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m", "If validation/wasm paths change: provision locked prerequisites per validation/wasm/README.md; env FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -count=1 -v"]
 exclusions = ["No scientific/numerical/physics/default/material/quantization/golden or production RNG/API changes; no weakened assertions/coverage, global full-check serialization, new dependencies, browser features, launch/build-policy changes or task closure. WASM edits only for demonstrated interference causing this failure, never weakened parity/lifecycle/budgets/cleanup. Preserve all existing task contracts, dependencies and closures."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/MAIN-M2-YIELD.toml"
 +++
 
 - Sources: docs/tasks/main-m2-yield.md#contract-and-evidence
