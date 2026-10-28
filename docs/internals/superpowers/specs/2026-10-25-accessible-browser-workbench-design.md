@@ -69,15 +69,19 @@ Builder review: a fresh read-only reviewer reported **â€œnothing important leftâ
 
 | Source | Current fact / boundary |
 |---|---|
-| `workbench/experiment/types.go`; `workbench/presentation/value.go` | Go metrics retain numeric value, unit, model, assumptions and evidence; `presentation.FormatMetric` now supplies separate display/speakable/availability forms. Browser consumption is not yet implemented. |
+| `workbench/experiment/types.go`; `workbench/presentation/value.go` | Go metrics retain numeric value, unit, model, assumptions and evidence; `presentation.FormatMetric` now supplies separate display/speakable/availability forms. Hysteresis React consumes Go presentation; the four-view research-workbench consumer remains planned. |
 | `workbench/experiment/analyze.go:28` | Feasibility and Pareto analysis belongs to Go. |
 | `workbench/experiment/runner.go`; `progress.go` | The runner accepts a context and an optional nonblocking count-progress channel; this is not yet a browser job registry or SSE endpoint. |
 | `workbench/study/study.go` | `study.Run` retains trustworthy partial results and explicit `ResultsState`/`AnalysisAvailable`; the browser still needs its lifecycle adapter. |
-| `workbench/project/load.go` | `LoadRoot` provides scoped reads with strict typed YAML; it is not end-to-end confined persistence or a comment-preserving editor. |
-| `web/README.md` | `web/` is a static Astro project/marketing site, not this browser client. |
+| `workbench/project/load.go`; `configuration.go`; `configuration_save.go` | Root-confined Go loading, configuration snapshots and the field/comment-preserving editor are implemented. Their ETag-protected research API/browser journey remains WEB-WORKBENCH work; do not reimplement the native prerequisites. |
+| `web/README.md`; `web/src/main.tsx`; `cmd/fecim-lattice-tools/serve.go` | React/Vite hosted/local home and Hysteresis are implemented; the authenticated embedded local candidate is additive, not the default launch. Combined automated evidence is retained in T-015; real dual-profile Orca remains NOT RUN. |
 | [Accessibility audit](../../accessibility.md) | Historical Fyne audit, not evidence of browser/Orca acceptance. |
 
-The browser adapter, field-patch editing, ETags and accessible views below remain **planned requirements**. Some reusable Go progress/presentation/outcome foundations are now implemented, not the browser client itself. Scientific equations, result identities, evidence definitions and CLI behavior remain unchanged; Fyne workflows are deprecated compatibility, not the future primary UI.
+Current-source reconciliation at `53fcd0ed`: the **research-workbench** browser adapter, field-patch editing, ETags and four-view journey below remain planned requirements, not delivered by the Hysteresis route. The shared React/Vite shell, Hysteresis Worker/controls and authenticated rooted-file local candidate are now implemented. See [combined automated evidence](../../testing/wasm-parity-gate.md#7-combined-post-local-automated-checkpoint) and [final Hysteresis reconciliation](../../../tasks/HYS-NEXT-PLAN.md#final-round-2-reconciliation--t-016-64f7b2b2); these retained results are not a new test run or real Orca qualification. Scientific equations, result identities, evidence definitions and CLI behavior remain Go-owned; Fyne/default launch remains compatibility until qualified replacement and separately authorized retirement.
+
+## All-module delivery roadmap
+
+The owner's accepted request to plan **all seven modules in the web app** is specified in the [complete module roadmap](../plans/2026-10-28-all-modules-web-roadmap.md). The current-source refresh preserves completed HYS IDs/receipts and their final planning stop, then carries forward the same eight WEB IDs for shared research-workbench infrastructure and real Crossbar/MNIST/Circuits/Comparison/EDA/Docs workflows. Hosted/local boundaries and qualification-before-retirement remain unchanged; planning does not dispatch, implement or switch defaults. Existing native descriptors and placeholder demonstrations are not browser parity evidence. WEB-WORKBENCH owns the concrete routing/lock/security adaptation of the existing local server; WEB-NEXT-PLAN is the separate bounded all-module chain, not a third Hysteresis planning round.
 
 ## Architecture and scope
 
