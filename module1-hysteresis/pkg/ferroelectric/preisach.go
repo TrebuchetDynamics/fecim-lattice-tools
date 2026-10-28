@@ -501,7 +501,7 @@ func (p *PreisachModel) reversiblePolarization(E float64) float64 {
 	if p.reversiblePSat == 0 || p.everett == nil || p.everett.Ec <= 0 {
 		return 0
 	}
-	return p.reversiblePSat * math.Tanh(E/p.everett.Ec)
+	return p.reversiblePSat * physics.PreisachTanh(E/p.everett.Ec)
 }
 
 func (p *PreisachModel) updateReversibleParams() {

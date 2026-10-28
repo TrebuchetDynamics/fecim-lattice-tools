@@ -46,8 +46,8 @@ func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
 		return 0
 	}
 
-	ascCDF := 1.0 + math.Tanh((alpha-t.Ec)/t.Delta)
-	descSurv := 1.0 - math.Tanh((beta+t.Ec)/t.Delta)
+	ascCDF := 1.0 + PreisachTanh((alpha-t.Ec)/t.Delta)
+	descSurv := 1.0 - PreisachTanh((beta+t.Ec)/t.Delta)
 
 	val := ascCDF * descSurv * t.Ps * 0.25
 	if !isFiniteTanhEverettValue(val) || val < 0 {
@@ -57,6 +57,21 @@ func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
 		return t.Ps
 	}
 	return val
+}
+
+// PreisachTanh evaluates the existing tanh equation with a fixed exponential
+// backend, shared by Everett and the adapter's reversible contribution. The
+// small-argument math.Tanh path is the same rational polynomial in native Go
+// and WASM; its large-argument path otherwise calls architecture-specific Exp.
+func PreisachTanh(x float64) float64 {
+	z := math.Abs(x)
+	if z < 0.625 || math.IsNaN(x) {
+		return math.Tanh(x)
+	}
+	if z > 0.5*8.8029691931113054295988e+01 {
+		return math.Copysign(1, x)
+	}
+	return math.Copysign(1-2/(preisachExp(2*z)+1), x)
 }
 
 func (t *TanhEverett) hasValidBinding() bool {
