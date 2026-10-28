@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-AUDIT_PATH = ROOT / "docs/public-release/THIRD_PARTY_PDF_AUDIT.csv"
+AUDIT_PATH = ROOT / "docs/internals/release/THIRD_PARTY_PDF_AUDIT.csv"
 FIELDS = [
     "path",
     "title",
@@ -41,16 +41,24 @@ def load_existing() -> dict[str, dict[str, str]]:
         return {}
     with AUDIT_PATH.open(newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh)
-        return {row["path"]: row for row in reader if row.get("path")}
+        existing = {}
+        for row in reader:
+            path = row.get("path") or ""
+            if not path:
+                continue
+            # Only this exact historical prefix has an approved migration.
+            if path.startswith("docs/4-research/"):
+                path = "docs/research/" + path[len("docs/4-research/"):]
+            row["path"] = path
+            if path in existing and existing[path] != row:
+                raise SystemExit(f"Conflicting PDF audit rows: {path}")
+            existing[path] = row
+        return existing
 
 
-def build_row(path: str, existing: dict[str, str] | None = None) -> dict[str, str]:
+def build_row(path: str) -> dict[str, str]:
     row = {field: "" for field in FIELDS}
     row["path"] = path
-    if existing:
-        for field in FIELDS:
-            if existing.get(field):
-                row[field] = existing[field]
     if not row["title"]:
         row["title"] = Path(path).stem
     if not row["decision"]:
@@ -62,7 +70,11 @@ def build_row(path: str, existing: dict[str, str] | None = None) -> dict[str, st
 
 def main() -> int:
     existing = load_existing()
-    rows = [build_row(path, existing.get(path)) for path in tracked_pdfs()]
+    # Retain historical records and every existing cell, including blank cells.
+    for path in tracked_pdfs():
+        if path not in existing:
+            existing[path] = build_row(path)
+    rows = list(existing.values())
     AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with AUDIT_PATH.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=FIELDS)
