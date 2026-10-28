@@ -49,6 +49,8 @@ func dispatchSubcommandWithWriters(args []string, stdout, stderr io.Writer) erro
 		return nil
 	}
 	switch args[0] {
+	case "serve":
+		return runServeSubcommand(args[1:], stdout, stderr)
 	case "hysteresis":
 		return runHysteresisSubcommand(args[1:], stdout, stderr)
 	case "crossbar":
@@ -219,6 +221,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "The default GUI is the restored Fyne desktop shell.")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Subcommands:")
+	fmt.Fprintln(w, "  serve              Additive authenticated local React UI (--root DIRECTORY)")
 	fmt.Fprintln(w, "  hysteresis         Fyne module or headless mode")
 	fmt.Fprintln(w, "  crossbar           Fyne module or inference CLI")
 	fmt.Fprintln(w, "  mnist              Fyne module or CLI/training tools")

@@ -220,9 +220,6 @@ export interface Results {
 declare global {
   const __FECIM_PROFILE__: "hosted" | "local";
   const __FECIM_UI__: string;
-  interface Window {
-    fecimLocalAdapter?: { perform(action: string): Promise<void> };
-  }
   var HysteresisWorkerClient: {
     new (options: Record<string, unknown>): {
       ready: Promise<void>;

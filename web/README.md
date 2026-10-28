@@ -12,7 +12,8 @@ npm ci
 npm test
 npm run typecheck
 npm run build:hosted     # dist/
-npm run build:local      # dist-local/; identical views, local adapter callback seam
+npm run build:local      # dist-local/ + generated local embedding stage
+npm run build:native     # matching embedded fecim-lattice-tools binary
 npm run dev -- --port 20200
 # Or serve compiled hosted assets:
 npm run preview -- --host 127.0.0.1 --port 20200 --strictPort
@@ -39,7 +40,7 @@ The emitted `engine/manifest.json` binds frontend content, protocol/model/build/
 
 Hosted computation has no scientific upload, analytics, persistence, filesystem writes, automatic downloads, clipboard export, remote solver or localhost discovery. Ordinary same-origin static asset requests still occur and the host sees HTTP metadata. Citation links are deliberate navigation. Reload/discard loses ephemeral science.
 
-Local-only buttons remain navigable instructions. The local profile exposes a callback seam (`window.fecimLocalAdapter.perform(action)`) but **the authenticated local adapter, embedded assets and `fecim serve` command are not implemented here**; HYS-LOCAL owns them. A local build flag alone grants no capability. This task does not change the executable's legacy Fyne launch default or retire any Fyne module.
+Hosted local-only buttons remain navigable instructions without constructing a local transport. The local build stages generated assets under `internal/browserui/assets`; `npm run build:native` verifies source/UI drift and pins matching native identities. Start `fecim-lattice-tools serve --root DIRECTORY` and open its short-lived launch link for authenticated file operations. A local static preview alone grants no capability. See the [command/security reference](../cmd/fecim-lattice-tools/README.md) for explicit file formats, bootstrap renewal, conflicts, imported calibration limits and threat boundaries. Existing Fyne launch defaults and entry points remain unchanged.
 
 ## Browser and scientific checks
 
@@ -50,6 +51,8 @@ npm run test:e2e -- test/e2e/hysteresis.spec.ts test/e2e/hosted-isolation.spec.t
 FECIM_WEB_PROFILE=local npm run test:e2e
 npm run test:e2e         # also retains existing home/content/layout/anchor guards
 ```
+
+`npm run test:e2e -- test/e2e/hysteresis-local.spec.ts` also builds and starts the actual embedded Go binary with a temporary granted root on `AUTOWORK_PORT_BASE + 10`, exercises explicit files/replay/renewal/logout, then cleans up. It is not a static-preview substitute for the local API.
 
 Playwright owns two private static servers at `AUTOWORK_PORT_BASE` and `+1` (standalone default 20200/20201); it does not reuse unrelated servers. `PLAYWRIGHT_CHROMIUM_EXECUTABLE` / `PLAYWRIGHT_FIREFOX_EXECUTABLE` select compatible installed engines. Worker caches under Autowork are reused when present. CI builds both profiles and runs the same browser contracts against each, plus the separate exact native/Node/Firefox Go parity gate.
 
