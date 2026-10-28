@@ -26,7 +26,7 @@ Module 1 is the physics core of fecim-lattice-tools. It models polarization–el
 
 ### `pkg/algo/` — Calibration
 
-- **calibration.go** — Automated calibration routines fitting model params to experimental data
+- **calibration.go** — Runtime field-table feedback and native monotonic level-table repair
 
 
 - **gui.go** — Main module GUI layout and lifecycle
@@ -144,6 +144,85 @@ display/speech preserve sign, zero and exponents. Unavailable presentation value
 retain a reason instead of fabricating zero. Unsupported `FormatMetric` units
 still report unavailable; SI callers use the explicit conversion functions.
 
+## Bounded programming and calibration
+
+[`NewProgrammer(*Session, ProgramConfig)`](../workbench/hysteresis/programming.go)
+shares the session drive and solvers, reusing `controller.WriteController` and
+`LevelBins`. It is UI-free and in-memory; it does not change CLI/Fyne launch defaults.
+
+```go
+cfg := hysteresis.DefaultConfig()
+cfg.Mode, cfg.Seed = hysteresis.Manual, 42
+session, err := hysteresis.NewSession(cfg)
+if err != nil { return err }
+programmer, err := hysteresis.NewProgrammer(session, hysteresis.ProgramConfig{})
+if err != nil { return err }
+state, err := programmer.Apply(hysteresis.ProgramCommand{
+    Kind: hysteresis.WriteTarget, Target: 22,
+})
+if err != nil { return err }
+// Call again at explicit work boundaries; DT is physical seconds, not playback.
+state, err = programmer.Advance(hysteresis.Budget{Steps: 64, DT: 0.01})
+if err != nil { return err }
+_ = state // Core contains canonical SI values and Go display/speech text.
+```
+
+- `TargetWrite` (default) follows native manual PREP/WRITE/DISPLAY; Preisach skips
+  PREP on its first step, while L-K pre-biases. Targets use native **1-based**
+  indexing; `Core.Level` stays zero-based. Clicking the current manual level is a
+  no-op; another click during a manual write returns an ownership error.
+  `WriteRead` queues the next click, applying it at the next PREP/WRITE boundary
+  (including replacement at WRITE entry after PREP). Without a queued click,
+  same-branch target selection uses a private RNG seeded by `Config.Seed`.
+- Start from `DefaultProgramConfig()` to select `LinearISPP` or
+  `LogarithmicISPP`, guard fraction, pulse/work limits and domain count. DCC is
+  unimplemented and rejected. Domains 2–128 select seeded native polydomain L-K
+  **only for WriteRead**; other workflows use one domain. NLS/noise remain off.
+  The programmer releases ensemble mode when the job ends.
+- While programming/calibration owns the drive, direct Session mutation and
+  `Advance` return `ErrDriveOwned` (read-only snapshots/pages and SetView remain
+  available). Use `CancelProgram` or `ResetProgram` through the programmer, then
+  reconfigure. Reset clears target/queue/controller/history through the native
+  session reset; Preisach retains its native physical polarization memory across
+  turning-point reset, rather than becoming a freshly constructed cell.
+- Each `Advance` accepts 1–256 work steps. Programming uses explicit physical
+  `Budget.DT`; calibration uses the extracted native sweep timing, not playback
+  or `DT`. Defaults cap a programming job at 100000 steps and 30 native
+  total-plus-current pulses, and calibration at 128000000 solver calls (enough
+  for the native worst-case 126 target writes at 64 levels). Configured
+  limits may be smaller. Session lifetime work limits still apply to live writes.
+  Cancellation (command or context), pulse/work caps and controller failure have
+  distinct terminal statuses and never label partial work complete. Completed
+  steps remain readable; a terminal job releases drive ownership and pauses.
+  These are safety bounds, **not measured browser responsiveness guarantees**.
+- `CalibrateProgram` explicitly starts an in-memory job with scratch solvers.
+  [`controller.LevelCalibration`](pkg/controller/level_calibration.go) extracts
+  the native Preisach zero-field binary search and single-domain L-K controller
+  sweep, including monotonic repair. It is not a measured-data fit or the shared
+  uniform field-spacing estimate. Native L-K ±Ec fallback estimates are counted
+  in `FallbackTargets`; **fresh does not mean every target converged**.
+  No partial table is exposed as a completed calibration. Calibration does not
+  drive/reset the interactive cell. Legacy GUI calibration uses the same sweep
+  but retains its adapter-owned cache/reset behavior.
+- Calibration is `unavailable` before completion, `fresh` for the completed
+  settings, or `stale` after material, engine, level count, target range,
+  temperature, stress or seed changes. Reverting settings does not resurrect a
+  stale table; explicit recalibration is required. Playback/view changes do not
+  invalidate it. Only fresh tables seed controller feedback or pass
+  `ExportCalibration()`, which returns owned **in-memory data**, not a file.
+  The range remains 2–64 levels and 0.5–1.0 usable polarization fraction.
+- The legacy GUI's 500 ms recalibration timer and automatic save are **not**
+  reproduced in the workbench. There is no automatic timer, file logger, save,
+  download or persistence; future local file operations need separate consent.
+- `TimeResolved` returns `legacy_protocol_unavailable` with a Go explanation,
+  never a switching trace or completion claim. Existing session history is not
+  presented as switching-protocol samples. The legacy mode was a stub, not a
+  protocol to restore in this migration.
+
+The default **30 levels are educational simulation bins**, not demonstrated
+hardware states. Material presets and calibration tables are simulation-only;
+none of these workflows establish device validation or browser/Orca qualification.
+
 ## Testing
 
 ```bash
@@ -164,6 +243,21 @@ go test ./workbench/hysteresis ./workbench/presentation -count=1
 env CGO_ENABLED=1 xvfb-run -a go test ./module1-hysteresis/pkg/gui -run 'TestWorkbenchSessionCharacterization|TestResetAllStateLocked_IsDeterministic|TestWaveformSwitch|TestLastCompleteCycle' -count=1
 env CGO_ENABLED=1 go test -race ./workbench/hysteresis ./workbench/presentation -count=1
 ```
+
+Programming/calibration contract and native characterization checks:
+
+```bash
+go test ./workbench/hysteresis -run 'TestProgramming|TestTimeResolved' -count=1
+env CGO_ENABLED=1 xvfb-run -a go test ./module1-hysteresis/pkg/gui -run TestWorkbenchSessionCharacterization -count=1
+env CGO_ENABLED=1 xvfb-run -a go test ./module1-hysteresis/pkg/controller ./module1-hysteresis/pkg/algo ./module1-hysteresis/tests -count=1
+env CGO_ENABLED=1 go test -race ./workbench/hysteresis -count=1
+```
+
+`TestProgrammingTrace`, `TestProgrammingCalibration`, `TestProgrammingCancellation`,
+`TestProgrammingInputs` and `TestTimeResolvedUnavailable` exercise deterministic
+writes/reset/ownership, calibration freshness and terminal/unavailable states.
+Native characterization compares both ISPP methods/engines (including seeded
+polydomain writes), queued targets and captured two-level calibration fields.
 
 `TestSession` checks reversal memory, reset, invalid-input atomicity, retention,
 revision paging and work/allocation bounds. `TestWorkbenchSessionCharacterization`
