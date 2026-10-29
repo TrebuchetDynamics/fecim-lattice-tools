@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-EDA"
+candidate = "977b415f63a67e91d4d7d2351674ec6e36a76ace"
+integration = "9dcd81a63f29a28aabfcbf088995e66dcf4e5eca"
+tree = "aeb0e0f46a500d284a99d2126bb5e3f3e6539aef"
+contract_hash = "83c9e693b5deabed363618ba47bbd5334278cfc24427a1abe91c857724a1fc36"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-EDA"]
+result = "pass"
+review = "passed"

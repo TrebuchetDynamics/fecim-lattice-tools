@@ -11,7 +11,7 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 | File | Description |
 |------|-------------|
 | `CLAUDE.md` | AI agent instructions, project conventions, and accuracy policy |
-| `go.mod` | Go 1.25.0+ module definition with Fyne, charmbracelet, Vulkan, GLFW |
+| `go.mod` | Go 1.26.10+ module definition with Fyne, charmbracelet, Vulkan, GLFW |
 | `go.sum` | Dependency hash verification |
 | `launch.sh` | Build and run script |
 | `README.md` | Project overview, features, physics models, and quick start |
@@ -72,6 +72,8 @@ go run ./cmd/fecim-lattice-tools
 ./launch.sh
 ```
 
+**Optional browser candidate:** `make build-browser`, then `./fecim-lattice-tools serve --root DIRECTORY` for an existing grant directory. Build with exact Go 1.26.10, Node 24.19.0 and npm 11.17.0. Node is build-only. `CGO_ENABLED=0` supports CLI/serve, not desktop startup; plain Go builds have no embedded browser assets. See `web/README.md` for generated contracts, module conventions and both-profile checks. The default remains legacy Fyne.
+
 **Test:**
 ```bash
 go test ./...                           # Full test suite
@@ -81,7 +83,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 ```
 
 **Key Patterns:**
-- **Primary UI target:** React web is the primary target for new UI work; Fyne is deprecated compatibility, not a required path for new demos/features. React is not an already-shipped client. Follow the [approved browser workbench design](docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#architecture-and-scope): React owns presentation and interaction; Go retains scientific computation, values, evidence and identities through the planned thin local API. Keep the Go core/CLI intact.
+- **Primary UI target:** React web is the primary target for new UI work; Fyne is deprecated compatibility, not a required path for new demos/features. A source-built React candidate provides all seven module views and the shared Projects/Configuration/Experiment/Results workflow; it is not a qualified release. Hosted provides Hysteresis, bounded studies, Crossbar, Circuits, Comparison and Documentation. MNIST inference and EDA generation require the authenticated local application; hosted MNIST/EDA are read-only help/imports. Real installed EDA tool qualification remains NOT RUN. Real Orca + Firefox/Linux acceptance is **NOT RUN**. Follow the [accepted browser architecture](docs/internals/adr/0005-unified-react-hosted-and-local.md#decision): React owns presentation and interaction; Go retains scientific computation, values, evidence and identities through Go/WASM and the authenticated same-origin local API. Keep the Go core/CLI intact.
 - **Current launch availability:** The existing executable and `launch.sh` still open legacy Fyne by default. Keep entry points and regression guards working until replacements pass the approved behavioral and accessibility gates. GUI packages still build by default; do not reintroduce `legacy_fyne` gates or change launch defaults as part of this policy.
 - **Fyne thread safety:** widget mutations from goroutines must use `fyne.Do(func() { ... })`; see `docs/3-develop/gui/FYNE_NOTES.md`.
 - **Conductance quantization:** Call `crossbar.QuantizeTo30Levels(value)` for simulation baseline (30 discrete levels, configurable)
@@ -142,7 +144,7 @@ threshold interaction with guard-band logic.
 ## Dependencies
 
 ### Go Version
-- **Go 1.25.0+** (toolchain 1.25.x)
+- **Go 1.26.10+** (browser asset/native builds require the exact go.mod toolchain)
 
 ### External (Direct)
 - **fyne.io/fyne/v2** v2.7.2 — Current legacy desktop GUI framework (deprecated)

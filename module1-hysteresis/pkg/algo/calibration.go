@@ -349,3 +349,57 @@ func (cm *CalibrationManager) EnforceMonotonicityDown(idx int, Ec float64) {
 		cm.CalibrationDown[idx-1] = cm.CalibrationDown[idx] - step
 	}
 }
+
+// RepairLevelTables preserves the native GUI sweep's monotonic table repair.
+func (cm *CalibrationManager) RepairLevelTables(Ec float64) {
+	numLevels := cm.NumLevels
+	// MONOTONICITY ENFORCEMENT: Fix any non-monotonic values (spikes)
+	// For ascending (calibrationUp): E-field must increase with level
+	// For descending (calibrationDown): E-field must decrease (more negative) with decreasing level
+
+	// Fix ascending calibration: ensure calibrationUp[i] <= calibrationUp[i+1]
+	for i := 1; i < numLevels-1; i++ {
+		if cm.CalibrationUp[i+1] < cm.CalibrationUp[i] {
+			// Spike detected - interpolate from neighbors
+			nextValid := cm.CalibrationUp[i]
+			for j := i + 1; j < numLevels; j++ {
+				if cm.CalibrationUp[j] > cm.CalibrationUp[i] {
+					nextValid = cm.CalibrationUp[j]
+					break
+				}
+			}
+			cm.CalibrationUp[i+1] = (cm.CalibrationUp[i] + nextValid) / 2
+		}
+	}
+
+	// Second pass: ensure strict monotonicity from bottom up
+	for i := 1; i < numLevels; i++ {
+		if cm.CalibrationUp[i] <= cm.CalibrationUp[i-1] {
+			step := Ec * 0.02 // 2% of Ec per level minimum step
+			cm.CalibrationUp[i] = cm.CalibrationUp[i-1] + step
+		}
+	}
+
+	// Fix descending calibration: ensure calibrationDown[i] >= calibrationDown[i-1] (less negative for higher levels)
+	for i := numLevels - 2; i > 0; i-- {
+		if cm.CalibrationDown[i-1] > cm.CalibrationDown[i] {
+			prevValid := cm.CalibrationDown[i]
+			for j := i - 1; j >= 0; j-- {
+				if cm.CalibrationDown[j] < cm.CalibrationDown[i] {
+					prevValid = cm.CalibrationDown[j]
+					break
+				}
+			}
+			cm.CalibrationDown[i-1] = (cm.CalibrationDown[i] + prevValid) / 2
+		}
+	}
+
+	// Second pass: ensure strict monotonicity from top down
+	for i := numLevels - 2; i >= 0; i-- {
+		if cm.CalibrationDown[i] >= cm.CalibrationDown[i+1] {
+			step := Ec * 0.02 // 2% of Ec per level minimum step
+			cm.CalibrationDown[i] = cm.CalibrationDown[i+1] - step
+		}
+	}
+
+}

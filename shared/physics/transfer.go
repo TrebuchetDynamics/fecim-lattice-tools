@@ -40,14 +40,17 @@ func PolarizationToConductanceWithParams(P, Ps, Gmin, Gmax float64, model Conduc
 			n := (normalizedP + 1.0) / 2.0
 			logGmin := math.Log(Gmin)
 			logGmax := math.Log(Gmax)
-			return math.Exp(logGmin + (logGmax-logGmin)*n)
+			// Use the existing portable exponential evaluation order, as in the
+			// Preisach/NLS path. Native assembly math.Exp differs by an ULP
+			// from WASM for some admitted circuit levels; never round exports.
+			return preisachExp(logGmin + (logGmax-logGmin)*n)
 		}
 		nFactor := 1.3
 		vThermal := 0.026
 		deltaVt := kvT * normalizedP
-		iRaw := math.Exp(deltaVt / (nFactor * vThermal))
-		iMin := math.Exp((-kvT) / (nFactor * vThermal))
-		iMax := math.Exp((kvT) / (nFactor * vThermal))
+		iRaw := preisachExp(deltaVt / (nFactor * vThermal))
+		iMin := preisachExp((-kvT) / (nFactor * vThermal))
+		iMax := preisachExp((kvT) / (nFactor * vThermal))
 		n := (iRaw - iMin) / (iMax - iMin)
 		if n < 0 {
 			n = 0

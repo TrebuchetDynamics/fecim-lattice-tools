@@ -119,6 +119,9 @@ output/regression/
 web/fecim.wasm
 web/.astro/
 web/dist/
+web/dist-local/
+internal/browserui/assets/*
+!internal/browserui/assets/README.txt
 # Dependency installs for the marketing site and future React workbench.
 node_modules/
 web/test-results/
@@ -160,3 +163,36 @@ validation/literature/output/
 # Local caches and generated coverage reports (not source/test data).
 /.cache/
 /coverage/
+
+# Private planning and research material excluded by the public-boundary policy.
+# Ignore rules do not untrack existing files or remove them from Git history.
+/docs/archive/
+/docs/superpowers/
+/docs/internals/superpowers/
+/docs/internals/release/FILTER_REPO_PATHS.txt
+/docs/research/internal-analysis/
+/docs/research/transcripts/COSM_2025_AI_Hardware_Breakthrough/
+/docs/research/transcripts/ironlattice-youtube-script.md
+/docs/research/tour-group-ironlattice-research.md
+/docs/research/superlattice-material-analysis.md
+/docs/research/papers/tourlab/
+/docs/research/papers/DOWNLOAD_PLAN.md
+/docs/research/tools/research_notes_final.md
+/validation/literature/_incoming/
+
+# Historical locations of the same policy-private material.
+/docs/4-research/internal-analysis/
+/docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/
+/docs/4-research/transcripts/ironlattice-youtube-script.md
+/docs/4-research/tour-group-ironlattice-research.md
+/docs/4-research/superlattice-material-analysis.md
+/docs/research-papers/tourlab/
+/docs/4-research/papers/tourlab/
+/docs/4-research/papers/DOWNLOAD_PLAN.md
+/docs/4-research/opensource-tools/research_notes_final.md
+
+# Legacy source paths explicitly excluded by the public-boundary policy.
+/demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go
+/demo2-crossbar/pkg/layers/kvcache_fjh.go
+/demo2-inference/pkg/layers/kvcache_fjh.go
+/module2-crossbar/pkg/_layers_experimental/kvcache_fjh.go

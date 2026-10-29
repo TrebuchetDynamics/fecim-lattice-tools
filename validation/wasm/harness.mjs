@@ -63,7 +63,7 @@ try {
     response.writeHead(200, { 'Content-Type': route[0], 'Cache-Control': 'no-store' });
     response.end(route[1]);
   });
-  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(Number(process.env.AUTOWORK_PORT_BASE || 0), '127.0.0.1', resolve); });
   browser = await firefox.launch({ headless: true, ...(process.env.FECIM_FIREFOX_EXECUTABLE ? { executablePath: process.env.FECIM_FIREFOX_EXECUTABLE } : {}) });
   const page = await browser.newPage();
   page.setDefaultTimeout(60_000);

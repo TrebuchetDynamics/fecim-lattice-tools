@@ -24,7 +24,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualiz
 
 ## UI Direction and Compatibility
 
-React web is the primary UI target for new work; Fyne is deprecated compatibility. React is not an already-shipped client. Follow the [approved browser workbench design](docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#architecture-and-scope): React handles presentation and interaction across a planned thin local Go API; Go retains scientific computation, values, evidence and identities. Preserve the Go core and CLI.
+React web is the primary UI target for new work; Fyne is deprecated compatibility. The source-built React candidate provides Hysteresis, bounded studies, Crossbar, Circuits, Comparison and Documentation in hosted/local profiles. All seven module views are present. MNIST inference and EDA generation require the authenticated local application; hosted MNIST/EDA provide read-only help/imports. Real installed EDA tool qualification remains NOT RUN. Follow the [accepted browser architecture](docs/internals/adr/0005-unified-react-hosted-and-local.md#decision): React owns presentation and interaction; Go retains scientific computation, values, evidence and identities through Worker and authenticated same-origin adapters. Preserve the Go core and CLI. Real Orca + Firefox/Linux qualification is **NOT RUN**; a runnable candidate is not a qualified release.
 
 The current executable and `launch.sh` still open legacy Fyne by default. Keep existing entry points, default-build GUI packages and regression guards working until replacements pass the approved behavioral and accessibility gates. Do not add `legacy_fyne` gates or change launch defaults as part of this policy. Legacy widget mutations from goroutines must still use `fyne.Do(func() { ... })`.
 
@@ -33,9 +33,11 @@ The current executable and `launch.sh` still open legacy Fyne by default. Keep e
 These commands launch the current legacy Fyne executable, not a React client:
 
 ```bash
-CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
+CGO_ENABLED=1 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 # Or: ./launch.sh
 ```
+
+Optional browser candidate: `make build-browser`, then `./fecim-lattice-tools serve --root DIRECTORY` for an existing grant directory. Builds pin Go 1.26.10 from `go.mod`, Node 24.19.0 and npm 11.17.0. A plain Go build does not embed generated browser assets. `CGO_ENABLED=0` supports headless CLI/serve builds, but default desktop startup fails explicitly without CGO. Node is build-only. See [web/README.md](web/README.md) for contract generation, module conventions and isolation checks.
 
 ## Key Rules
 

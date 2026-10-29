@@ -47,12 +47,14 @@ const (
 
 // Config contains crossbar array configuration.
 type Config struct {
-	Rows       int     // Number of rows (word lines)
-	Cols       int     // Number of columns (bit lines)
-	NoiseLevel float64 // Device-to-device variation sigma (Gaussian, normalized)
-	ADCBits    int     // ADC resolution in bits
-	DACBits    int     // DAC resolution in bits
-	UseGPU     bool    `json:"use_gpu"` // Enable GPU acceleration for MVM operations
+	// QuantizationLevels selects the programming grid; zero preserves 30 levels.
+	QuantizationLevels int     `json:"quantization_levels,omitempty"`
+	Rows               int     // Number of rows (word lines)
+	Cols               int     // Number of columns (bit lines)
+	NoiseLevel         float64 // Device-to-device variation sigma (Gaussian, normalized)
+	ADCBits            int     // ADC resolution in bits
+	DACBits            int     // DAC resolution in bits
+	UseGPU             bool    `json:"use_gpu"` // Enable GPU acceleration for MVM operations
 
 	// Conductance model configuration
 	ConductanceModel ConductanceModel // Model type (linear, exponential, lookup)
@@ -186,7 +188,18 @@ const maxArrayDim = 4096
 const maxADCDACBits = 62
 
 // NewArray creates a new crossbar array.
-func NewArray(cfg *Config) (*Array, error) {
+func NewArray(cfg *Config) (*Array, error) { return newArray(cfg, rand.NormFloat64) }
+
+// NewArraySeeded creates session-local device variation without changing the
+// process-global RNG. C2C variation is not enabled by the browser profiles.
+func NewArraySeeded(cfg *Config, seed int64) (*Array, error) {
+	return newArray(cfg, rand.New(rand.NewSource(seed)).NormFloat64)
+}
+
+func newArray(cfg *Config, normal func() float64) (*Array, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("nil crossbar configuration")
+	}
 	getLog().Input("NewArray", map[string]interface{}{
 		"rows":       cfg.Rows,
 		"cols":       cfg.Cols,
@@ -196,6 +209,9 @@ func NewArray(cfg *Config) (*Array, error) {
 		"useGPU":     cfg.UseGPU,
 	})
 
+	if cfg.QuantizationLevels < 0 || cfg.QuantizationLevels == 1 {
+		return nil, fmt.Errorf("programming levels must be zero (default) or at least two")
+	}
 	if cfg.Rows <= 0 || cfg.Cols <= 0 {
 		err := fmt.Errorf("invalid array dimensions: %dx%d", cfg.Rows, cfg.Cols)
 		getLog().Error(err, "NewArray validation failed")
@@ -243,7 +259,7 @@ func NewArray(cfg *Config) (*Array, error) {
 		for j := range arr.cells[i] {
 			arr.cells[i][j] = Cell{
 				Conductance: 0.0,
-				NoiseFactor: initialNoiseFactor(cfg),
+				NoiseFactor: initialNoiseFactorWith(cfg, normal),
 			}
 		}
 	}
@@ -255,7 +271,9 @@ func NewArray(cfg *Config) (*Array, error) {
 // initialNoiseFactor returns a per-cell device variation factor.
 // Uses Gaussian noise to match PHYSICS.md: G = G_nominal * (1 + sigma * N(0,1)).
 // If ProcessVariation is configured, its DeviceSigma overrides NoiseLevel.
-func initialNoiseFactor(cfg *Config) float64 {
+func initialNoiseFactor(cfg *Config) float64 { return initialNoiseFactorWith(cfg, rand.NormFloat64) }
+
+func initialNoiseFactorWith(cfg *Config, normal func() float64) float64 {
 	sigma := cfg.NoiseLevel
 	if cfg.ProcessVariation != nil {
 		sigma = cfg.ProcessVariation.DeviceSigma
@@ -263,7 +281,7 @@ func initialNoiseFactor(cfg *Config) float64 {
 	if sigma <= 0 {
 		return 1.0
 	}
-	factor := 1.0 + rand.NormFloat64()*sigma
+	factor := 1.0 + normal()*sigma
 	if factor < 0 {
 		factor = 0
 	}
@@ -458,6 +476,9 @@ func (a *Array) programWeightLocked(row, col int, weight float64) error {
 
 	// Quantize to discrete levels
 	quantized := QuantizeToLevels(weight)
+	if a.config.QuantizationLevels != 0 {
+		quantized = physics.QuantizeToLevels(weight, a.config.QuantizationLevels)
+	}
 
 	getLog().Calculation("ProgramWeight", map[string]interface{}{
 		"row":            row,

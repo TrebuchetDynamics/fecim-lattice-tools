@@ -14,11 +14,11 @@ func buildSnapshot(state EDAState) viewmodel.ModuleSnapshot {
 		{ID: "cells", Label: "Total Cells", Value: fmt.Sprintf("%d", state.TotalCells)},
 		{ID: "area", Label: "Area", Value: fmt.Sprintf("%.3f mm²", state.AreaMM2)},
 		{ID: "power", Label: "Power", Value: fmt.Sprintf("%.1f mW", state.PowerMW)},
-		{ID: "spice", Label: "SPICE", Value: "ready"},
-		{ID: "verilog", Label: "Verilog", Value: "ready"},
-		{ID: "liberty", Label: "Liberty", Value: "ready"},
-		{ID: "def", Label: "DEF", Value: "ready"},
-		{ID: "lef", Label: "LEF", Value: "ready"},
+		{ID: "spice", Label: "SPICE", Value: "preview only; not exported"},
+		{ID: "verilog", Label: "Verilog", Value: "preview only; not exported"},
+		{ID: "liberty", Label: "Liberty", Value: "preview only; not exported"},
+		{ID: "def", Label: "DEF", Value: "preview only; not exported"},
+		{ID: "lef", Label: "LEF", Value: "preview only; not exported"},
 	}
 	sections := []viewmodel.Section{
 		{ID: "design_stats", Title: "Design Statistics", Body: fmt.Sprintf("Generated %d×%d compute-mode design on %s.\nArea: %.3f mm²  |  Power: %.1f mW  |  Cells: %d", state.ArrayRows, state.ArrayCols, state.ProcessNode, state.AreaMM2, state.PowerMW, state.TotalCells), Category: "design"},
@@ -67,7 +67,7 @@ func buildSnapshot(state EDAState) viewmodel.ModuleSnapshot {
 	})
 	sections = append(sections, viewmodel.Section{
 		ID: "research_validation", Title: "Validation Status",
-		Body:     "Generated SPICE netlists validated with ngspice roundtrip tests. Netlist syntax checked against Verilog-A compact model. Liberty corners verified (TT/FF/SS). All exports are educational baselines — not validated against silicon measurements.",
+		Body:     "Example previews only. No external tool has been run by this module session. Placeholder cell Verilog and ESTIMATED_SCALAR characterization are educational assumptions, not signoff or silicon validation. Use the local web EDA workflow for rooted generation and explicit structural/tool evidence.",
 		Category: "research",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -76,8 +76,8 @@ func buildSnapshot(state EDAState) viewmodel.ModuleSnapshot {
 		Category: "design",
 	})
 	actions := []viewmodel.Action{
-		{ID: "generate_all", Label: "Export All Formats", Kind: viewmodel.ActionCommand},
-		{ID: "generate_spice", Label: "Generate SPICE", Kind: viewmodel.ActionCommand},
+		{ID: "generate_all", Label: "Regenerate Example Previews", Kind: viewmodel.ActionCommand},
+		{ID: "generate_spice", Label: "Regenerate SPICE Preview", Kind: viewmodel.ActionCommand},
 	}
 	return viewmodel.ModuleSnapshot{
 		Descriptor: viewmodel.ModuleDescriptor{

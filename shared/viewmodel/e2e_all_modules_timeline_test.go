@@ -56,7 +56,7 @@ func TestAllModulesE2ESnapshotTimelineStateTransitions(t *testing.T) {
 				{label: "baseline"},
 				{label: "low_levels", actions: []viewmodel.Action{{ID: "sweep_levels", Payload: map[string]string{"levels": "8"}}}},
 				{label: "nominal_levels", actions: []viewmodel.Action{{ID: "sweep_levels", Payload: map[string]string{"levels": "30"}}}},
-				{label: "inference", actions: []viewmodel.Action{{ID: "run_inference"}}},
+				{label: "inference_unavailable"},
 			},
 			validate: validateMNISTTimelineE2E,
 		},

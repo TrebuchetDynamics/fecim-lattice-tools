@@ -1,0 +1,9 @@
+schema = 1
+task = "HYS-LOCAL"
+candidate = "1cb09424cae1af4b914fdeac443c26f9c3eef0db"
+integration = "ae7059f4d5841d5c81af6eb53648d73b5e69d4ce"
+tree = "217bf7e06896b761866c83f2554e4ed1b7289555"
+contract_hash = "fbe126110ace308b2f94d1382dd46a9f66ce6a3a69c9b7a2335c8102db42a83f"
+checks = ["<path>", "<path>", "--verify", "<path>", "HYS-LOCAL"]
+result = "pass"
+review = "passed"

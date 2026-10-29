@@ -69,7 +69,7 @@ func TestAllModulesE2EParallelLifecycleAndActionStorm(t *testing.T) {
 	}{
 		{name: "hysteresis", factory: func() viewmodel.ModulePort { return hystvm.New() }, actions: []viewmodel.Action{{ID: hystvm.EventToggleSimulation}, {ID: hystvm.EventSetWaveform, Payload: map[string]string{"waveform": hystvm.WaveformSine}}, {ID: hystvm.EventRunPUND}}},
 		{name: "crossbar", factory: func() viewmodel.ModulePort { return crossbarvm.New(4, 4) }, actions: []viewmodel.Action{{ID: "run_mvm"}, {ID: "toggle_ir"}, {ID: "resize", Payload: map[string]string{"rows": "8", "cols": "8"}}}},
-		{name: "mnist", factory: func() viewmodel.ModulePort { return mnistvm.New() }, actions: []viewmodel.Action{{ID: "run_inference"}, {ID: "sweep_levels", Payload: map[string]string{"levels": "16"}}, {ID: "sweep_levels", Payload: map[string]string{"levels": "64"}}}},
+		{name: "mnist", factory: func() viewmodel.ModulePort { return mnistvm.New() }, actions: []viewmodel.Action{{ID: "sweep_levels", Payload: map[string]string{"levels": "16"}}, {ID: "sweep_levels", Payload: map[string]string{"levels": "31"}}}},
 		{name: "circuits", factory: func() viewmodel.ModulePort { return circuitsvm.New() }, actions: []viewmodel.Action{{ID: circuitsvm.ActionRunRead}, {ID: circuitsvm.ActionRunWrite}, {ID: circuitsvm.ActionRunCompute}, {ID: circuitsvm.ActionToggleISPP}}},
 		{name: "comparison", factory: func() viewmodel.ModulePort { return comparisonvm.New() }},
 		{name: "eda", factory: func() viewmodel.ModulePort { return edavm.New() }, actions: []viewmodel.Action{{ID: "generate_spice"}, {ID: "generate_all"}}},

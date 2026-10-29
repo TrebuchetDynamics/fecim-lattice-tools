@@ -81,7 +81,7 @@ func TestExportSelectedRunUsesVerifiedRunAndWritesAllFormats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := json.Unmarshal(blob, &manifest); err != nil || manifest.RunID != runID || len(manifest.Files) != 5 {
+	if err := json.Unmarshal(blob, &manifest); err != nil || manifest.RunID != runID || len(manifest.Files) != 6 {
 		t.Fatalf("manifest=%+v err=%v", manifest, err)
 	}
 	if _, err := ExportSelectedRun(bundle.Root, runID); err == nil {
@@ -112,7 +112,11 @@ func TestExportSelectedRunRootConfinement(t *testing.T) {
 		if err == nil || dir != "" || !strings.Contains(err.Error(), "write design.spice") {
 			t.Fatalf("expected artifact write failure: dir=%q err=%v", dir, err)
 		}
-		return
+		must(t, root.Close())
+		// The fault child cannot write coverage metadata under its intentional
+		// zero-size limit. Exit only after its assertions; the covered parent
+		// still checks cleanup, the unrelated marker and a successful retry.
+		os.Exit(0)
 	}
 
 	t.Run("verified bytes through moved handle", func(t *testing.T) {
@@ -144,7 +148,7 @@ func TestExportSelectedRunRootConfinement(t *testing.T) {
 		must(t, err)
 		must(t, json.Unmarshal(blob, &manifest))
 		if manifest.SchemaVersion != 1 || manifest.RunID != id || !reflect.DeepEqual(manifest.Design, bundle.Design) ||
-			manifest.Technology != "SKY130" || !strings.Contains(manifest.Warning, "tech_node=65nm is not mapped to a foundry PDK") || len(manifest.Hashes) != 5 {
+			manifest.Technology != "SKY130" || !strings.Contains(manifest.Warning, "tech_node=65nm is not mapped to a foundry PDK") || len(manifest.Hashes) != 6 {
 			t.Fatalf("export provenance=%+v", manifest)
 		}
 		for name, fragments := range map[string][]string{

@@ -3,6 +3,8 @@ package comparison
 import (
 	pkg "fecim-lattice-tools/module5-comparison/pkg/comparison"
 	"fecim-lattice-tools/shared/viewmodel"
+	"fecim-lattice-tools/workbench/moduleapi"
+	webcomparison "fecim-lattice-tools/workbench/modules/comparison"
 )
 
 // Module is a read-only viewmodel for the FeCIM comparison module.
@@ -20,5 +22,8 @@ func New() *Module {
 func (m *Module) Descriptor() viewmodel.ModuleDescriptor { return descriptor() }
 func (m *Module) Snapshot() viewmodel.ModuleSnapshot     { return buildSnapshot(m.architectures) }
 func (m *Module) ApplyAction(viewmodel.Action) error     { return viewmodel.ErrUnsupportedAction }
-func (m *Module) Start()                                 {}
-func (m *Module) Stop()                                  {}
+
+// WebPort supplies the real bounded scenario workflow without changing legacy snapshots.
+func (m *Module) WebPort() moduleapi.Port { return webcomparison.New() }
+func (m *Module) Start()                  {}
+func (m *Module) Stop()                   {}

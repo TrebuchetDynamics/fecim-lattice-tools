@@ -1,0 +1,9 @@
+schema = 1
+task = "HYS-PROGRAM"
+candidate = "8d35d47eb6633f93a2fc3f37bb75e244a11f769e"
+integration = "9327474226531fcdf15ec5d2ab0a2e470745dc42"
+tree = "45d15e6f014910daadcdceb52c5044046e19595d"
+contract_hash = "7dca3d4e4f11e935406eaa3f0fb5c402a464fe3cee5d15d8e96792cb97944578"
+checks = ["<path>", "<path>", "--verify", "<path>", "HYS-PROGRAM"]
+result = "pass"
+review = "passed"

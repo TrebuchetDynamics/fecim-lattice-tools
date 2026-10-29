@@ -2,7 +2,8 @@ package circuits
 
 import "testing"
 
-func TestComputeRunWorkflowBuildsDetailedMVMSummary(t *testing.T) {
+// Compatibility serialization only; real device parity belongs to the web/native tests.
+func TestLegacySyntheticComputeRunWorkflowBuildsDetailedMVMSummary(t *testing.T) {
 	log := newComputeRunWorkflow(CircuitsState{
 		Rows:          2,
 		Cols:          2,
@@ -17,6 +18,10 @@ func TestComputeRunWorkflowBuildsDetailedMVMSummary(t *testing.T) {
 	if log == nil {
 		t.Fatal("log = nil")
 	}
+	if log.Material != "Synthetic compatibility fixture; not device/material/coupling parity" {
+		t.Fatal("synthetic matrix must not claim a material-aware device run")
+	}
+
 	if log.Schema != "fecim.circuits.compute_run.v1" || log.ArraySize != "2x2" || log.ExportedCells != 4 {
 		t.Fatalf("unexpected header: %+v", log)
 	}

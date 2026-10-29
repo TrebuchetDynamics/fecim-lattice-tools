@@ -1,9 +1,11 @@
 package arraysim
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math"
+	"time"
 )
 
 // DCEngine extends Engine with access to the full DC nodal solution (internal line node voltages).
@@ -29,6 +31,7 @@ type DCResult struct {
 type TierBSolver struct {
 	// MaxIter bounds solver iterations. If <=0, default is used.
 	MaxIter int
+	context context.Context
 	// RelativeTolerance is the relative residual tolerance. If <=0, default is used.
 	RelativeTolerance float64
 	// AbsoluteTolerance is the absolute residual tolerance. If <=0, default is used.
@@ -213,7 +216,11 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 		}
 	}
 
-	x, err := pcgSolve(applyA, diag, b, t.maxIter(), t.relTol(), t.absTol())
+	ctx := context.Background()
+	if t != nil && t.context != nil {
+		ctx = t.context
+	}
+	x, err := pcgSolveContext(ctx, applyA, diag, b, t.maxIter(), t.relTol(), t.absTol())
 	if err != nil {
 		return DCResult{}, err
 	}
@@ -263,6 +270,9 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 }
 
 func pcgSolve(applyA func(x, y []float64), diag, b []float64, maxIter int, relTol, absTol float64) ([]float64, error) {
+	return pcgSolveContext(context.Background(), applyA, diag, b, maxIter, relTol, absTol)
+}
+func pcgSolveContext(ctx context.Context, applyA func(x, y []float64), diag, b []float64, maxIter int, relTol, absTol float64) ([]float64, error) {
 	n := len(b)
 	if n == 0 {
 		return []float64{}, nil
@@ -299,6 +309,12 @@ func pcgSolve(applyA func(x, y []float64), diag, b []float64, maxIter int, relTo
 	}
 
 	for it := 0; it < maxIter; it++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		if it%32 == 31 {
+			time.Sleep(time.Millisecond)
+		}
 		applyA(p, Ap)
 		den := dot(p, Ap)
 		if den == 0 {

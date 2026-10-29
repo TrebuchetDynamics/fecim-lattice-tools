@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-AUTOMATION"
+candidate = "57a61a0981ee5bd1c291f2a941a4da033310511f"
+integration = "303b94c45843596b5c54d73437fce6214858b08d"
+tree = "dd212bd508605a03c7dd15fdc5365090144d3dc9"
+contract_hash = "e548b64ead765ced25973c8137978f8177676a0bc16eee73a50281c7c4d4b77d"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-AUTOMATION"]
+result = "pass"
+review = "passed"

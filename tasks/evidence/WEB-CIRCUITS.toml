@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-CIRCUITS"
+candidate = "e01a715038e912c0cbd8ab4aededf84bb0e52066"
+integration = "94095400f6f83864b190760e7eb99528d1566a7e"
+tree = "3157ba5c41eac851414454e6da082e65e9ba5825"
+contract_hash = "8879a77599d7fab24c39c330c373472583f7d1eaaf1a24379547bd07ee524dc7"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-CIRCUITS"]
+result = "pass"
+review = "passed"

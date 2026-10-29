@@ -1,21 +1,42 @@
 {
   "name": "fecim-lattice-tools-web",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name fecim --branch development --commit-dirty=true",
-    "test": "node --test test/**/*.test.mjs",
+    "prepare:assets": "npm run generate:docs && node src/build/build.mjs",
+    "dev": "npm run prepare:assets && vite --host 127.0.0.1",
+    "build": "npm run build:hosted",
+    "build:hosted": "npm run prepare:assets && vite build --mode hosted",
+    "build:local": "npm run prepare:assets && vite build --mode local-app && node src/local/stage.mjs",
+    "build:native": "node src/local/build-native.mjs",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "deploy": "npm run build:hosted && wrangler pages deploy dist --project-name fecim --branch development --commit-dirty=true",
+    "test": "node --import ./test/setup.mjs --test test/*.test.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:build": "npm run build && npm run test:e2e"
+    "test:e2e:build": "npm run build:hosted && npm run build:local && npm run test:e2e",
+    "generate:api": "node scripts/generate-api.mjs",
+    "generate:docs": "cd .. && go run ./cmd/fecim-docs-index",
+    "check:docs": "cd .. && go run ./cmd/fecim-docs-index --check"
   },
   "dependencies": {
-    "astro": "^7.4.2"
+    "openapi-fetch": "0.17.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0"
-  }
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.60.0",
+    "@types/node": "24.10.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.5"
+  },
+  "packageManager": "npm@11.17.0"
 }

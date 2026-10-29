@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-MNIST-WAIT"
+candidate = "4dbf518cbc8537bd49f54e5a3a0405d698cce4dc"
+integration = "07689a8e317fd8d83203049a137b6a7a70bad066"
+tree = "564f75f0d9ac9c974e2b2c2d49a5b8226714576d"
+contract_hash = "3d2bfa76cb823c2d27053faa9bc8a6119ccd85129c1432e88b4a44207a407557"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-MNIST-WAIT"]
+result = "pass"
+review = "passed"

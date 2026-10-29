@@ -66,7 +66,36 @@ CGO_ENABLED=0 go build -o fecim-lattice-tools-cli ./cmd/fecim-lattice-tools
 
 Use that binary with the [workbench guide's](research-design-workbench.md) `project validate`, `experiment run`, and `report generate` subcommands. Running it without a headless subcommand requests the desktop and fails.
 
-**Launcher limitation:** [`launch.sh:29`](../../launch.sh) currently forces `CGO_ENABLED=0`, so it cannot launch the desktop. Use the explicit desktop build above instead. Recheck this guidance when the launcher or the CGO entry points change.
+Alternatively, [`./launch.sh`](../../launch.sh) builds and starts the default Fyne desktop app. It defaults an unset or empty `CGO_ENABLED` to `1` and preserves an explicit caller value. For headless commands, use `CGO_ENABLED=0 ./launch.sh --help` or the subcommands above; there is no automatic headless fallback if the desktop build fails.
+
+The launcher forwards arguments unchanged except for `--clear`, which deletes only `logs/` and `docs/assets/screenshots/` relative to the script before building. It replaces the root `fecim-lattice-tools` binary on each run, never launches after a failed build, and returns the application's exit status. See [`launch.sh:9–36`](../../launch.sh) and the display-free [launcher contract test](../../scripts/launch_contract_test.go). Recheck this guidance when the launcher or the CGO entry points change.
+
+## Optional local React Hysteresis application
+
+The additive command is **`fecim-lattice-tools serve --root DIRECTORY`**.
+The design's `fecim serve` is shorthand, not a separate installed executable.
+Default launch and existing CLI/Fyne entry points are unchanged.
+
+To build the embedded browser profile, install Node 24+, npm and the exact Go
+version in `go.mod`, plus the desktop build dependencies above, then run:
+
+```bash
+make build-browser
+./fecim-lattice-tools serve --root ./data --port 20200
+```
+
+Only grant directories you intend to read/write. Repeat `--root` for additional
+grants. Omit `--port` to select an available loopback port; Autowork checks use
+only the worker's assigned port range. Open the terminal's 60-second, single-use
+launch link. Type `renew` then Enter in that terminal if the link expires or was
+used. Use the local file panel to log out; Ctrl-C shuts down the server and
+revokes its session. Browser users need no runtime Node installation.
+
+Plain `go build` still compiles without generated browser assets; `serve`
+reports `browser-assets-unavailable` unless the matching profile is staged and
+pinned. Rebuild after changing Go or frontend source. Generated assets are not
+committed. See the [command and security reference](../../cmd/fecim-lattice-tools/README.md)
+for explicit save/load/export support, conflict recovery and trust limits.
 
 ## Equation SVG (Optional, Ubuntu/Debian)
 

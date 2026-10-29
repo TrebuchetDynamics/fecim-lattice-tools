@@ -23,7 +23,6 @@ import (
 	guimetrics "fecim-lattice-tools/module4-circuits/pkg/gui/metrics"
 	unifiedsense "fecim-lattice-tools/module4-circuits/pkg/gui/unified/sense"
 	sharedexport "fecim-lattice-tools/shared/export"
-	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -46,20 +45,9 @@ const (
 	minSenseADCVrefSpan = 1e-3
 )
 
-type senseMeasurementPreset struct {
-	Name string
-	Rf   float64
-	Vmin float64
-	Vmax float64
-}
+type senseMeasurementPreset = arraysim.SenseMeasurementPreset
 
-var senseMeasurementPresets = []senseMeasurementPreset{
-	{Name: "Balanced", Rf: 10.0, Vmin: 0.00, Vmax: 1.00},
-	{Name: "High Sensitivity", Rf: 50.0, Vmin: 0.00, Vmax: 1.00},
-	{Name: "Wide Current Range", Rf: 5.0, Vmin: 0.00, Vmax: 1.20},
-	{Name: "Low-Current Focus", Rf: 100.0, Vmin: 0.10, Vmax: 0.90},
-	{Name: "Ultra-Low Current", Rf: 500.0, Vmin: 0.20, Vmax: 0.80},
-}
+var senseMeasurementPresets = arraysim.NativeSensePresets()
 
 const (
 	customSensePresetName = "Custom"
@@ -103,26 +91,23 @@ func formatCurrentA(currentA float64) string {
 
 // techNodeSelectorParams returns (selectorRon, leakageS, nodeNm) for a technology node name.
 func techNodeSelectorParams(name string) (selectorRon, leakageS, nodeNm float64) {
+	node := 130
 	switch name {
 	case "14nm":
-		return 0.8e3, 5e-11, 14
+		node = 14
 	case "28nm":
-		return 1.5e3, 2e-11, 28
+		node = 28
 	case "65nm":
-		return 3.5e3, 5e-12, 65
-	default:
-		return 7.0e3, 1e-12, 130
+		node = 65
 	}
+	selectorRon, leakageS = arraysim.NodeSelectorParams(node)
+	return selectorRon, leakageS, float64(node)
 }
 
 // safeReadVoltage computes a safe read voltage from the device's read range.
 // Returns ReadVoltageFraction * readRange.Max, with a floor of FallbackReadVoltage.
 func (ca *CircuitsApp) safeReadVoltage() float64 {
-	v := ca.deviceState.GetReadRange().Max * ReadVoltageFraction
-	if v < MinReadVoltageThreshold {
-		v = FallbackReadVoltage
-	}
-	return v
+	return arraysim.SafeDeviceReadVoltage(ca.deviceState.GetReadRange().Max)
 }
 
 // parseBitsFromSelection extracts the bit width from a selector string like "5-bit (32)".
@@ -1508,24 +1493,7 @@ func (ca *CircuitsApp) senseChainConfig() (arraysim.SenseChain, bool) {
 }
 
 func (ca *CircuitsApp) composedSenseSNRdB(currentA float64, sense arraysim.SenseChain) float64 {
-	if ca.tia == nil {
-		return math.NaN()
-	}
-	signalRMS := math.Abs(currentA)
-	bandwidth := ca.tia.Bandwidth
-	if bandwidth <= 0 {
-		bandwidth = 1
-	}
-
-	// Input-referred noise composition (A_rms): TIA input noise + shot noise + ADC quantization.
-	tiaNoiseRMS := math.Abs(ca.tia.InputNoiseRMS) * math.Sqrt(bandwidth)
-	shotNoiseRMS := peripherals.ShotNoiseCurrentRMS(math.Abs(currentA), bandwidth)
-	quantNoiseRMS := 0.0
-	if lsb := sense.CurrentLSB(); lsb > 0 {
-		quantNoiseRMS = lsb / math.Sqrt(12)
-	}
-	totalNoiseRMS := math.Sqrt(peripherals.TotalNoiseVariance(tiaNoiseRMS, shotNoiseRMS, quantNoiseRMS))
-	return peripherals.SNRDB(signalRMS, totalNoiseRMS)
+	return arraysim.ComposedSenseSNR(currentA, sense, ca.tia)
 }
 
 // updateSensePanel updates the compact sense-chain readout.

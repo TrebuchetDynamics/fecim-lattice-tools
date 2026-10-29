@@ -46,7 +46,7 @@ func (n *NLSKinetics) CalculateTau(E float64) float64 {
 		// Return a very large number to prevent numerical issues
 		return 1e15 // ~30 million years
 	}
-	tau := n.Tau0 * math.Exp(n.Ea/absE)
+	tau := n.Tau0 * preisachExp(n.Ea/absE)
 	if !isFiniteNLSValue(tau) || tau <= 0 {
 		return math.Inf(1)
 	}
@@ -73,7 +73,7 @@ func (n *NLSKinetics) Relax(currentP, targetP, E, dt float64) float64 {
 	}
 
 	// P(t) decay
-	decay := math.Exp(-dt / tau)
+	decay := preisachExp(-dt / tau)
 	if !isFiniteNLSValue(decay) {
 		return currentP
 	}
@@ -82,6 +82,83 @@ func (n *NLSKinetics) Relax(currentP, targetP, E, dt float64) float64 {
 		return currentP
 	}
 	return relaxed
+}
+
+// preisachExp fixes the evaluation order of the existing exponential equation
+// to Go's portable range-reduced implementation. math.Exp selects different
+// native assembly polynomials even with FMA disabled; that changed programming
+// history by one ULP relative to WASM. No precision rounding or equation change
+// is applied at a target boundary. Explicit binary64 intermediates forbid FMA.
+//
+// Adapted from Go 1.26 math/exp.go (exp/expmulti), Copyright 2009 The Go Authors.
+// Original constants/algorithm: Copyright (C) 2004 Sun Microsystems, Inc.
+// Permission to use, copy, modify, and distribute this software is freely
+// granted, provided that this notice is preserved.
+//
+// Go BSD license: Redistribution and use in source and binary forms, with or
+// without modification, are permitted provided that the following conditions
+// are met:
+//   - Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//   - Redistributions in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+//   - Neither the name of Google LLC nor the names of its contributors may be
+//     used to endorse or promote products derived from this software without
+//     specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+func preisachExp(x float64) float64 {
+	const (
+		ln2Hi     = 6.93147180369123816490e-01
+		ln2Lo     = 1.90821492927058770002e-10
+		log2e     = 1.44269504088896338700e+00
+		overflow  = 7.09782712893383973096e+02
+		underflow = -7.45133219101941108420e+02
+		nearZero  = 1.0 / (1 << 28)
+		p1        = 1.66666666666666657415e-01
+		p2        = -2.77777777770155933842e-03
+		p3        = 6.61375632143793436117e-05
+		p4        = -1.65339022054652515390e-06
+		p5        = 4.13813679705723846039e-08
+	)
+	switch {
+	case math.IsNaN(x):
+		return x
+	case x > overflow:
+		return math.Inf(1)
+	case x < underflow:
+		return 0
+	case -nearZero < x && x < nearZero:
+		return 1 + x
+	}
+	var k int
+	if x < 0 {
+		k = int(float64(log2e*x) - 0.5)
+	} else {
+		k = int(float64(log2e*x) + 0.5)
+	}
+	hi := x - float64(float64(k)*ln2Hi)
+	lo := float64(k) * ln2Lo
+	r := hi - lo
+	t := r * r
+	polynomial := p4 + float64(t*p5)
+	polynomial = p3 + float64(t*polynomial)
+	polynomial = p2 + float64(t*polynomial)
+	polynomial = p1 + float64(t*polynomial)
+	c := r - float64(t*polynomial)
+	y := 1 - ((lo - float64(r*c)/(2-c)) - hi)
+	return math.Ldexp(y, k)
 }
 
 func (n *NLSKinetics) hasValidParameters() bool {

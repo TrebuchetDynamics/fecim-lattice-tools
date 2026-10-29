@@ -4,6 +4,7 @@ package validation
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -20,18 +21,37 @@ func CrossCheckFiles(lefPath, libPath, verilogPath string) error {
 		"lefPath": lefPath, "libPath": libPath, "verilogPath": verilogPath,
 	})
 
-	// Extract data from each file
-	lefPins, lefCellName, err := extractLEFData(lefPath)
+	lef, err := os.Open(lefPath)
+	if err != nil {
+		return err
+	}
+	defer lef.Close()
+	lib, err := os.Open(libPath)
+	if err != nil {
+		return err
+	}
+	defer lib.Close()
+	verilog, err := os.Open(verilogPath)
+	if err != nil {
+		return err
+	}
+	defer verilog.Close()
+	return CrossCheckReaders(lef, lib, verilog)
+}
+
+// CrossCheckReaders performs cell-name/port-set checks, not extracted LVS.
+func CrossCheckReaders(lef, lib, verilog io.Reader) error {
+	lefPins, lefCellName, err := extractLEFReader(lef)
 	if err != nil {
 		return fmt.Errorf("LEF parsing error: %v", err)
 	}
 
-	libPins, libCellName, err := extractLibData(libPath)
+	libPins, libCellName, err := extractLibReader(lib)
 	if err != nil {
 		return fmt.Errorf("Liberty parsing error: %v", err)
 	}
 
-	verilogPins, verilogCellName, err := extractVerilogData(verilogPath)
+	verilogPins, verilogCellName, err := extractVerilogReader(verilog)
 	if err != nil {
 		return fmt.Errorf("Verilog parsing error: %v", err)
 	}
@@ -61,6 +81,9 @@ func extractLEFData(path string) ([]string, string, error) {
 		return nil, "", err
 	}
 	defer file.Close()
+	return extractLEFReader(file)
+}
+func extractLEFReader(file io.Reader) ([]string, string, error) {
 
 	var pins []string
 	var cellName string
@@ -91,6 +114,9 @@ func extractLibData(path string) ([]string, string, error) {
 		return nil, "", err
 	}
 	defer file.Close()
+	return extractLibReader(file)
+}
+func extractLibReader(file io.Reader) ([]string, string, error) {
 
 	var pins []string
 	var cellName string
@@ -121,6 +147,9 @@ func extractVerilogData(path string) ([]string, string, error) {
 		return nil, "", err
 	}
 	defer file.Close()
+	return extractVerilogReader(file)
+}
+func extractVerilogReader(file io.Reader) ([]string, string, error) {
 
 	var pins []string
 	var moduleName string

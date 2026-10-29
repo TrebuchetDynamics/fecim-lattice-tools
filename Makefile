@@ -1,12 +1,13 @@
 export PATH := $(PATH):/usr/local/go/bin
 
-.PHONY: build test test-race test-short test-legacy-fyne test-next-ui bench vet fmt fmt-check lint govulncheck coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research research-audit install-skills test-skills
+.PHONY: generate-api check-api build-browser build test test-race test-short test-legacy-fyne test-next-ui bench vet fmt fmt-check lint govulncheck coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research research-audit install-skills test-skills
 # Help target - self-documenting Makefile
 help:
 	@echo "FeCIM Lattice Tools Makefile"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make build          Build all packages"
+	@echo "  make build-browser  Build hosted/local React assets and embedded local binary"
 	@echo "  make test           Run all tests"
 	@echo "  make test-race      Run tests with race detector"
 	@echo "  make test-short     Run only short tests"
@@ -72,6 +73,16 @@ COVERAGE_HTML ?= coverage.html
 
 build:
 	$(GO) build ./...
+
+# Optional asset build; plain Go builds do not require Node or generated files.
+generate-api:
+	cd web && npm run generate:api
+
+check-api: generate-api
+	git diff --exit-code -- workbench/moduleapi/openapi.json web/src/api/generated.ts
+
+build-browser:
+	cd web && npm ci && npm run generate:api && npm run build:hosted && npm run build:local && npm run build:native
 
 test:
 	$(GO) test ./...

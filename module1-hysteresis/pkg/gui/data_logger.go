@@ -189,6 +189,12 @@ func (l *HysteresisDataLogger) Record(snapshot HysteresisSnapshot) {
 	defer func() {
 		_ = recover()
 	}()
+	// Preserve target/phase boundaries even when the CSV writer falls behind.
+	// Ordinary samples remain best-effort, as in the headless logger.
+	if snapshot.Waveform == "ISPP" && snapshot.WrdTargetLevel > 0 && snapshot.WrdPhaseTimer == 0 {
+		l.rows <- snapshot
+		return
+	}
 	select {
 	case l.rows <- snapshot:
 		return

@@ -1,0 +1,9 @@
+schema = 1
+task = "MAIN-STRESS-ARCH"
+candidate = "29178f31d55d14806c1b6f8cc10ef710096d648f"
+integration = "71b7dc7f1f98f3d93d3a89f4f6672a1f4e37008e"
+tree = "a6a17148c0369393eda6c76227d18f18a52a0f0f"
+contract_hash = "07a2f608e36278bf27b32ddfd4458de5ac4ffed4e8493ea3bea0197838ed96e3"
+checks = ["<path>", "<path>", "--verify", "<path>", "MAIN-STRESS-ARCH"]
+result = "pass"
+review = "passed"

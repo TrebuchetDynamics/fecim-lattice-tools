@@ -14,7 +14,7 @@ CGO_ENABLED=1 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools
 ```
 
-See [Installation](installation.md#desktop-build-dependencies) for native prerequisites. Do not use `./launch.sh` for desktop startup while it forces `CGO_ENABLED=0` ([source, line 29](../../launch.sh)); the [non-CGO entry point, lines 16–20](../../cmd/fecim-lattice-tools/fyne_nocgo.go) refuses desktop requests.
+See [Installation](installation.md#desktop-build-dependencies) for native prerequisites. Alternatively, use [`./launch.sh`](../../launch.sh) to build and start the default Fyne desktop app: unset or empty `CGO_ENABLED` defaults to `1`, while an explicit value is preserved. Use `CGO_ENABLED=0 ./launch.sh --help` for a headless command; the [non-CGO entry point, lines 16–20](../../cmd/fecim-lattice-tools/fyne_nocgo.go) still refuses desktop requests. See [launcher behavior and cleanup scope](installation.md#build-and-run) before using `--clear`.
 
 ### Release Build
 

@@ -147,9 +147,12 @@ func TestExternalValidationWorkflowRejectsNonGatingMutations(t *testing.T) {
 			name: "moved version step",
 			mutate: func(t *testing.T, workflow string) string {
 				workflow = replaceOnce(t, workflow, "      - name: Record Icarus Verilog version\n        run: iverilog -V\n\n", "")
-				ciStart := "  ci:\n    runs-on: ubuntu-latest\n    timeout-minutes: 20\n\n    steps:\n      - name: Checkout"
-				ciWithVersion := "  ci:\n    runs-on: ubuntu-latest\n    timeout-minutes: 20\n\n    steps:\n      - name: Record Icarus Verilog version\n        run: iverilog -V\n\n      - name: Checkout"
-				return replaceOnce(t, workflow, ciStart, ciWithVersion)
+				ciPrefix, external, found := strings.Cut(workflow, "\n  external-validation:")
+				if !found {
+					t.Fatal("external validation job boundary missing")
+				}
+				ciPrefix = replaceOnce(t, ciPrefix, "    steps:\n", "    steps:\n      - name: Record Icarus Verilog version\n        run: iverilog -V\n\n")
+				return ciPrefix + "\n  external-validation:" + external
 			},
 		},
 		{
@@ -328,16 +331,31 @@ func TestCIRunsWebTestsAndProductionBuild(t *testing.T) {
 	if err := yaml.Unmarshal([]byte(workflow), &parsed); err != nil {
 		t.Fatal(err)
 	}
-	for _, step := range parsed.Jobs["ci"].Steps {
-		if step.Name == "Test and build web app" {
-			if step.Run != "npm ci && npm test && npm run build" || step.WorkingDirectory != "web" {
-				t.Fatalf("web CI command=%q working-directory=%q", step.Run, step.WorkingDirectory)
-			}
-			if nodePresent(step.ContinueOnError) {
-				t.Fatal("web checks must be required")
-			}
-			return
-		}
+	required := map[string]struct{ command, directory string }{
+		"Test and build web app": {
+			"npm ci && npm run generate:api && npm test && npm run build", "web",
+		},
+		"Reject generated API drift": {
+			"git diff --exit-code -- workbench/moduleapi/openapi.json web/src/api/generated.ts", "",
+		},
+		"Typecheck and build both shared React profiles": {
+			"npm run typecheck && npm run build:hosted && npm run build:local", "web",
+		},
 	}
-	t.Fatal("CI is missing required web tests/build")
+	for _, step := range parsed.Jobs["ci"].Steps {
+		want, ok := required[step.Name]
+		if !ok {
+			continue
+		}
+		if step.Run != want.command || step.WorkingDirectory != want.directory {
+			t.Fatalf("%s: command=%q working-directory=%q", step.Name, step.Run, step.WorkingDirectory)
+		}
+		if nodePresent(step.ContinueOnError) {
+			t.Fatalf("%s must be required", step.Name)
+		}
+		delete(required, step.Name)
+	}
+	for name := range required {
+		t.Errorf("CI is missing required web step %q", name)
+	}
 }

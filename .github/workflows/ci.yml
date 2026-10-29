@@ -7,22 +7,47 @@ on:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Playwright 1.60.0 supports this host, not ubuntu-latest's Ubuntu 26.04.
+    runs-on: ubuntu-24.04
+    # Serial hosted/local, parity, race and coverage gates exceed the old 20m cap.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Guard the locked browser host
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_ci_browser_host.py' -v
+
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: '24.19.0'
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Setup pinned Go for browser assets
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Pin frontend package manager
+        run: npm install --global npm@11.17.0
+
       - name: Test and build web app
-        run: npm ci && npm test && npm run build
+        run: npm ci && npm run generate:api && npm test && npm run build
+        working-directory: web
+
+      - name: Reject generated API drift
+        run: git diff --exit-code -- workbench/moduleapi/openapi.json web/src/api/generated.ts
+
+      - name: Typecheck and build both shared React profiles
+        run: npm run typecheck && npm run build:hosted && npm run build:local
+        working-directory: web
+
+      - name: Install locked browser engines
+        run: npx playwright install --with-deps chromium firefox
         working-directory: web
 
       - name: Install GUI build dependencies
@@ -30,14 +55,49 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
-      - name: Setup Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: go.mod
-          cache: true
-
       - name: Run make ci
         run: make ci
+
+      - name: Build matching native browser binary
+        timeout-minutes: 10
+        run: npm run build:native
+        working-directory: web
+
+      - name: Hosted React workflows, isolation and route budgets
+        run: npm run test:e2e
+        working-directory: web
+        env:
+          FECIM_WEB_SUITE: shared
+
+      - name: Embedded authenticated local session and file workflows
+        run: npm run test:e2e -- test/e2e/hysteresis-local.spec.ts
+        working-directory: web
+
+      - name: Local shared routes and real rooted research service
+        run: npm run test:e2e
+        working-directory: web
+        env:
+          FECIM_WEB_PROFILE: local
+          FECIM_WEB_SUITE: shared
+
+      - name: Shared research transport and root-lifetime races
+        run: go test -race ./workbench/server ./workbench/moduleapi ./workbench/project ./workbench/study -count=1
+        env:
+          CGO_ENABLED: '1'
+
+      - name: Exact native Node Firefox scientific parity and Worker budgets
+        run: go test ./validation/wasm -count=1 -v
+        env:
+          FECIM_WASM_PARITY: '1'
+          CGO_ENABLED: '1'
+
+      - name: Retain browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: react-browser-failures
+          path: web/test-results
+          if-no-files-found: ignore
 
       - name: Future gogpu UI shell tests
         run: make test-next-ui
