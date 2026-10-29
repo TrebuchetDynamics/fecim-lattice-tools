@@ -55,6 +55,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
+      - name: Build matching native browser binary
+        timeout-minutes: 10
+        run: npm run build:native
+        working-directory: web
+
       - name: Hosted React workflows, isolation and route budgets
         run: npm run test:e2e
         working-directory: web

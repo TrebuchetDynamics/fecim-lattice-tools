@@ -24,6 +24,12 @@ class TestCIBrowserHost(unittest.TestCase):
         self.assertIsNotNone(match)
         self.assertEqual(int(match.group(1)), 60)
 
+    def test_native_build_precedes_timed_browser_workflows(self):
+        build = self.job.find("run: npm run build:native")
+        self.assertGreaterEqual(build, 0)
+        self.assertLess(self.job.index("- name: Install GUI build dependencies"), build)
+        self.assertLess(build, self.job.index("- name: Hosted React workflows"))
+
     def test_platform_guard_runs_in_the_browser_job(self):
         self.assertIn(
             "python3 -m unittest discover -s scripts -p 'test_ci_browser_host.py'",
