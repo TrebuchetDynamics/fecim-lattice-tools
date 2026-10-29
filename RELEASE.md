@@ -36,7 +36,7 @@ Open the short-lived terminal launch link. `make build-browser` installs locked 
 
 The current `build:native` packaging script explicitly selects CGO=1 and needs the desktop build dependencies. The Go command supports CGO=0 headless subcommand builds, but those plain builds have no matched browser packaging. Default desktop startup fails explicitly without CGO. Legacy Fyne remains the default and retains its regression gates.
 
-This is a source-built candidate, not a published or qualified release. Real Orca + Firefox/Linux acceptance is **NOT RUN** for both profiles. No Fyne retirement, deployment, publication or default switch follows from automated checks. See [web build/check instructions](web/README.md) and the [manual acceptance contract](docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-orca-acceptance.md).
+This is a source-built candidate, not a published or qualified release. Real Orca + Firefox/Linux acceptance is **NOT RUN** for both profiles. No Fyne retirement, deployment, publication or default switch follows from automated checks. See [web build/check instructions](web/README.md) and the [remaining manual qualification limits](docs/internals/testing/all-modules-web-recheck.md#verdict-and-scope).
 
 ### Minimum Hardware
 - 4 GB RAM (8 GB recommended for large arrays)
