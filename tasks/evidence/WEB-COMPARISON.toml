@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-COMPARISON"
+candidate = "72fc47086579d8240ef8e7c94c74638c2b4afa6c"
+integration = "bc5836b9619f6e5ab921d3d644451d462bc469ad"
+tree = "ea41e5fc22ea70d4c154802c6b572cb246b84e9a"
+contract_hash = "c794351e8920fbcd13c5f47e2338dff1136c22238974c32c3358ef35c3e95287"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-COMPARISON"]
+result = "pass"
+review = "passed"
