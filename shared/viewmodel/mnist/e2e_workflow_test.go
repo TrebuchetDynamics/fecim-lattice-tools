@@ -9,7 +9,7 @@ import (
 
 func TestModule3MNISTViewModelE2EWideQuantizationWorkflow(t *testing.T) {
 	m := New()
-	levels := []int{2, 4, 8, 16, 30, 64, 128}
+	levels := []int{2, 4, 8, 16, 30, 31}
 	for _, level := range levels {
 		if err := m.ApplyAction(viewmodel.Action{ID: "sweep_levels", Payload: map[string]string{"levels": itoaE2E(level)}}); err != nil {
 			t.Fatalf("sweep_levels %d: %v", level, err)
@@ -23,8 +23,8 @@ func TestModule3MNISTViewModelE2EWideQuantizationWorkflow(t *testing.T) {
 			t.Fatalf("sections did not reflect level %d", level)
 		}
 	}
-	if err := m.ApplyAction(viewmodel.Action{ID: "run_inference"}); err != nil {
-		t.Fatalf("run_inference: %v", err)
+	if err := m.ApplyAction(viewmodel.Action{ID: "run_inference"}); err == nil {
+		t.Fatal("missing model inference must be unavailable")
 	}
 	if err := m.ApplyAction(viewmodel.Action{ID: "unknown"}); err == nil {
 		t.Fatal("unknown action should fail")
@@ -49,7 +49,7 @@ func assertMNISTSnapshotContractE2E(t *testing.T, s viewmodel.ModuleSnapshot) {
 			t.Fatalf("missing section %s", id)
 		}
 	}
-	if len(s.Plots) != 1 || s.Plots[0].ID != "accuracy_sweep" || len(s.Plots[0].Series) != 1 || len(s.Plots[0].Series[0].Points) == 0 {
+	if len(s.Plots) != 0 {
 		t.Fatalf("accuracy sweep plot invalid: %+v", s.Plots)
 	}
 }

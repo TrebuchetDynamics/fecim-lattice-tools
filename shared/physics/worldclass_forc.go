@@ -1,9 +1,30 @@
 package physics
 
 import (
+	"context"
 	"fmt"
 	"math"
 )
+
+// GUIFORCEverett is the simplified weighted Everett function used by the
+// native GUI diagnostic, not the headless TanhEverett or an L-K experiment.
+type GUIFORCEverett struct{ SaturationE, Ps float64 }
+
+func (e GUIFORCEverett) Calculate(alpha, beta float64) float64 {
+	if alpha <= beta || e.SaturationE <= 0 {
+		return 0
+	}
+	x := (alpha - beta) / (2 * e.SaturationE)
+	if x < 0 {
+		x = 0
+	}
+	if x > 1 {
+		x = 1
+	}
+	center := (alpha + beta) / (2 * e.SaturationE)
+	weight := preisachExp(-(center * center) / (2 * 0.2 * 0.2))
+	return e.Ps * x * weight
+}
 
 // FORCCurve is one first-order reversal branch at fixed reversal field Er.
 type FORCCurve struct {
@@ -46,24 +67,12 @@ func RunFORCSweep(model *PreisachStack, Emax float64, numReversals int) (FORCRes
 		Curves:            make([]FORCCurve, 0, numReversals),
 	}
 
-	for i, er := range reversalGrid {
-		ps := NewPreisachStack(model.SaturationE, model.Everett)
-		_ = ps.Update(er) // ascend branch to reversal field
-
-		applied := make([]float64, 0, i+1)
-		polarization := make([]float64, 0, i+1)
-		for j := i; j >= 0; j-- {
-			ea := reversalGrid[j]
-			p := ps.Update(ea)
-			applied = append(applied, ea)
-			polarization = append(polarization, p)
+	for i := range reversalGrid {
+		curve, err := RunFORCCurveContext(context.Background(), model, reversalGrid, i)
+		if err != nil {
+			return FORCResult{}, err
 		}
-
-		result.Curves = append(result.Curves, FORCCurve{
-			ReversalField_Vm: er,
-			AppliedField_Vm:  applied,
-			Polarization_Cm2: polarization,
-		})
+		result.Curves = append(result.Curves, curve)
 	}
 
 	result.PreisachDensity, result.ReversalPairs = ComputeFORCDensity(result)
@@ -77,22 +86,63 @@ func RunFORCSweep(model *PreisachStack, Emax float64, numReversals int) (FORCRes
 //
 // using central finite differences on the FORC grid.
 func ComputeFORCDensity(results FORCResult) ([][]float64, [][2]float64) {
+	density, pairs, _ := ComputeFORCDensityContext(context.Background(), results)
+	return density, pairs
+}
+
+// RunFORCCurveContext is one resumable sweep unit: initialize at negative
+// saturation, ascend to the reversal, then record the descending branch.
+// grid is caller-owned and must remain unchanged during this call.
+func RunFORCCurveContext(ctx context.Context, model *PreisachStack, grid []float64, index int) (FORCCurve, error) {
+	if model == nil || index < 0 || index >= len(grid) {
+		return FORCCurve{}, fmt.Errorf("invalid FORC curve input")
+	}
+	if err := ctx.Err(); err != nil {
+		return FORCCurve{}, err
+	}
+	ps := NewPreisachStack(model.SaturationE, model.Everett)
+	if ps == nil {
+		return FORCCurve{}, fmt.Errorf("invalid FORC stack")
+	}
+	_ = ps.Update(grid[index])
+	curve := FORCCurve{ReversalField_Vm: grid[index], AppliedField_Vm: make([]float64, 0, index+1), Polarization_Cm2: make([]float64, 0, index+1)}
+	for j := index; j >= 0; j-- {
+		if err := ctx.Err(); err != nil {
+			return FORCCurve{}, err
+		}
+		ea := grid[j]
+		p := ps.Update(ea)
+		curve.AppliedField_Vm = append(curve.AppliedField_Vm, ea)
+		curve.Polarization_Cm2 = append(curve.Polarization_Cm2, p)
+	}
+	return curve, nil
+}
+
+// ComputeFORCDensityContext checks cancellation while constructing and
+// differentiating the grid. Cancelled matrices are never returned as complete.
+func ComputeFORCDensityContext(ctx context.Context, results FORCResult) ([][]float64, [][2]float64, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
 	n := len(results.ReversalFields_Vm)
 	density := make([][]float64, n)
 	for i := range density {
 		density[i] = make([]float64, n)
 	}
 	if n < 3 || len(results.Curves) != n {
-		return density, nil
+		return density, nil, nil
 	}
 
 	dE := results.ReversalFields_Vm[1] - results.ReversalFields_Vm[0]
 	if dE == 0 {
-		return density, nil
+		return density, nil, nil
 	}
 
 	gridP := make([][]float64, n)
 	for i := 0; i < n; i++ {
+		if err := ctx.Err(); err != nil {
+			return nil, nil, err
+		}
 		gridP[i] = make([]float64, n)
 		for j := 0; j < n; j++ {
 			gridP[i][j] = math.NaN()
@@ -108,6 +158,9 @@ func ComputeFORCDensity(results FORCResult) ([][]float64, [][2]float64) {
 
 	pairs := make([][2]float64, 0, n*n/2)
 	for i := 1; i < n-1; i++ {
+		if err := ctx.Err(); err != nil {
+			return nil, nil, err
+		}
 		eb := results.ReversalFields_Vm[i]
 		for j := 1; j < n-1; j++ {
 			ea := results.ReversalFields_Vm[j]
@@ -128,7 +181,7 @@ func ComputeFORCDensity(results FORCResult) ([][]float64, [][2]float64) {
 		}
 	}
 
-	return density, pairs
+	return density, pairs, nil
 }
 
 func linspace(min, max float64, n int) []float64 {

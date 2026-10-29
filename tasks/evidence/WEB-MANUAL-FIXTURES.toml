@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-MANUAL-FIXTURES"
+candidate = "d8cad4c193ed84e781b57e015bc510991b107aa5"
+integration = "9ec42d890b4d6c35a3b57ca7df63ac7d54886107"
+tree = "54173c26cc13d9be987f66809161f292efbe1c67"
+contract_hash = "1b7c2d128058e1607b9d226f380ffc2a247470671597d93a86435b94b2604c66"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-MANUAL-FIXTURES"]
+result = "pass"
+review = "passed"

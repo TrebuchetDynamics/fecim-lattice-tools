@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-DOCS"
+candidate = "a358755774b82c38e9b0d53533df4fe53ded1cee"
+integration = "e82d1d58c7f5f493415bbab550937cc94d87c2b2"
+tree = "4bb9e930b09c73ee6366e6f9deb75d4514d16c76"
+contract_hash = "9def95302715f0c2342113927718a22c23effafea9d65adcaab2701e4855ce9b"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-DOCS"]
+result = "pass"
+review = "passed"

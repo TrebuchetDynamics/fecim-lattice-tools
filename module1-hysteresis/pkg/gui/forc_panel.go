@@ -45,19 +45,7 @@ type guiFORCEverett struct {
 }
 
 func (e guiFORCEverett) Calculate(alpha, beta float64) float64 {
-	if alpha <= beta || e.satE <= 0 {
-		return 0
-	}
-	x := (alpha - beta) / (2 * e.satE)
-	if x < 0 {
-		x = 0
-	}
-	if x > 1 {
-		x = 1
-	}
-	center := (alpha + beta) / (2 * e.satE)
-	weight := math.Exp(-(center * center) / (2 * 0.2 * 0.2))
-	return e.ps * x * weight
+	return (sharedphysics.GUIFORCEverett{SaturationE: e.satE, Ps: e.ps}).Calculate(alpha, beta)
 }
 
 // runFORCWorkflow executes FORC sweep + Preisach density extraction.

@@ -1,0 +1,110 @@
+.eda-workbench {
+  max-width: 76rem;
+  margin-inline: auto;
+}
+.eda-kicker {
+  font-family: monospace;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  color: var(--accent, #8bd6b0);
+  margin-block: 1.5rem;
+}
+.eda-workbench h2 {
+  margin-top: 2.5rem;
+}
+.eda-notice {
+  border-inline-start: 4px solid #dab66f;
+  padding: 1rem;
+  background: #dab66f12;
+}
+.eda-workbench fieldset {
+  margin-block: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #78908066;
+  min-width: 0;
+}
+.eda-workbench legend {
+  font-weight: 700;
+  padding-inline: 0.5rem;
+}
+.eda-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+}
+.eda-workbench label {
+  display: block;
+  margin-block: 0.75rem;
+}
+.eda-workbench input,
+.eda-workbench select,
+.eda-workbench textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 2.8rem;
+  margin-top: 0.3rem;
+  font: inherit;
+  padding: 0.6rem;
+  color: inherit;
+  background: #192b27;
+  border: 1px solid #879d94;
+  border-radius: 0.2rem;
+}
+.eda-workbench textarea {
+  font-family: monospace;
+  resize: vertical;
+}
+.eda-workbench button,
+.eda-workbench td a {
+  display: inline-block;
+  min-height: 2.8rem;
+  padding: 0.65rem;
+  margin: 0.3rem;
+  font: inherit;
+}
+.eda-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.eda-workbench pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 36rem;
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid #78908066;
+  font-size: 0.9rem;
+}
+.eda-workbench code {
+  overflow-wrap: anywhere;
+}
+.eda-table-scroll {
+  overflow: auto;
+}
+.eda-workbench table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.eda-workbench th,
+.eda-workbench td {
+  padding: 0.7rem;
+  border-bottom: 1px solid #78908066;
+  text-align: start;
+  vertical-align: top;
+}
+.eda-workbench td code {
+  word-break: break-all;
+}
+.eda-workbench [role="alert"] {
+  border: 2px solid #f1ab82;
+  padding: 1rem;
+}
+.eda-workbench :focus-visible {
+  outline: 3px solid #e7be77;
+  outline-offset: 3px;
+}
+.eda-workbench :disabled {
+  opacity: 0.6;
+}

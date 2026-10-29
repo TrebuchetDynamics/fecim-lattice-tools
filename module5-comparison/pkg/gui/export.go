@@ -3,6 +3,10 @@
 package gui
 
 import (
+	"bytes"
+	"encoding/csv"
+	"encoding/json"
+	model "fecim-lattice-tools/module5-comparison/pkg/comparison"
 	"fmt"
 	"os"
 	"os/exec"
@@ -70,89 +74,39 @@ func (ca *ComparisonApp) exportComparisonData() {
 		return
 	}
 
-	// Build export configuration
-	config := ComparisonExportConfig{
-		Metadata: *export.NewExportMetadata("module5-comparison"),
-		WorkloadConfig: WorkloadConfig{
-			WorkloadName:     ca.currentWorkload,
-			InferencesPerDay: int(ca.currentInferences),
-			MACsPerInference: getWorkloadMACs(ca.currentWorkload),
-		},
-		EnergySpecs: EnergySpecsExport{
-			CPUSpec: EnergySpecExport{
-				Name:          ca.cpuSpec.Name,
-				EnergyFJ:      ca.cpuSpec.EnergyFJ,
-				Source:        ca.cpuSpec.Source,
-				Verified:      ca.cpuSpec.Verified,
-				SourceDetails: ca.cpuSpec.SourceDetails,
-			},
-			GPUSpec: EnergySpecExport{
-				Name:          ca.gpuSpec.Name,
-				EnergyFJ:      ca.gpuSpec.EnergyFJ,
-				Source:        ca.gpuSpec.Source,
-				Verified:      ca.gpuSpec.Verified,
-				SourceDetails: ca.gpuSpec.SourceDetails,
-			},
-			FeCIMSpec: EnergySpecExport{
-				Name:          ca.fecimSpec.Name,
-				EnergyFJ:      ca.fecimSpec.EnergyFJ,
-				Source:        ca.fecimSpec.Source,
-				Verified:      ca.fecimSpec.Verified,
-				SourceDetails: ca.fecimSpec.SourceDetails,
-			},
-		},
+	// Version 2 explicitly fixes the former daily-count, kWh and million-USD
+	// mistakes. Export the calculator's workload denominator and scenario.
+	result, err := model.CalculateScenario(ca.currentWorkload, ca.currentInferences, ca.scenarioProfile)
+	if err != nil {
+		ca.showExportError(err.Error())
+		return
 	}
-
-	// Calculate and add results
-	totalMACs := float64(ca.currentInferences) * float64(getWorkloadMACs(ca.currentWorkload))
-	cpuEnergy := totalMACs * ca.cpuSpec.EnergyFJ / 1e15 / 3600 // fJ to kWh
-	gpuEnergy := totalMACs * ca.gpuSpec.EnergyFJ / 1e15 / 3600
-	fecimEnergy := totalMACs * ca.fecimSpec.EnergyFJ / 1e15 / 3600
-
-	config.CalculatedResults = &CalculatedResults{
-		TotalMACsPerDay:    totalMACs,
-		CPUEnergyKWh:       cpuEnergy,
-		GPUEnergyKWh:       gpuEnergy,
-		FeCIMEnergyKWh:     fecimEnergy,
-		CPUSavingsKWh:      cpuEnergy - fecimEnergy,
-		GPUSavingsKWh:      gpuEnergy - fecimEnergy,
-		CPUSavingsPercent:  (1 - fecimEnergy/cpuEnergy) * 100,
-		GPUSavingsPercent:  (1 - fecimEnergy/gpuEnergy) * 100,
-		AnnualCostSavingsM: (gpuEnergy - fecimEnergy) * 365 * 0.10 / 1000, // $0.10/kWh
-		Timestamp:          time.Now(),
+	data, err := model.MarshalScenario(result, "json")
+	if err != nil {
+		ca.showExportError(err.Error())
+		return
 	}
-
-	// Export JSON configuration
-	exporter := export.NewExporter(dataDir, fmt.Sprintf("comparison-config_%s", timestamp))
-	jsonResult := exporter.ExportJSON(config)
+	exporter := export.NewExporter(dataDir, fmt.Sprintf("comparison-v2_%s", timestamp))
+	jsonResult := exporter.ExportJSON(json.RawMessage(data))
 	if jsonResult.Error != nil {
-		ca.showExportError(fmt.Sprintf("JSON export failed: %v", jsonResult.Error))
+		ca.showExportError(jsonResult.Error.Error())
 		return
 	}
-
-	// Export comparison as CSV
-	csvExporter := export.NewExporter(dataDir, fmt.Sprintf("comparison-data_%s", timestamp))
-
-	csvData := export.NewCSVData("Architecture", "Energy_FJ_per_MAC", "Energy_kWh_per_day", "Savings_vs_FeCIM_percent")
-	csvData.AddRow("CPU + DRAM",
-		fmt.Sprintf("%.0f", ca.cpuSpec.EnergyFJ),
-		fmt.Sprintf("%.6f", cpuEnergy),
-		fmt.Sprintf("%.2f", config.CalculatedResults.CPUSavingsPercent))
-	csvData.AddRow("GPU + HBM",
-		fmt.Sprintf("%.0f", ca.gpuSpec.EnergyFJ),
-		fmt.Sprintf("%.6f", gpuEnergy),
-		fmt.Sprintf("%.2f", config.CalculatedResults.GPUSavingsPercent))
-	csvData.AddRow("FeCIM",
-		fmt.Sprintf("%.0f", ca.fecimSpec.EnergyFJ),
-		fmt.Sprintf("%.6f", fecimEnergy),
-		"0.00")
-
-	csvResult := csvExporter.ExportCSV(csvData.Headers, csvData.Rows)
+	data, err = model.MarshalScenario(result, "csv")
+	if err != nil {
+		ca.showExportError(err.Error())
+		return
+	}
+	rows, err := csv.NewReader(bytes.NewReader(data)).ReadAll()
+	if err != nil {
+		ca.showExportError(err.Error())
+		return
+	}
+	csvResult := exporter.ExportCSV(rows[0], rows[1:])
 	if csvResult.Error != nil {
-		ca.showExportError(fmt.Sprintf("CSV export failed: %v", csvResult.Error))
+		ca.showExportError(csvResult.Error.Error())
 		return
 	}
-
 	ca.showExportSuccess(fmt.Sprintf("Exported:\n• %s\n• %s", jsonResult.FilePath, csvResult.FilePath))
 }
 
@@ -173,21 +127,8 @@ func (ca *ComparisonApp) showExportSuccess(msg string) {
 
 // getWorkloadMACs returns the MACs per inference for a given workload
 func getWorkloadMACs(workload string) int64 {
-	// These are model-based estimates, not verified values
-	switch workload {
-	case "GPT-2":
-		return 774_000_000 // 774M parameters
-	case "GPT-3":
-		return 175_000_000_000 // 175B parameters
-	case "LLaMA-7B":
-		return 7_000_000_000 // 7B parameters
-	case "BERT":
-		return 340_000_000 // 340M parameters
-	case "ResNet-50":
-		return 4_100_000_000 // 4.1G FLOPs
-	default:
-		return 1_000_000_000 // Default 1B MACs
-	}
+	macs, _ := model.ScenarioWorkloadMACs(workload)
+	return macs
 }
 
 func currentGitCommit() string {

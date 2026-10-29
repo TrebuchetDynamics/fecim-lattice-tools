@@ -3,7 +3,7 @@ package crossbar
 import (
 	"math"
 
-	"fecim-lattice-tools/shared/export"
+	export "fecim-lattice-tools/shared/export/metadata"
 )
 
 // CrossSimVariationConfig represents CrossSim-format device variation parameters.

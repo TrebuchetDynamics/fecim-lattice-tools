@@ -410,6 +410,13 @@ func TestNewArray_EmptyConfig(t *testing.T) {
 		}
 	}()
 
+	if array, err := NewArray(nil); err == nil || array != nil {
+		t.Fatal("nil config was not rejected")
+	}
+	if array, err := NewArray(&Config{Rows: 1, Cols: 1, ADCBits: 8, DACBits: 8, QuantizationLevels: 1}); err == nil || array != nil {
+		t.Fatal("one-state programming grid was not rejected")
+	}
+
 	// Minimal config - only required fields
 	cfg := &Config{
 		Rows: 8,

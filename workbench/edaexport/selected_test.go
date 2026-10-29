@@ -81,7 +81,7 @@ func TestExportSelectedRunUsesVerifiedRunAndWritesAllFormats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := json.Unmarshal(blob, &manifest); err != nil || manifest.RunID != runID || len(manifest.Files) != 5 {
+	if err := json.Unmarshal(blob, &manifest); err != nil || manifest.RunID != runID || len(manifest.Files) != 6 {
 		t.Fatalf("manifest=%+v err=%v", manifest, err)
 	}
 	if _, err := ExportSelectedRun(bundle.Root, runID); err == nil {
@@ -144,7 +144,7 @@ func TestExportSelectedRunRootConfinement(t *testing.T) {
 		must(t, err)
 		must(t, json.Unmarshal(blob, &manifest))
 		if manifest.SchemaVersion != 1 || manifest.RunID != id || !reflect.DeepEqual(manifest.Design, bundle.Design) ||
-			manifest.Technology != "SKY130" || !strings.Contains(manifest.Warning, "tech_node=65nm is not mapped to a foundry PDK") || len(manifest.Hashes) != 5 {
+			manifest.Technology != "SKY130" || !strings.Contains(manifest.Warning, "tech_node=65nm is not mapped to a foundry PDK") || len(manifest.Hashes) != 6 {
 			t.Fatalf("export provenance=%+v", manifest)
 		}
 		for name, fragments := range map[string][]string{

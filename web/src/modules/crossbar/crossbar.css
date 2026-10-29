@@ -1,0 +1,81 @@
+.crossbar-lab {
+  max-width: 1440px;
+}
+.crossbar-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 23rem) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+.crossbar-lab fieldset {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+}
+.crossbar-lab legend {
+  font-weight: 700;
+  padding-inline: 0.4rem;
+}
+.crossbar-lab .field {
+  margin-block: 0.7rem;
+}
+.crossbar-lab label {
+  display: block;
+  margin-block: 0.7rem;
+}
+.crossbar-lab input,
+.crossbar-lab select,
+.crossbar-lab textarea {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  margin-top: 0.3rem;
+}
+.crossbar-lab textarea {
+  min-height: 6rem;
+  font-family: monospace;
+}
+.crossbar-lab small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.crossbar-lab button {
+  min-height: 2.75rem;
+  margin: 0.25rem;
+}
+.crossbar-lab .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.crossbar-lab {
+  --matrix-ink: #1c7394;
+}
+.crossbar-lab.palette-amber {
+  --matrix-ink: #a66316;
+}
+.crossbar-lab:not(.palette-plain) .state-cell {
+  background: color-mix(
+    in srgb,
+    var(--matrix-ink) calc(var(--cell-state) * 30%),
+    transparent
+  );
+}
+.crossbar-lab table {
+  font-variant-numeric: tabular-nums;
+}
+.crossbar-lab td,
+.crossbar-lab th {
+  overflow-wrap: anywhere;
+}
+.crossbar-lab .crossbar-evidence {
+  border-left: 2px solid var(--line);
+  padding-left: 0.7rem;
+  font-size: 0.9rem;
+}
+@media (max-width: 900px) {
+  .crossbar-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+}

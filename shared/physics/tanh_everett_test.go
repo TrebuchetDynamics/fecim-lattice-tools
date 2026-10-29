@@ -5,6 +5,15 @@ import (
 	"testing"
 )
 
+// Correctly rounded reference from 100-digit evaluation of the existing
+// product-form equation at the exact binary64 inputs (not math.Tanh's backend).
+func TestTanhEverettReproducibleProgrammingField(t *testing.T) {
+	e := TanhEverett{Ps: 1, Ec: 0.87, Delta: 1}
+	if got := e.Calculate(0, -0.87); got != 0.07465646726542188 {
+		t.Fatalf("Everett at programming field: %.17g, want %.17g", got, 0.07465646726542188)
+	}
+}
+
 func TestTanhEverettRejectsInvalidInputs(t *testing.T) {
 	valid := TanhEverett{Ps: 0.3, Ec: 1e8, Delta: 2e7}
 	cases := []struct {

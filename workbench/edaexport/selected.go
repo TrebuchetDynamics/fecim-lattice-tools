@@ -1,6 +1,7 @@
 package edaexport
 
 import (
+	"archive/zip"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -18,6 +19,7 @@ import (
 const maxExportCells = 16_384
 
 type exportManifest struct {
+	Origin        string            `json:"origin"`
 	SchemaVersion int               `json:"schema_version"`
 	RunID         string            `json:"run_id"`
 	Design        any               `json:"resolved_design"`
@@ -103,7 +105,12 @@ func ExportSelectedRunRoot(root *os.Root, runID string) (string, error) {
 			_ = exports.Remove(runID)
 		}
 	}()
+	sizes := map[string]int64{}
 	write := func(name string, data []byte) error {
+		sizes[name] = int64(len(data))
+		if err := CheckArtifacts(sizes); err != nil {
+			return err
+		}
 		info, err := writeExportFile(dir, name, data)
 		if info != nil {
 			created[name] = info
@@ -128,22 +135,41 @@ func ExportSelectedRunRoot(root *os.Root, runID string) (string, error) {
 		{"cell.lef", func() string { return daexport.GenerateLEF(cell) }},
 		{"cell.lib", func() string { return daexport.GenerateLiberty(cell) }},
 	}
-	hashes := make(map[string]string, len(files))
+	hashes := make(map[string]string, len(files)+1)
+	var pack limitedBuffer
+	pack.limit = MaxArtifactBytes
+	zw := zip.NewWriter(&pack)
 	for _, file := range files {
 		data := []byte(file.generate())
 		if err := write(file.name, data); err != nil {
+			return "", err
+		}
+		entry, err := zw.Create(file.name)
+		if err != nil {
+			return "", err
+		}
+		if _, err := entry.Write(data); err != nil {
 			return "", err
 		}
 		// A successful exclusive write includes all bytes and a successful close.
 		digest := sha256.Sum256(data)
 		hashes[file.name] = hex.EncodeToString(digest[:])
 	}
+	if err := zw.Close(); err != nil {
+		return "", err
+	}
+	if err := write("package.zip", pack.Bytes()); err != nil {
+		return "", err
+	}
+	digest := sha256.Sum256(pack.Bytes())
+	hashes["package.zip"] = hex.EncodeToString(digest[:])
 	manifest := exportManifest{
+		Origin:        "selected-run",
 		SchemaVersion: 1,
 		RunID:         runID,
 		Design:        run.Design,
 		Technology:    config.Technology,
-		Warning:       fmt.Sprintf("EDA cell/layout assumptions use %s defaults; source run tech_node=%s is not mapped to a foundry PDK.", config.Technology, run.Design.Circuit.TechNode),
+		Warning:       Warning + " " + fmt.Sprintf("EDA cell/layout assumptions use %s defaults; source run tech_node=%s is not mapped to a foundry PDK.", config.Technology, run.Design.Circuit.TechNode),
 		FilesSHA256:   hashes,
 	}
 	blob, err := json.MarshalIndent(manifest, "", "  ")

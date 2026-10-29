@@ -6,13 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"sync"
-	"time"
 	"unicode"
 
 	"fecim-lattice-tools/shared/mathutil"
+	docscore "fecim-lattice-tools/workbench/modules/docs"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -26,24 +25,11 @@ import (
 )
 
 // IndexEntry represents a term occurrence in a document.
-type IndexEntry struct {
-	DocPath   string
-	Frequency int    // number of term occurrences
-	InTitle   bool   // term found in document title
-	InHeading bool   // term found in a heading
-	Snippet   string // context around match
-}
+type IndexEntry = docscore.IndexEntry
 
 // SearchDocMetadata stores cached metadata about a document for search purposes.
 // This extends the basic DocMetadata with additional search-relevant fields.
-type SearchDocMetadata struct {
-	Path          string
-	Title         string   // extracted from first # heading
-	Category      string   // ELI5, Physics, Research, Demo, Guide
-	ReadingTime   int      // estimated minutes (words / 200)
-	GlossaryTerms []string // detected glossary terms
-	LastModified  time.Time
-}
+type SearchDocMetadata = docscore.SearchDocMetadata
 
 // SearchIndex provides full-text search over documentation.
 type SearchIndex struct {
@@ -54,14 +40,7 @@ type SearchIndex struct {
 }
 
 // SearchResult represents a single search result.
-type SearchResult struct {
-	DocPath   string
-	Title     string
-	Category  string  // ELI5, Physics, Research, Demo, Guide
-	Snippet   string  // ~100 chars with match context
-	MatchType string  // "title", "heading", "content", "glossary"
-	Relevance float64 // TF-IDF score
-}
+type SearchResult = docscore.SearchResult
 
 const (
 	titleMatchBoost    = 3.0
@@ -356,151 +335,15 @@ func (si *SearchIndex) extractSnippet(content, term string) string {
 
 // Query performs a fuzzy search with TF-IDF ranking.
 func (si *SearchIndex) Query(query string, limit int) []SearchResult {
-	// Lazy build: index on first query
 	si.mu.RLock()
 	needsBuild := len(si.docs) == 0 && si.docsPath != ""
 	si.mu.RUnlock()
-
 	if needsBuild {
-		si.Build() // Build() takes write lock internally
+		si.Build()
 	}
-
 	si.mu.RLock()
 	defer si.mu.RUnlock()
-
-	if query == "" || len(si.docs) == 0 {
-		return nil
-	}
-
-	// Parse query into terms
-	queryTerms := si.extractWords(query)
-	if len(queryTerms) == 0 {
-		return nil
-	}
-
-	// Calculate document scores
-	docScores := make(map[string]float64)
-	docMatchTypes := make(map[string]string)
-	docSnippets := make(map[string]string)
-
-	totalDocs := float64(len(si.docs))
-
-	for _, term := range queryTerms {
-		// Find matching entries (exact and fuzzy)
-		matchingTerms := si.findMatchingTerms(term)
-
-		for _, matchTerm := range matchingTerms {
-			entries, exists := si.index[matchTerm]
-			if !exists {
-				continue
-			}
-
-			// IDF: log(N / df) where df is document frequency.
-			// Clamp to a small floor so common terms still retain ranking signal
-			// from title/heading boosts and frequency.
-			idf := math.Log(totalDocs / float64(len(entries)))
-			if idf <= 0 {
-				idf = 0.1
-			}
-
-			for _, entry := range entries {
-				// TF: 1 + log(frequency)
-				tf := 1.0 + math.Log(float64(entry.Frequency))
-
-				// Base score
-				score := tf * idf
-
-				// Boost for title matches
-				if entry.InTitle {
-					score *= titleMatchBoost
-					docMatchTypes[entry.DocPath] = "title"
-				} else if entry.InHeading {
-					score *= headingMatchBoost
-					if docMatchTypes[entry.DocPath] != "title" {
-						docMatchTypes[entry.DocPath] = "heading"
-					}
-				} else if docMatchTypes[entry.DocPath] == "" {
-					docMatchTypes[entry.DocPath] = "content"
-				}
-
-				// Exact match bonus
-				if matchTerm == term {
-					score *= exactMatchBoost
-				}
-
-				docScores[entry.DocPath] += score
-
-				// Keep best snippet
-				if entry.Snippet != "" {
-					if existing, ok := docSnippets[entry.DocPath]; !ok || len(entry.Snippet) > len(existing) {
-						docSnippets[entry.DocPath] = entry.Snippet
-					}
-				}
-			}
-		}
-	}
-
-	// Check for glossary term matches
-	glossaryQueryTerms := DetectGlossaryTerms(query)
-	if len(glossaryQueryTerms) > 0 {
-		glossarySet := make(map[string]struct{}, len(glossaryQueryTerms))
-		for _, term := range glossaryQueryTerms {
-			glossarySet[term] = struct{}{}
-		}
-
-		for path, meta := range si.docs {
-			if meta == nil || len(meta.GlossaryTerms) == 0 {
-				continue
-			}
-			if !hasGlossaryOverlap(glossarySet, meta.GlossaryTerms) {
-				continue
-			}
-			if score, ok := docScores[path]; ok {
-				docScores[path] = score * glossaryMatchBoost
-				if docMatchTypes[path] == "" {
-					docMatchTypes[path] = "glossary"
-				}
-			}
-		}
-	}
-
-	// Convert to results and sort
-	var results []SearchResult
-	for path, score := range docScores {
-		meta := si.docs[path]
-		title := path
-		category := ""
-		if meta != nil {
-			title = meta.Title
-			category = meta.Category
-		}
-
-		snippet := docSnippets[path]
-		if snippet == "" && meta != nil {
-			snippet = "Category: " + meta.Category
-		}
-
-		results = append(results, SearchResult{
-			DocPath:   path,
-			Title:     title,
-			Category:  category,
-			Snippet:   snippet,
-			MatchType: docMatchTypes[path],
-			Relevance: score,
-		})
-	}
-
-	// Sort by relevance (descending)
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Relevance > results[j].Relevance
-	})
-
-	// Apply limit
-	if limit > 0 && len(results) > limit {
-		results = results[:limit]
-	}
-
-	return results
+	return docscore.Rank(si.index, si.docs, query, limit)
 }
 
 // findMatchingTerms returns terms that match (exact or fuzzy).

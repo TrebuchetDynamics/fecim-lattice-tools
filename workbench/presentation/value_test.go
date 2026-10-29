@@ -11,6 +11,50 @@ import (
 	"fecim-lattice-tools/workbench/presentation"
 )
 
+// TestHysteresisValues checks SI conversion independently of the session/GUI.
+func TestHysteresisValues(t *testing.T) {
+	for _, tt := range []struct {
+		name                  string
+		format                func(float64, string) presentation.Value
+		si, factor            float64
+		unit, speech, missing string
+	}{
+		{"negative E", presentation.FormatElectricField, -1.25e8, 1e-8, "MV/cm", "minus 1 point 2 5 megavolts per centimeter", ""},
+		{"zero E", presentation.FormatElectricField, 0, 1e-8, "MV/cm", "0 megavolts per centimeter", ""},
+		{"signed zero P", presentation.FormatPolarization, math.Copysign(0, -1), 100, "µC/cm²", "minus 0 microcoulombs per square centimeter", ""},
+		{"negative P", presentation.FormatPolarization, -0.25, 100, "µC/cm²", "minus 25 microcoulombs per square centimeter", ""},
+		{"exponent E", presentation.FormatElectricField, 1e-12, 1e-8, "MV/cm", "1 times 10 to the minus 20 megavolts per centimeter", ""},
+		{"exponent P", presentation.FormatPolarization, 1e20, 100, "µC/cm²", "1 times 10 to the plus 22 microcoulombs per square centimeter", ""},
+		{"missing", presentation.FormatPolarization, 0, 100, "µC/cm²", "", "No sample was produced"},
+		{"nonfinite", presentation.FormatElectricField, math.NaN(), 1e-8, "MV/cm", "", ""},
+		{"overflow", presentation.FormatPolarization, math.MaxFloat64, 100, "µC/cm²", "", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			bits := math.Float64bits(tt.si)
+			got := tt.format(tt.si, tt.missing)
+			if math.Float64bits(tt.si) != bits {
+				t.Fatal("canonical SI changed")
+			}
+			if tt.missing != "" || math.IsNaN(tt.si) || math.IsInf(tt.si*tt.factor, 0) {
+				if got.Availability != "unavailable" || got.Reason == "" || !strings.Contains(got.Speakable, got.Reason) {
+					t.Fatalf("missing reason: %+v", got)
+				}
+				if tt.missing != "" && got.Reason != tt.missing {
+					t.Fatal("reason lost")
+				}
+				return
+			}
+			want := strconv.FormatFloat(tt.si*tt.factor, 'g', -1, 64) + " " + tt.unit
+			if got.Display != want || got.Speakable != tt.speech || got.Availability != "available" {
+				t.Fatalf("got %+v want %q / %q", got, want, tt.speech)
+			}
+		})
+	}
+	if got := presentation.FormatMetric(experiment.Metric{Value: 1, Unit: "V/m"}, ""); got.Reason != `Unsupported metric unit "V/m"` {
+		t.Fatal("unsupported-unit compatibility changed")
+	}
+}
+
 // These synthetic fixtures catch lost signs, scale, precision, unit vocabulary,
 // fabricated missing values and mutation of the scientific record. They do not
 // qualify actual Orca pronunciation.
@@ -74,5 +118,34 @@ func TestFormatMetricSpeech(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Common module units must retain the canonical scale rather than parsing
+// legacy formatted UI strings or silently calling ratios percentages.
+func TestCommonModuleUnits(t *testing.T) {
+	for _, tt := range []struct{ unit, spoken string }{
+		{"%", "percent"}, {"bits", "bits"}, {"bits/cell", "bits per cell"},
+		{"cells", "cells"}, {"levels", "levels"}, {"samples", "samples"}, {"count", "count"},
+		{"operations", "operations"}, {"MACs", "multiply accumulate operations"},
+		{"mV", "millivolts"}, {"µA", "microamperes"}, {"mA", "milliamperes"}, {"pA", "picoamperes"},
+		{"µS", "microsiemens"}, {"nS", "nanosiemens"}, {"kΩ", "kiloohms"},
+		{"F", "farads"}, {"pF", "picofarads"}, {"fF", "femtofarads"},
+		{"W", "watts"}, {"mW", "milliwatts"}, {"µW", "microwatts"}, {"nW", "nanowatts"},
+		{"fJ", "femtojoules"}, {"nJ", "nanojoules"}, {"ms", "milliseconds"}, {"µs", "microseconds"}, {"ps", "picoseconds"},
+		{"nm", "nanometers"}, {"µm", "micrometers"}, {"mm2", "square millimeters"},
+		{"TOPS", "trillion operations per second"}, {"GOPS", "billion operations per second"},
+		{"TOPS/W", "trillion operations per second per watt"}, {"GOPS/W", "billion operations per second per watt"},
+		{"GB/s", "gigabytes per second"}, {"kWh", "kilowatt hours"},
+	} {
+		metric := experiment.Metric{Value: -1.25, Unit: tt.unit}
+		got := presentation.FormatMetric(metric, "")
+		displayUnit := tt.unit
+		if tt.unit == "mm2" {
+			displayUnit = "mm²"
+		}
+		if got.Availability != "available" || got.Display != "-1.25 "+displayUnit || got.Speakable != "minus 1 point 2 5 "+tt.spoken || metric.Value != -1.25 || metric.Unit != tt.unit {
+			t.Errorf("%s: %+v", tt.unit, got)
+		}
 	}
 }

@@ -1,0 +1,219 @@
+.docs-screen {
+  max-width: 1280px;
+  margin: auto;
+}
+.docs-heading {
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+.docs-heading h1 {
+  margin-bottom: 0.5rem;
+}
+.docs-heading [data-testid="corpus-count"] {
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+.docs-notice {
+  border-inline-start: 4px solid #914b13;
+  padding: 0.8rem 1.2rem;
+  background: #f1ead9;
+}
+.docs-search {
+  display: flex;
+  gap: 1rem;
+  align-items: end;
+  flex-wrap: wrap;
+  padding: 1rem 0;
+}
+.docs-screen label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.docs-search label:first-child {
+  flex: 1 1 16rem;
+}
+.docs-screen input,
+.docs-screen select {
+  background: #fffdf7;
+  border: 1px solid var(--line);
+  padding: 0.5rem;
+  max-width: 100%;
+}
+.docs-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  gap: 2.5rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+}
+.docs-library {
+  font-size: 0.9rem;
+}
+.docs-library h2 {
+  font-size: 1.4rem;
+}
+.docs-library ul {
+  padding-inline-start: 1rem;
+  margin: 0.5rem 0 1.5rem;
+}
+.docs-library button {
+  text-align: start;
+  justify-content: start;
+  font-weight: normal;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  width: 100%;
+}
+.docs-library button[aria-current="page"] {
+  background: var(--accent);
+  color: white;
+}
+.docs-quick {
+  display: grid;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+}
+.docs-quick button {
+  font-weight: bold;
+}
+.docs-screen summary {
+  cursor: pointer;
+  padding: 0.65rem 0;
+  font-weight: bold;
+}
+.docs-content {
+  min-width: 0;
+}
+.docs-content nav[aria-label="Document breadcrumb"] {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+.docs-content nav[aria-label="Document breadcrumb"] button {
+  padding: 0;
+  border: 0;
+  min-height: auto;
+  text-decoration: underline;
+}
+.docs-toc {
+  border-block: 1px solid var(--line);
+  margin: 1.5rem 0;
+}
+.docs-toc ol {
+  max-height: 16rem;
+  overflow: auto;
+  padding-block: 0.5rem;
+}
+.docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.docs-reader {
+  max-width: 78ch;
+  padding-block: 1.5rem;
+}
+.docs-reader h2,
+.docs-reader h3,
+.docs-reader h4,
+.docs-reader h5,
+.docs-reader h6 {
+  scroll-margin-top: 2rem;
+  margin-top: 2rem;
+}
+.docs-reader pre {
+  white-space: pre;
+  overflow: auto;
+  background: #e9ede5;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.docs-reader :not(pre) > code {
+  white-space: break-spaces;
+  overflow-wrap: anywhere;
+}
+.docs-reader blockquote {
+  border-inline-start: 2px solid var(--accent);
+  margin-inline: 0;
+  padding-inline-start: 1.2rem;
+}
+.docs-table {
+  overflow: auto;
+  max-width: 100%;
+  margin-block: 1.5rem;
+}
+.docs-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.docs-table th,
+.docs-table td {
+  border: 1px solid var(--line);
+  text-align: start;
+  padding: 0.65rem;
+}
+.docs-table th {
+  background: #e4ebe4;
+}
+.docs-source {
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  padding-block: 1rem;
+}
+.docs-results,
+.docs-evidence,
+.docs-local {
+  border-block: 1px solid var(--line);
+  padding-block: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.docs-results ol {
+  padding-inline-start: 1.5rem;
+}
+.docs-results li {
+  margin-block: 1rem;
+}
+.docs-results li button {
+  padding-inline: 0;
+  border: 0;
+  text-decoration: underline;
+  text-align: start;
+  justify-content: start;
+}
+.docs-terms ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  padding-inline-start: 1.5rem;
+}
+.docs-local > label,
+.docs-local > button {
+  margin-block: 0.75rem;
+}
+.docs-local label:has(input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+}
+.docs-evidence dd {
+  margin-inline-start: 1rem;
+}
+@media (max-width: 800px) {
+  .docs-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .docs-library nav > details:not([open]) {
+    border-bottom: 1px solid var(--line);
+  }
+  .docs-search {
+    align-items: stretch;
+  }
+  .docs-search > * {
+    width: 100%;
+  }
+}

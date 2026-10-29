@@ -128,9 +128,14 @@ func command(t *testing.T, dir string, extra []string, name string, args ...stri
 		}
 		cmd.Env = append(filtered, value)
 	}
-	output, err := cmd.CombinedOutput()
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	output, err := cmd.Output()
 	if err != nil {
-		t.Fatalf("%s %s: %v\n%s", name, strings.Join(args, " "), err, output)
+		t.Fatalf("%s %s: %v\n%s\n%s", name, strings.Join(args, " "), err, output, stderr.String())
+	}
+	if stderr.Len() > 0 {
+		t.Logf("%s stderr: %s", name, stderr.String())
 	}
 	return string(output)
 }

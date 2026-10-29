@@ -1,0 +1,107 @@
+.circuits-lab {
+  --circuit-ink: #173b45;
+  --circuit-accent: #9a440d;
+  max-width: 90rem;
+}
+.circuits-lab .circuits-header {
+  border-block-start: 0.4rem solid var(--circuit-ink);
+  padding-block-start: 1.4rem;
+  margin-block-end: 1.5rem;
+}
+.circuits-lab h1 {
+  letter-spacing: -0.035em;
+}
+.circuits-lab .circuits-status {
+  border-inline-start: 0.3rem solid var(--circuit-accent);
+  padding: 0.8rem 1rem;
+  background: #fff5e6;
+  color: #42280f;
+}
+.circuits-lab fieldset {
+  min-inline-size: 0;
+  border: 1px solid #7b969a;
+  padding: 1rem;
+  margin-block: 1.5rem;
+}
+.circuits-lab legend {
+  font-weight: 700;
+  padding-inline: 0.5rem;
+  color: var(--circuit-ink);
+}
+.circuits-lab .circuits-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1.1rem;
+  margin-block: 1rem;
+}
+.circuits-lab label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 600;
+  margin-block: 0.6rem;
+}
+.circuits-lab input,
+.circuits-lab select {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  color: #142e35;
+  background: white;
+  border: 1px solid #69868c;
+  padding: 0.65rem;
+  min-height: 2.8rem;
+}
+.circuits-lab button {
+  min-height: 2.8rem;
+  padding: 0.6rem 1rem;
+  margin-block: 0.35rem;
+}
+.circuits-lab .circuit-write {
+  border-color: var(--circuit-accent);
+}
+.circuits-lab .table-scroll {
+  max-inline-size: 100%;
+  overflow-x: auto;
+  margin-block: 1.5rem;
+  border: 1px solid #91a8ad;
+}
+.circuits-lab table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.circuits-lab caption {
+  text-align: start;
+  padding: 0.8rem;
+  font-weight: 700;
+  color: var(--circuit-ink);
+  background: #edf3f3;
+}
+.circuits-lab th,
+.circuits-lab td {
+  text-align: start;
+  padding: 0.65rem;
+  border-block-end: 1px solid #c9d7d9;
+  white-space: nowrap;
+}
+.circuits-lab th {
+  font-weight: 600;
+}
+.circuits-lab :focus-visible {
+  outline: 3px solid #92410c;
+  outline-offset: 3px;
+}
+.circuits-lab [role="alert"] {
+  padding: 1rem;
+  border: 2px solid #9d281f;
+}
+.circuits-lab li {
+  overflow-wrap: anywhere;
+  margin-block: 0.5rem;
+}
+.circuits-lab svg {
+  width: 100%;
+  max-height: 12rem;
+  fill: var(--circuit-ink);
+}

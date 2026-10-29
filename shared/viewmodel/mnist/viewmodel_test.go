@@ -28,6 +28,9 @@ func TestSnapshotContainsAccuracy(t *testing.T) {
 	for _, m := range s.Metrics {
 		if m.ID == "accuracy" {
 			found = true
+			if m.Value != "Unavailable — select a model and labelled dataset in local web mode" {
+				t.Fatalf("fabricated baseline: %s", m.Value)
+			}
 			break
 		}
 	}

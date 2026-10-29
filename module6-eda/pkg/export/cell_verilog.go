@@ -20,6 +20,7 @@ package export
 
 import (
 	"fmt"
+	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/shared/logging"
@@ -59,6 +60,14 @@ module %s (
 
 endmodule
 `, cfg.Technology, cfg.CellType, cfg.Width, cfg.Height, cfg.Name)
+}
+
+// GenerateCellVerilogWithLevel preserves the legacy example bytes in
+// GenerateCellVerilog while accepting compiler instance LEVEL overrides.
+// LEVEL is intentionally unused: the model remains a pass-through Placeholder,
+// not a multilevel device simulation.
+func GenerateCellVerilogWithLevel(cfg config.CellConfig) string {
+	return strings.Replace(GenerateCellVerilog(cfg), "\n    // Placeholder behavior:", "\n    parameter LEVEL = 0; // Interface compatibility only; no device physics\n\n    // Placeholder behavior:", 1)
 }
 
 // Generate1T1RCellVerilog generates a behavioral Verilog model for 1T1R FeCIM bitcell

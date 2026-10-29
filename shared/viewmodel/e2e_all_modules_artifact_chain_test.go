@@ -77,13 +77,13 @@ func TestAllModulesE2EArtifactAndSnapshotChain(t *testing.T) {
 
 	// Module 3: sweep quantization and keep benchmark/trust surface observable.
 	mn := mnistvm.New()
-	for _, levels := range []string{"8", "30", "64"} {
+	for _, levels := range []string{"8", "30", "31"} {
 		if err := mn.ApplyAction(viewmodel.Action{ID: "sweep_levels", Payload: map[string]string{"levels": levels}}); err != nil {
 			t.Fatalf("mnist sweep %s: %v", levels, err)
 		}
 	}
 	mnSnap := mn.Snapshot()
-	if metricValueAllE2E(mnSnap, "levels") != "64 levels" || !strings.Contains(sectionBodyAllE2E(mnSnap, "research_benchmark"), "Educational") || len(mnSnap.Plots) != 1 {
+	if metricValueAllE2E(mnSnap, "levels") != "31 levels" || !strings.Contains(sectionBodyAllE2E(mnSnap, "research_benchmark"), "Educational") || len(mnSnap.Plots) != 0 {
 		t.Fatalf("mnist snapshot invalid: metrics=%+v sections=%+v plots=%+v", mnSnap.Metrics, mnSnap.Sections, mnSnap.Plots)
 	}
 

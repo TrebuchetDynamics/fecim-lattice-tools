@@ -1,0 +1,9 @@
+schema = 1
+task = "HYS-CORE"
+candidate = "655cbb9209234fda105218c554278d8b28295db0"
+integration = "485cf9a1804c9f9d7088228ead599e4404e7237c"
+tree = "ec0e076132061a6e5a895ab9b17605c09120fdc5"
+contract_hash = "90e0962d8a6121accaefd84a446a405279e0df9f84b2d68a6f8a34a5dee6d0fa"
+checks = ["<path>", "<path>", "--verify", "<path>", "HYS-CORE"]
+result = "pass"
+review = "passed"

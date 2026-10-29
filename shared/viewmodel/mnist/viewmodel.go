@@ -1,34 +1,32 @@
 package mnist
 
 import (
+	"errors"
 	"fmt"
 
+	"fecim-lattice-tools/shared/neural"
 	"fecim-lattice-tools/shared/viewmodel"
+	"fecim-lattice-tools/workbench/moduleapi"
+	webmnist "fecim-lattice-tools/workbench/modules/mnist"
 )
 
 type Module struct{ state MNISTState }
 
-func New() *Module {
-	m := &Module{state: MNISTState{Accuracy: 0.80, NumLevels: 30, TotalImages: 10000, CorrectImages: 8000}}
-	m.computeQuantizationSweep()
-	return m
-}
-func (m *Module) Descriptor() viewmodel.ModuleDescriptor {
-	return viewmodel.ModuleDescriptor{
-		ID: viewmodel.ModuleMNIST, Title: "FeCIM MNIST Neural Network",
-		Description: "Educational CIM inference pipeline with quantized weights and reproducible metrics.",
-		Status:      viewmodel.StatusFunctional,
-	}
-}
-func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.state) }
+func New() *Module                                       { return &Module{state: MNISTState{NumLevels: 30}} }
+func (m *Module) WebPort() moduleapi.Port                { return webmnist.New() }
+func (m *Module) Descriptor() viewmodel.ModuleDescriptor { return buildSnapshot(m.state).Descriptor }
+func (m *Module) Snapshot() viewmodel.ModuleSnapshot     { return buildSnapshot(m.state) }
 func (m *Module) ApplyAction(action viewmodel.Action) error {
 	switch action.ID {
 	case "run_inference":
-		return nil
+		return errors.New("MNIST inference unavailable in the legacy summary: select real model/data/input in the local web module")
 	case "sweep_levels":
-		levels, err := viewmodel.PayloadInt(action.Payload, "levels")
-		if err != nil {
-			return fmt.Errorf("mnist: %w", err)
+		levels, e := viewmodel.PayloadInt(action.Payload, "levels")
+		if e != nil {
+			return fmt.Errorf("mnist: %w", e)
+		}
+		if levels < 2 || levels > neural.MaxDemoLevels {
+			return errors.New("mnist: levels outside simulation bounds")
 		}
 		m.state.NumLevels = levels
 		return nil
@@ -38,26 +36,3 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 }
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
-
-func (m *Module) computeQuantizationSweep() {
-	m.state = newQuantizationSweepWorkflow(m.state).compute()
-}
-
-func accuracyForLevels(levels int) float64 {
-	switch {
-	case levels <= 2:
-		return 0.55
-	case levels <= 4:
-		return 0.65
-	case levels <= 8:
-		return 0.74
-	case levels <= 16:
-		return 0.79
-	case levels <= 32:
-		return 0.82
-	case levels <= 64:
-		return 0.84
-	default:
-		return 0.85
-	}
-}

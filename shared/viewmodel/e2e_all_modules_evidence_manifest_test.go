@@ -51,7 +51,7 @@ func TestAllModulesE2EEvidenceManifestArtifactCoversTrustAndSurfaces(t *testing.
 	preps := map[viewmodel.ModuleID][]viewmodel.Action{
 		viewmodel.ModuleHysteresis: {{ID: hystvm.EventRunPUND}, {ID: hystvm.EventRunFORC}, {ID: hystvm.EventRunLevelCalibration}},
 		viewmodel.ModuleCrossbar:   {{ID: "toggle_ir"}, {ID: "run_mvm"}},
-		viewmodel.ModuleMNIST:      {{ID: "sweep_levels", Payload: map[string]string{"levels": "30"}}, {ID: "run_inference"}},
+		viewmodel.ModuleMNIST:      {{ID: "sweep_levels", Payload: map[string]string{"levels": "30"}}},
 		viewmodel.ModuleCircuits:   {{ID: circuitsvm.ActionRunRead}, {ID: circuitsvm.ActionRunWrite}, {ID: circuitsvm.ActionRunCompute}},
 		viewmodel.ModuleEDA:        {{ID: "generate_all"}},
 		viewmodel.ModuleDocs:       {{ID: "search", Payload: map[string]string{"query": "trust evidence manifest"}}, {ID: "start_curriculum"}},

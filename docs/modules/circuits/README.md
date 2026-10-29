@@ -47,14 +47,22 @@ module4-circuits/
 
 ## Quick Start
 
-### GUI Mode
+### Browser candidate
+
+Open `/modules/circuits` in the shared React application.
+The [module README](../../../module4-circuits/README.md#browser-circuit-workflow) owns the current controls, profile limits, exports and verification commands.
+The browser runs the same Go device helpers as the native GUI. It does not use the synthetic compatibility viewmodel matrix.
+Hosted science is ephemeral and CPU-only. Local exports require an authenticated service and an opened rooted project.
+Real Orca + Firefox/Linux qualification is **NOT RUN** for both profiles.
+
+### Legacy GUI Mode
 ```bash
 fecim-lattice-tools circuits
 ```
 
 ### Headless Analysis
 ```bash
-fecim-lattice-tools --mode circuits --dac-bits 8 --adc-bits 6
+fecim-lattice-tools circuits cli -all
 ```
 
 ---
@@ -105,8 +113,8 @@ Example:
 
 ## Key Features
 
-- **DAC modeling:** 4-bit to 12-bit resolution
-- **ADC modeling:** 4-bit to 10-bit resolution
+- **DAC controls:** 4–8-bit resolution
+- **ADC controls:** 5–8-bit resolution
 - **TIA simulation:** Configurable gain, offset, noise
 - **Charge pump:** Dickson topology with losses
 - **INL/DNL analysis:** Visualize nonlinearity
@@ -156,28 +164,28 @@ Noise: Vnoise_rms = Inoise_rms × Rtia × √BW
 ### 0T1R (Passive Crossbar)
 
 ```
-Selected cell: Full voltage
-Unselected (same row): V/2
-Unselected (same col): V/2
-Other cells: 0V
-
-Half-select disturb issue!
+Native column-drive programming model, not a V/2 protocol:
+All word lines: grounded
+Selected bit line: -Vwrite
+Cells in the selected column: full applied drive before coupling
+Coupled solvers compute local cell voltages and currents.
+Programming affects the whole column, not an isolated cell.
 ```
 
 ### 1T1R (1 Transistor per Cell)
 
 ```
-Transistor blocks reverse current
-Reduces half-select to ~V/10
-Standard production architecture
+Educational row-selector abstraction
+READ/WRITE select a row; COMPUTE can use a row mask.
+Selector resistance and leakage are model assumptions, not device validation.
 ```
 
 ### 2T1R (2 Transistors)
 
 ```
-Complete isolation
-No disturb
-Higher area cost
+Separate read and write connection masks
+Finite selector resistance/leakage can be included.
+No measured isolation or disturb claim is implied.
 ```
 
 ---
@@ -227,7 +235,8 @@ Convergence typically 3-10 iterations
 
 ```bash
 go test ./shared/peripherals
-go test ./circuits/pkg/arraysim
+go test ./module4-circuits/pkg/arraysim
+go test ./workbench/modules/circuits ./shared/viewmodel/circuits
 ```
 
 ---

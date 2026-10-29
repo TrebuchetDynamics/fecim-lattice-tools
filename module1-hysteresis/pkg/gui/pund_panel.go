@@ -55,14 +55,18 @@ func NewPUNDPanel() *PUNDPanel {
 	return p
 }
 
-func (p *PUNDPanel) runPUND() {
-	// Default HZO parameters
+// runPUNDDiagnostic is the fixed illustrative HZO demo, independent of the loop.
+func runPUNDDiagnostic() (sharedphysics.PUNDResult, [4][]sharedphysics.PulseSample, error) {
+	// Legacy GUI profile parameters (not the DefaultHZO material preset).
 	ec := 3e7  // V/m
 	ps := 0.25 // C/m²
 	stack := sharedphysics.NewPreisachStack(ec, &sharedphysics.TanhEverett{Ec: ec, Ps: ps, Delta: ec * 0.3})
 
-	result, traces, err := sharedphysics.RunPUNDSimulation(stack, 5*ec, 100e-9, 5e-9, 1e-12)
+	return sharedphysics.RunPUNDSimulation(stack, 5*ec, 100e-9, 5e-9, 1e-12)
+}
 
+func (p *PUNDPanel) runPUND() {
+	result, traces, err := runPUNDDiagnostic()
 	if err != nil {
 		fyne.Do(func() {
 			p.resultsLabel.SetText(fmt.Sprintf("PUND error: %v", err))

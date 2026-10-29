@@ -1,9 +1,26 @@
 package gui
 
 import (
+	"fecim-lattice-tools/shared/neural"
 	"math"
+	"reflect"
 	"testing"
 )
+
+// The web/core extraction must retain the native bilinear and COM convention.
+func TestPreprocessDigitSharedCharacterization(t *testing.T) {
+	pixels := make([]float64, 784)
+	for y := 2; y < 24; y++ {
+		pixels[y*28+2] = 0.7
+	}
+	want := make([]float64, 784)
+	for y := 5; y < 25; y++ {
+		want[y*28+14] = 1
+	}
+	if !reflect.DeepEqual(neural.PreprocessDigit(pixels), want) || !reflect.DeepEqual(PreprocessDigit(pixels), want) {
+		t.Fatal("native drawing preprocessing changed")
+	}
+}
 
 func TestPreprocessDigitCenters(t *testing.T) {
 	pixels := make([]float64, preprocessSize*preprocessSize)

@@ -5,6 +5,19 @@ import (
 	"testing"
 )
 
+// The same activation/decay equation must not select a CPU-specific Exp
+// polynomial. References are rounded from 100-digit exp at binary64 inputs.
+func TestNLSKineticsReproducibleExponentials(t *testing.T) {
+	n := NLSKinetics{Tau0: 1, Ea: 1.74}
+	if got := n.CalculateTau(1); got != 5.697343422671991 {
+		t.Fatalf("activation: %.17g", got)
+	}
+	n.Ea = 0
+	if got := n.Relax(1, 0, 1, 1.74); got != 0.17552040061699686 {
+		t.Fatalf("relaxation: %.17g", got)
+	}
+}
+
 func TestNLSKineticsRejectsNonFiniteInputs(t *testing.T) {
 	const (
 		currentP = 0.10

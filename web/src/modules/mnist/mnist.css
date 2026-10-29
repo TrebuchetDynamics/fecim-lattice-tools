@@ -1,0 +1,96 @@
+.mnist-workbench {
+  max-inline-size: 92rem;
+}
+.mnist-workbench .mnist-kicker {
+  font-family: monospace;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+.mnist-workbench .mnist-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 1.4fr);
+  gap: 2rem;
+  align-items: start;
+}
+.mnist-workbench fieldset {
+  min-inline-size: 0;
+  padding: 1.2rem;
+  margin-block: 1.4rem;
+  border: 1px solid currentColor;
+}
+.mnist-workbench legend {
+  font-weight: 700;
+  padding-inline: 0.5rem;
+}
+.mnist-workbench label {
+  display: block;
+  margin-block: 0.75rem 0.25rem;
+}
+.mnist-workbench input,
+.mnist-workbench select,
+.mnist-workbench textarea {
+  max-inline-size: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0.5rem;
+}
+.mnist-workbench button {
+  margin: 0.5rem 0.5rem 0.5rem 0;
+  min-block-size: 2.75rem;
+}
+.mnist-workbench textarea {
+  inline-size: 100%;
+  min-block-size: 7rem;
+  font-family: monospace;
+}
+.mnist-workbench canvas {
+  display: block;
+  background: #101a24;
+  border: 2px solid currentColor;
+  inline-size: min(100%, 17.5rem);
+  aspect-ratio: 1;
+  touch-action: none;
+  image-rendering: pixelated;
+}
+.mnist-workbench pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-block-size: 24rem;
+  overflow: auto;
+  padding: 1rem;
+  border-inline-start: 3px solid currentColor;
+}
+.mnist-workbench .table-scroll {
+  overflow: auto;
+  max-block-size: 35rem;
+  margin-block: 1.5rem;
+}
+.mnist-workbench table {
+  border-collapse: collapse;
+  inline-size: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.mnist-workbench th,
+.mnist-workbench td {
+  text-align: start;
+  padding: 0.65rem;
+  border-block-end: 1px solid currentColor;
+}
+.mnist-workbench caption {
+  text-align: start;
+  font-weight: 700;
+  padding-block: 0.8rem;
+}
+.mnist-workbench :focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+.mnist-workbench .mnist-notice {
+  border-inline-start: 4px solid currentColor;
+  padding-inline-start: 1rem;
+}
+@media (max-width: 760px) {
+  .mnist-workbench .mnist-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

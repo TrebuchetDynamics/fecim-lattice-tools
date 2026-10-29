@@ -1,0 +1,45 @@
+.comparison-lab {
+  max-width: 90rem;
+  margin-inline: auto;
+}
+.comparison-controls {
+  border-block: 2px solid var(--line, #d6d3cb);
+  padding-block: 1.25rem;
+}
+.comparison-controls fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  border: 0;
+  padding: 0;
+}
+.comparison-controls legend {
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.comparison-results {
+  display: grid;
+  gap: 2rem;
+  margin-block: 2rem;
+}
+.comparison-results caption {
+  text-align: start;
+  font-weight: 700;
+  padding-block: 1rem;
+}
+.comparison-results small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+.comparison-evidence {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.comparison-lab details {
+  margin-block: 1.5rem;
+}
+.comparison-lab select,
+.comparison-lab input {
+  max-width: 100%;
+}

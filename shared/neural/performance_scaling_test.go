@@ -8,9 +8,61 @@ import (
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 )
 
+type scalingSample struct {
+	images  int
+	elapsed time.Duration
+}
+
+// Give each size equal-work sampling windows: a single 100-image
+// window can miss scheduling stalls that affect a subsequent 1000-image window.
+// Rotate four fixed rounds so each size occupies every sample position once.
+// Include all elapsed time (including GC/scheduling); never retry or pick a best run.
+func sampleScalingBatches(batchSizes []int, measure func(batchSize, imageCount int) time.Duration) []scalingSample {
+	const imagesPerSample = 1000
+	samples := make([]scalingSample, len(batchSizes))
+	for round := range batchSizes {
+		for position := range batchSizes {
+			i := (round + position) % len(batchSizes)
+			samples[i].elapsed += measure(batchSizes[i], imagesPerSample)
+			samples[i].images += imagesPerSample
+		}
+	}
+	return samples
+}
+
+// TestScalingSampling separates batch effects from transient sample-position load.
+func TestScalingSampling(t *testing.T) {
+	batchSizes := []int{1, 10, 100, 1000}
+	for _, tc := range []struct {
+		name      string
+		transient bool
+		wantTimes []time.Duration
+	}{
+		{"transient load in every fourth window", true, []time.Duration{5 * time.Second, 5 * time.Second, 5 * time.Second, 5 * time.Second}},
+		{"sustained large-batch slowdown", false, []time.Duration{4 * time.Second, 4 * time.Second, 4 * time.Second, 8 * time.Second}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			samples := sampleScalingBatches(batchSizes, func(batchSize, imageCount int) time.Duration {
+				elapsed := time.Duration(imageCount) * time.Millisecond
+				if (tc.transient && calls%4 == 3) || (!tc.transient && batchSize == 1000) {
+					elapsed *= 2
+				}
+				calls++
+				return elapsed
+			})
+			for i, sample := range samples {
+				if sample.images != 4000 || sample.elapsed != tc.wantTimes[i] {
+					t.Errorf("batch %d: %d images in %s, want 4000 in %s", batchSizes[i], sample.images, sample.elapsed, tc.wantTimes[i])
+				}
+			}
+		})
+	}
+}
+
 // TestPerformance_M3_PERF_03_Scaling measures throughput vs batch size.
-// Requirement: Throughput increases with batch size (1, 10, 100, 1000)
-// Evidence: throughput (img/s) for each batch size, monotonic increase
+// Requirement: No significant throughput regression between batches 100 and 1000.
+// Evidence: throughput (img/s) for each batch size (1, 10, 100, 1000).
 func TestPerformance_M3_PERF_03_Scaling(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping scaling test in short mode")
@@ -47,35 +99,34 @@ func TestPerformance_M3_PERF_03_Scaling(t *testing.T) {
 
 	t.Logf("M3-PERF-03: Batch Size Scaling Analysis:")
 
-	for idx, batchSize := range batchSizes {
-		if len(images) < batchSize {
-			t.Fatalf("Need at least %d images, got %d", batchSize, len(images))
+	samples := sampleScalingBatches(batchSizes, func(batchSize, imageCount int) time.Duration {
+		if len(images) < imageCount {
+			t.Fatalf("Need at least %d images, got %d", imageCount, len(images))
 		}
-
-		// Measure throughput for this batch size
 		start := time.Now()
-		for i := 0; i < batchSize; i++ {
-			result := net.Infer(images[i])
-			if result == nil {
-				t.Fatalf("Infer returned nil for image %d (batch size %d)", i, batchSize)
+		for offset := 0; offset < imageCount; offset += batchSize {
+			for i := offset; i < offset+batchSize; i++ {
+				if net.Infer(images[i]) == nil {
+					t.Fatalf("Infer returned nil for image %d (batch size %d)", i, batchSize)
+				}
 			}
 		}
-		elapsed := time.Since(start)
+		return time.Since(start)
+	})
 
-		totalTimeS := elapsed.Seconds()
-		throughput := float64(batchSize) / totalTimeS
-		avgLatencyMS := (totalTimeS * 1000.0) / float64(batchSize)
+	for idx, batchSize := range batchSizes {
+		totalTimeS := samples[idx].elapsed.Seconds()
+		throughput := float64(samples[idx].images) / totalTimeS
+		avgLatencyMS := (totalTimeS * 1000.0) / float64(samples[idx].images)
 
 		throughputs[idx] = throughput
 		avgLatencies[idx] = avgLatencyMS
 
-		t.Logf("  Batch %4d: throughput = %7.1f img/s, avg latency = %6.3f ms, total time = %.3f s",
-			batchSize, throughput, avgLatencyMS, totalTimeS)
+		t.Logf("  Batch %4d: throughput = %7.1f img/s, avg latency = %6.3f ms, total time = %.3f s (%d images)",
+			batchSize, throughput, avgLatencyMS, totalTimeS, samples[idx].images)
 	}
 
-	// Verify throughput scaling trend
-	// Small batches (1, 10) have high timing variance due to short duration,
-	// so we focus on larger batches (100, 1000) for scaling validation.
+	// Report every batch size; retain the larger-batch comparison as the gate.
 	t.Logf("")
 	t.Logf("Scaling Analysis:")
 
@@ -113,14 +164,12 @@ func TestPerformance_M3_PERF_03_Scaling(t *testing.T) {
 			batchSizes[len(batchSizes)-1], largestBatchThroughput, minThroughput)
 	}
 
-	// Report overall scaling factor (informational - small batch noise is expected)
+	// Report overall scaling factor (informational).
 	scalingFactor := throughputs[len(throughputs)-1] / throughputs[0]
 	t.Logf("")
 	t.Logf("Overall Scaling Factor: %.2fx (batch 1 → %d)", scalingFactor, batchSizes[len(batchSizes)-1])
-	t.Logf("  Note: Small batch sizes (1, 10) have high timing variance")
-
-	t.Logf("M3-PERF-03: PASS — Throughput scaling validated")
-	t.Logf("  Batch %d throughput: %.1f img/s > %.1f img/s requirement",
+	t.Logf("M3-PERF-03: Throughput scaling measurements complete")
+	t.Logf("  Batch %d throughput: %.1f img/s (requirement: %.1f img/s)",
 		batchSizes[len(batchSizes)-1], largestBatchThroughput, minThroughput)
 }
 
