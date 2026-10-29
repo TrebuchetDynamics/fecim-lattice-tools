@@ -55,6 +55,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev
 
+      - name: Run make ci
+        run: make ci
+
       - name: Build matching native browser binary
         timeout-minutes: 10
         run: npm run build:native
@@ -95,9 +98,6 @@ jobs:
           name: react-browser-failures
           path: web/test-results
           if-no-files-found: ignore
-
-      - name: Run make ci
-        run: make ci
 
       - name: Future gogpu UI shell tests
         run: make test-next-ui

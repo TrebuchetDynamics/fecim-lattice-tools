@@ -30,6 +30,10 @@ class TestCIBrowserHost(unittest.TestCase):
         self.assertLess(self.job.index("- name: Install GUI build dependencies"), build)
         self.assertLess(build, self.job.index("- name: Hosted React workflows"))
 
+    def test_fast_repository_gates_precede_browser_workflows(self):
+        check = self.job.index("- name: Run make ci")
+        self.assertLess(check, self.job.index("- name: Hosted React workflows"))
+
     def test_platform_guard_runs_in_the_browser_job(self):
         self.assertIn(
             "python3 -m unittest discover -s scripts -p 'test_ci_browser_host.py'",

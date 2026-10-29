@@ -112,7 +112,11 @@ func TestExportSelectedRunRootConfinement(t *testing.T) {
 		if err == nil || dir != "" || !strings.Contains(err.Error(), "write design.spice") {
 			t.Fatalf("expected artifact write failure: dir=%q err=%v", dir, err)
 		}
-		return
+		must(t, root.Close())
+		// The fault child cannot write coverage metadata under its intentional
+		// zero-size limit. Exit only after its assertions; the covered parent
+		// still checks cleanup, the unrelated marker and a successful retry.
+		os.Exit(0)
 	}
 
 	t.Run("verified bytes through moved handle", func(t *testing.T) {
