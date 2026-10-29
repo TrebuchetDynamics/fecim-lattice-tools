@@ -1,0 +1,9 @@
+schema = 1
+task = "MAIN-DEMO-STEPS"
+candidate = "1684cd6ff457d2a9801f67179fefc1a89cee5f5c"
+integration = "3ba8128b8439a51c920c2bfeadb6421b2094eea8"
+tree = "018f7662bbd2cb512f96ec219ae4c219902ffcfb"
+contract_hash = "2855f030c72245da3804b2192f1d81c92eae46e6e38800019634814f635399aa"
+checks = ["<path>", "<path>", "--verify", "<path>", "MAIN-DEMO-STEPS"]
+result = "pass"
+review = "passed"
