@@ -96,8 +96,15 @@ func TestModuleTransportContract(t *testing.T) {
 		t.Fatalf("module registry: %s", w.Body)
 	}
 	for _, m := range modules.Modules {
-		if m.ID != "hysteresis" && m.ID != "eda" && (m.Available || m.Reason == "") {
-			t.Fatalf("fabricated capability: %+v", m)
+		switch m.ID {
+		case "hysteresis", "eda", "comparison":
+			if !m.Available || m.Reason != "" {
+				t.Fatalf("implemented port unavailable: %+v", m)
+			}
+		default:
+			if m.Available || m.Reason == "" {
+				t.Fatalf("fabricated capability: %+v", m)
+			}
 		}
 	}
 	if w := request(s, "POST", "/api/v1/modules/crossbar/sessions", `{}`, cookie, nil); w.Code != 409 {
@@ -178,6 +185,49 @@ func TestModuleTransportContract(t *testing.T) {
 		}
 		send("program.apply", hysteresis.ProgramCommand{Kind: hysteresis.ResetProgram}, 200)
 		send("core.apply", hysteresis.Command{Kind: hysteresis.Run}, 200)
+	})
+	t.Run("functional comparison adapter", func(t *testing.T) {
+		w := request(s, "POST", "/api/v1/modules/comparison/sessions", `{}`, cookie, nil)
+		var snapshot moduleapi.Snapshot
+		if err := json.Unmarshal(w.Body.Bytes(), &snapshot); err != nil || w.Code != 201 || snapshot.Session == "" || !snapshot.Descriptor.Available {
+			t.Fatalf("comparison session: %d %s", w.Code, w.Body)
+		}
+		path := "/api/v1/module-sessions/" + snapshot.Session
+		body, _ := json.Marshal(moduleapi.Command{Action: "calculate", Revision: snapshot.Revision, Input: map[string]string{"workload": "MNIST", "rate": "2", "profile": "conservative"}})
+		w = request(s, "POST", path+"/actions", string(body), cookie, nil)
+		if err := json.Unmarshal(w.Body.Bytes(), &snapshot); err != nil || w.Code != 200 {
+			t.Fatalf("comparison calculate: %d %s", w.Code, w.Body)
+		}
+		var daily, unavailable bool
+		for _, table := range snapshot.Tables {
+			if table.ID == "energy" && len(table.Rows) == 3 {
+				cell := table.Rows[0][2]
+				daily = cell.Value != nil && *cell.Value == 172800 && cell.Unit == "inf/day"
+			}
+			if table.ID == "summary" {
+				for _, row := range table.Rows {
+					if row[0].Presentation.Display == "CO2 reduction" {
+						unavailable = row[1].Value == nil && row[1].Presentation.Reason != ""
+					}
+				}
+			}
+		}
+		if !daily || !unavailable {
+			t.Fatal("comparison transport lost canonical dimensions or unavailable evidence")
+		}
+		before := request(s, "GET", path, "", cookie, nil).Body.String()
+		if w := request(s, "POST", path+"/actions", string(body), cookie, nil); w.Code != 409 {
+			t.Fatalf("stale comparison revision: %d %s", w.Code, w.Body)
+		}
+		if after := request(s, "GET", path, "", cookie, nil).Body.String(); after != before {
+			t.Fatal("rejected comparison command changed the committed snapshot")
+		}
+		if w := request(s, "POST", path+"/close", `{}`, cookie, nil); w.Code != 200 {
+			t.Fatalf("comparison close: %d %s", w.Code, w.Body)
+		}
+		if w := request(s, "GET", path, "", cookie, nil); w.Code != 404 {
+			t.Fatal("closed comparison session remains accessible")
+		}
 	})
 	t.Run("opaque bounded granted resources", func(t *testing.T) {
 		var grant string
