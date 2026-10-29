@@ -58,6 +58,12 @@ class TestPublicReleaseBoundary(unittest.TestCase):
     def assert_exit(self, result, code):
         self.assertEqual(result.returncode, code, result.stdout + result.stderr)
 
+    def test_public_journal_privacy_warning_is_not_a_scan_false_positive(self):
+        path = "docs/internals/journal/README.md"
+        self.track(path, (SCRIPTS.parents[1] / path).read_text(encoding="utf-8"))
+        self.audit([])
+        self.assert_exit(self.run_tool(), 0)
+
     def test_canonical_audit_decisions_fail_closed(self):
         path = "docs/research/papers/example.pdf"
         self.track(path)
