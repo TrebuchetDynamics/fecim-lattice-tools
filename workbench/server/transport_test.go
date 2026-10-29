@@ -95,8 +95,18 @@ func TestModuleTransportContract(t *testing.T) {
 	if json.Unmarshal(w.Body.Bytes(), &modules) != nil || len(modules.Modules) != 7 {
 		t.Fatalf("module registry: %s", w.Body)
 	}
+	// Feature-owned Providers now include Documentation. Availability must be
+	// backed by an actual port, never by a legacy functional status badge.
+	available := map[string]bool{}
+	for _, factory := range nativeFactories {
+		port := nativePort(factory)
+		if port != nil {
+			available[factory.id] = port.Descriptor().Available
+			port.Close()
+		}
+	}
 	for _, m := range modules.Modules {
-		if m.ID != "hysteresis" && m.ID != "crossbar" && m.ID != "eda" && (m.Available || m.Reason == "") {
+		if m.Available != available[m.ID] || !m.Available && m.Reason == "" {
 			t.Fatalf("fabricated capability: %+v", m)
 		}
 	}
