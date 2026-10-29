@@ -96,7 +96,7 @@ func TestModuleTransportContract(t *testing.T) {
 		t.Fatalf("module registry: %s", w.Body)
 	}
 	for _, m := range modules.Modules {
-		if m.ID != "hysteresis" && m.ID != "crossbar" && m.ID != "eda" && (m.Available || m.Reason == "") {
+		if m.ID != "hysteresis" && m.ID != "crossbar" && m.ID != "eda" && m.ID != "mnist" && (m.Available || m.Reason == "") {
 			t.Fatalf("fabricated capability: %+v", m)
 		}
 	}

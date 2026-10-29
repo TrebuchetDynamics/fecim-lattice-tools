@@ -53,7 +53,7 @@ func (p *AccuracySweepPanel) Content() fyne.CanvasObject {
 }
 
 // getTestSubset returns up to maxN images/labels from the app's loaded dataset.
-// Falls back to synthetic patterns if no dataset is loaded.
+// Missing labelled data is unavailable; synthetic patterns are not accuracy evidence.
 func (p *AccuracySweepPanel) getTestSubset(maxN int) ([][]float64, []int) {
 	imgs := p.app.testImages()
 	lbls := p.app.testLabels()
@@ -64,16 +64,7 @@ func (p *AccuracySweepPanel) getTestSubset(maxN int) ([][]float64, []int) {
 		return imgs, lbls
 	}
 
-	// Synthetic fallback: simple patterns with one non-zero input per class
-	result := make([][]float64, maxN)
-	labels := make([]int, maxN)
-	for i := range result {
-		result[i] = make([]float64, 784)
-		digit := i % 10
-		result[i][digit] = 1.0
-		labels[i] = digit
-	}
-	return result, labels
+	return nil, nil
 }
 
 func (p *AccuracySweepPanel) setStatus(s string) {
@@ -89,6 +80,10 @@ func (p *AccuracySweepPanel) runLevelSweep() {
 	p.setResults("")
 
 	imgs, lbls := p.getTestSubset(500)
+	if len(imgs) == 0 {
+		p.setStatus("Accuracy unavailable: load a real labelled dataset first.")
+		return
+	}
 	levels := []int{2, 4, 8, 16, 30}
 
 	net := p.app.network()
@@ -114,6 +109,10 @@ func (p *AccuracySweepPanel) runADCSweep() {
 	p.setResults("")
 
 	imgs, lbls := p.getTestSubset(500)
+	if len(imgs) == 0 {
+		p.setStatus("Accuracy unavailable: load a real labelled dataset first.")
+		return
+	}
 	bits := []int{3, 4, 6, 8, 10}
 
 	net := p.app.network()
@@ -139,6 +138,10 @@ func (p *AccuracySweepPanel) runNoiseSweep() {
 	p.setResults("")
 
 	imgs, lbls := p.getTestSubset(500)
+	if len(imgs) == 0 {
+		p.setStatus("Accuracy unavailable: load a real labelled dataset first.")
+		return
+	}
 	noiseLevels := []float64{0.0, 0.02, 0.05, 0.10, 0.15, 0.20}
 
 	net := p.app.network()
