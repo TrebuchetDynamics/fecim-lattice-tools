@@ -6,6 +6,8 @@ import (
 
 	"fecim-lattice-tools/shared/viewmodel"
 	"fecim-lattice-tools/shared/viewmodel/design"
+	"fecim-lattice-tools/workbench/moduleapi"
+	webeda "fecim-lattice-tools/workbench/modules/eda"
 )
 
 type Module struct{ state EDAState }
@@ -33,14 +35,19 @@ func (m *Module) Descriptor() viewmodel.ModuleDescriptor {
 func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.state) }
 func (m *Module) ApplyAction(action viewmodel.Action) error {
 	switch action.ID {
-	case "generate_all":
-		return nil
-	case "generate_spice":
+	case "generate_all", "generate_spice":
+		// Legacy compatibility regenerates the actual in-memory example; this is
+		// not a filesystem export or an installed-tool validation claim.
+		m.state = newDesignGenerationWorkflow(m.state.ArrayRows, m.state.ArrayCols).buildState()
 		return nil
 	default:
 		return viewmodel.ErrUnsupportedAction
 	}
 }
+
+// WebPort self-supplies the native adapter without a shared factory/route edit.
+func (m *Module) WebPort() moduleapi.Port { return webeda.New() }
+
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
 
