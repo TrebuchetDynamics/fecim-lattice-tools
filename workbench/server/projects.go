@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"fecim-lattice-tools/workbench/edaexport"
 	"fecim-lattice-tools/workbench/experiment"
 	"fecim-lattice-tools/workbench/moduleapi"
 	"fecim-lattice-tools/workbench/moduleapi/httpapi"
@@ -453,7 +454,21 @@ func (s *Server) Execute(ctx context.Context, op string, input any) (httpapi.Res
 		if !scientificID(q.Run) {
 			return httpapi.Result{}, httpapi.Fail(400, "Invalid scientific run ID")
 		}
-		return downloadFile(p, "exports/"+q.Run, q.Artifact, exportFiles)
+		if !edaexport.AllowedArtifact(q.Artifact) {
+			return httpapi.Result{}, httpapi.Fail(404, "Artifact not enumerated")
+		}
+		data, err := edaexport.ReadArtifactRoot(p.root, q.Run, q.Artifact)
+		if err != nil {
+			return httpapi.Result{}, httpapi.Fail(409, "Export unavailable or failed integrity review")
+		}
+		media := "text/plain; charset=utf-8"
+		if strings.HasSuffix(q.Artifact, ".json") {
+			media = "application/json"
+		}
+		if q.Artifact == "package.zip" {
+			media = "application/zip"
+		}
+		return result(httpapi.Download{Data: data, Type: media, Name: q.Artifact}), nil
 	}
 	return httpapi.Result{}, httpapi.Fail(404, "Operation not found")
 }

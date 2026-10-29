@@ -118,7 +118,7 @@ writeFileSync(join(out, "hysteresis-worker.mjs"), driver);
 const modules = buildModels({ web, repo, out, env, flags, identity: Catalogue.Identity });
 const Modules = mergeModelDescriptors(JSON.parse(go(["run", "./web/src/build/modules.go"]).toString()), modules);
 const manifest = { UI, API, Catalogue, Modules, identity: Catalogue.Identity, modules, assets: {} };
-for (const name of ["hysteresis.wasm", "wasm_exec.js", "hysteresis-worker.mjs", ...Object.values(modules).map(m => m.wasm)])
+for (const name of ["hysteresis.wasm", "wasm_exec.js", "hysteresis-worker.mjs", ...Object.values(modules).map(m => m.wasm).filter(Boolean)])
   manifest.assets[name] = sha(readFileSync(join(out, name)));
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest));
 console.log("Pinned Go " + pin + "; core " + build + "; UI " + UI);
