@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-WORKBENCH"
+candidate = "e21309063714cb2385c60651d67a9ba53657034c"
+integration = "09afb92452045333d3f2c5d6acfd4facce0f3197"
+tree = "e654ebd11a5e41449b7055bd12b00d6e71e86192"
+contract_hash = "cdc53670e3bd5cc124f945945976daf9e5081b73c2f68928cfeac9c016608e70"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-WORKBENCH"]
+result = "pass"
+review = "passed"
