@@ -2,6 +2,7 @@
 package crossbar
 
 import (
+	"context"
 	"errors"
 	"math"
 )
@@ -109,6 +110,14 @@ func (s *ParasiticSolver) SetParasitics(rpRow, rpCol float64) {
 // 6. Update device voltages with relaxation: V_new = V_old + omega × V_error
 // 7. Repeat until converged or max iterations
 func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*ParasiticMVMResult, error) {
+	return s.SolveMVMContext(context.Background(), appliedVoltages, nil)
+}
+
+// SolveMVMContext preserves arithmetic and tolerances, yielding per iteration.
+func (s *ParasiticSolver) SolveMVMContext(ctx context.Context, appliedVoltages []float64, yield func() error) (*ParasiticMVMResult, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if len(appliedVoltages) != s.cols {
 		return nil, ErrInvalidConfiguration
 	}
@@ -133,6 +142,14 @@ func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*ParasiticMVMResu
 	var finalErr float64
 
 	for iter := 0; iter < s.config.MaxIterations; iter++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		if yield != nil {
+			if err := yield(); err != nil {
+				return nil, err
+			}
+		}
 		// Step 1: Compute device currents (Ohm's law: I = G × V)
 		for i := 0; i < s.rows; i++ {
 			for j := 0; j < s.cols; j++ {

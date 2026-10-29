@@ -23,6 +23,9 @@ func TestSnapshotContainsExportFormats(t *testing.T) {
 	ids := map[string]bool{}
 	for _, m := range s.Metrics {
 		ids[m.ID] = true
+		if (m.ID == "spice" || m.ID == "verilog") && m.Value != "preview only; not exported" {
+			t.Fatalf("false export readiness: %+v", m)
+		}
 	}
 	for _, id := range []string{"spice", "verilog", "liberty", "def", "lef"} {
 		if !ids[id] {

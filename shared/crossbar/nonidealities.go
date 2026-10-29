@@ -199,6 +199,9 @@ func (p *WireParams) ScaleForTechNode(fromNode, toNode float64) *WireParams {
 
 // IRDropAnalysis contains the results of IR drop analysis.
 type IRDropAnalysis struct {
+	Iterations int
+	Converged  bool
+	Residual   float64 // Last maximum voltage change (V), not a KCL residual.
 	// Voltage drop matrices
 	WordLineVoltages [][]float64 // Voltage at each word line position
 	BitLineVoltages  [][]float64 // Voltage at each bit line position
@@ -255,6 +258,11 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 
 // AnalyzeIRDropIterative performs physics-based IR drop analysis with configurable solver.
 func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, config *IRDropSolverConfig) *IRDropAnalysis {
+	result, _ := a.analyzeIRDropControlled(input, params, config, nil)
+	return result
+}
+
+func (a *Array) analyzeIRDropControlled(input []float64, params *WireParams, config *IRDropSolverConfig, yield func() error) (*IRDropAnalysis, error) {
 	// FeCAP arrays have no DC IR drop — capacitors block DC current,
 	// so no steady-state current flows through the word/bit lines.
 	if a.config.CellType == CellTypeFeCAP {
@@ -272,7 +280,8 @@ func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, conf
 			MaxIRDrop:        0,
 			AvgIRDrop:        0,
 			IRDropVariance:   0,
-		}
+			Converged:        true,
+		}, nil
 	}
 
 	if params == nil {
@@ -308,7 +317,13 @@ func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, conf
 
 	// Iterative relaxation solver
 	// Couples the voltage drops and currents until convergence
+	iterations, residual, converged := 0, 0.0, false
 	for iter := 0; iter < config.MaxIterations; iter++ {
+		if yield != nil {
+			if err := yield(); err != nil {
+				return nil, err
+			}
+		}
 		maxChange := 0.0
 
 		// Store old voltages for convergence check
@@ -413,7 +428,9 @@ func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, conf
 		}
 
 		// Converged when max voltage change is below tolerance
+		iterations, residual = iter+1, maxChange
 		if maxChange < config.Tolerance {
+			converged = true
 			break
 		}
 	}
@@ -467,6 +484,7 @@ func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, conf
 	variance /= float64(count)
 
 	return &IRDropAnalysis{
+		Iterations: iterations, Converged: converged, Residual: residual,
 		WordLineVoltages: wlVoltage,
 		BitLineVoltages:  blVoltage,
 		EffectiveVoltage: effVoltage,
@@ -474,7 +492,7 @@ func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, conf
 		AvgIRDrop:        avgDrop,
 		IRDropVariance:   variance,
 		WorstCaseCell:    worstCell,
-	}
+	}, nil
 }
 
 // SneakPathAnalysis contains sneak path current analysis results.

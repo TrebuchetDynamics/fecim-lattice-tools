@@ -4,6 +4,7 @@ package validation
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -26,7 +27,12 @@ func ValidateDEF(defPath string) error {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	return ValidateDEFReader(file)
+}
+
+// ValidateDEFReader applies the same structural oracle to a capability-owned reader.
+func ValidateDEFReader(reader io.Reader) error {
+	scanner := bufio.NewScanner(reader)
 	var lines []string
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())

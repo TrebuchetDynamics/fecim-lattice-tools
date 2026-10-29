@@ -3,7 +3,7 @@ package crossbar
 import (
 	"fmt"
 
-	"fecim-lattice-tools/shared/physics"
+	core "fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/viewmodel"
 	"fecim-lattice-tools/shared/viewmodel/design"
 )
@@ -13,6 +13,9 @@ type Module struct {
 }
 
 func New(rows, cols int) *Module {
+	if rows < 1 || cols < 1 || rows > 128 || cols > 128 {
+		rows, cols = 8, 8
+	}
 	m := &Module{state: CrossbarState{Rows: rows, Cols: cols}}
 	m.reallocate(rows, cols)
 	return m
@@ -27,7 +30,7 @@ func (m *Module) reallocate(rows, cols int) {
 	for i := range rows {
 		m.state.Conductances[i] = make([]float64, cols)
 		for j := range cols {
-			m.state.Conductances[i][j] = physics.QuantizeTo30Levels(50.0 * float64(1+((i*cols+j)%3)))
+			m.state.Conductances[i][j] = core.QuantizeToLevels(float64(1+((i*cols+j)%3)) / 4)
 		}
 	}
 	for j := range cols {
@@ -63,18 +66,22 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		}
 		return fmt.Errorf("crossbar: invalid dimensions %d×%d", rows, cols)
 	case "run_mvm":
-		m.runMVM()
-		return nil
+		return m.runMVM()
 	case "toggle_ir":
-		m.state.SneakPaths = !m.state.SneakPaths
+		m.state.EnableIRDrop = !m.state.EnableIRDrop
 		return nil
 	default:
 		return viewmodel.ErrUnsupportedAction
 	}
 }
 
-func (m *Module) runMVM() {
-	m.state = newMVMWorkflow(m.state).compute()
+func (m *Module) runMVM() error {
+	state, err := newMVMWorkflow(m.state).compute()
+	if err != nil {
+		return err
+	}
+	m.state = state
+	return nil
 }
 
 func (m *Module) Start() {}
