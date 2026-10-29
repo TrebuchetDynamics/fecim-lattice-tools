@@ -102,6 +102,9 @@ func actionCatalogPayloadE2E(moduleID viewmodel.ModuleID, actionID string, adver
 	safePath := func(name string) string {
 		return filepath.Join(tmp, strings.ReplaceAll(string(moduleID)+"-"+name, "_", "-"))
 	}
+	if moduleID == viewmodel.ModuleMNIST && actionID == "run_inference" {
+		return nil, true, "No model/data/input in legacy summary; real execution covered by TestMNISTWebWorkflow"
+	}
 	switch actionID {
 	case hystvm.EventSelectMaterial:
 		return map[string]string{"material": "HZO (Si-doped, Park 2015 midpoint)"}, false, ""

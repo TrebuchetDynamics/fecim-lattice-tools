@@ -107,7 +107,7 @@ func TestModuleTransportContract(t *testing.T) {
 	}
 	for _, m := range modules.Modules {
 		switch m.ID {
-		case "hysteresis", "crossbar", "eda", "comparison":
+		case "hysteresis", "crossbar", "eda", "mnist", "comparison":
 			if !m.Available {
 				t.Fatalf("implemented port unavailable: %+v", m)
 			}

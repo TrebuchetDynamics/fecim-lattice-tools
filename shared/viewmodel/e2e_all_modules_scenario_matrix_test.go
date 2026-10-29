@@ -39,7 +39,7 @@ func TestAllModulesE2EScenarioMatrixDescriptorCompositionAndTrust(t *testing.T) 
 	scenarios := []scenario{
 		{name: "compact_education", rows: "8", cols: "8", adcBits: "6", dacBits: "6", arch: circuitsvm.ArchitecturePassive, coupling: circuitsvm.CouplingIdeal, isppEngine: circuitsvm.ISPPEngineLevel, waveform: hystvm.WaveformSine, mnistLevels: "16", docQuery: "education simulation", wantArray: "8x8", wantSummary: []string{"8×8", "6-bit ADC/6-bit DAC"}, wantMaterial: "HZO"},
 		{name: "balanced_crossbar", rows: "16", cols: "32", adcBits: "8", dacBits: "7", arch: circuitsvm.Architecture1T1R, coupling: circuitsvm.CouplingTierA, isppEngine: circuitsvm.ISPPEngineLevel, waveform: hystvm.WaveformTriangle, mnistLevels: "30", docQuery: "crossbar validation", wantArray: "16x32", wantSummary: []string{"16×32", "8-bit ADC/7-bit DAC"}, wantMaterial: "HZO"},
-		{name: "research_export", rows: "32", cols: "16", adcBits: "8", dacBits: "8", arch: circuitsvm.Architecture2T1R, coupling: circuitsvm.CouplingTierB, isppEngine: circuitsvm.ISPPEngineLK, waveform: hystvm.WaveformSquare, mnistLevels: "64", docQuery: "EDA artifact trust", wantArray: "32x16", wantSummary: []string{"32×16", "8-bit ADC/8-bit DAC"}, wantMaterial: "HZO"},
+		{name: "research_export", rows: "32", cols: "16", adcBits: "8", dacBits: "8", arch: circuitsvm.Architecture2T1R, coupling: circuitsvm.CouplingTierB, isppEngine: circuitsvm.ISPPEngineLK, waveform: hystvm.WaveformSquare, mnistLevels: "31", docQuery: "EDA artifact trust", wantArray: "32x16", wantSummary: []string{"32×16", "8-bit ADC/8-bit DAC"}, wantMaterial: "HZO"},
 	}
 
 	known := map[viewmodel.ModuleID]viewmodel.ModuleDescriptor{}
@@ -75,7 +75,9 @@ func TestAllModulesE2EScenarioMatrixDescriptorCompositionAndTrust(t *testing.T) 
 			applyScenarioActionE2E(t, x, viewmodel.Action{ID: "run_mvm"})
 
 			applyScenarioActionE2E(t, mn, viewmodel.Action{ID: "sweep_levels", Payload: map[string]string{"levels": sc.mnistLevels}})
-			applyScenarioActionE2E(t, mn, viewmodel.Action{ID: "run_inference"})
+			if err := mn.ApplyAction(viewmodel.Action{ID: "run_inference"}); err == nil {
+				t.Fatal("missing model must be unavailable")
+			}
 
 			applyScenarioActionE2E(t, c, viewmodel.Action{ID: circuitsvm.ActionResizeArray, Payload: map[string]string{"rows": sc.rows, "cols": sc.cols}})
 			applyScenarioActionE2E(t, c, viewmodel.Action{ID: circuitsvm.ActionSetADCBits, Payload: map[string]string{"bits": sc.adcBits}})
