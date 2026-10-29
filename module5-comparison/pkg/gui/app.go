@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	model "fecim-lattice-tools/module5-comparison/pkg/comparison"
 	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/presets"
@@ -535,14 +536,9 @@ func (ca *ComparisonApp) createEvidenceFirstPanel() fyne.CanvasObject {
 	}
 
 	if ca.uiMode == "Presentation" {
-		summary := widget.NewLabel(fmt.Sprintf("Scenario: %s | Energy %.1f%% | Latency %.1f%% | TCO %.1f%% | CO2 %.1f%%",
-			run.Profile,
-			run.Outputs["energy_reduction_pct"].Value,
-			run.Outputs["latency_reduction_pct"].Value,
-			run.Outputs["tco_reduction_pct"].Value,
-			run.Outputs["co2_reduction_pct"].Value,
-		))
-		caveat := widget.NewLabel("Caveat: Presentation mode simplifies outputs. Switch to Technical Review for raw assumptions and uncertainty.")
+		summary := widget.NewLabel(fmt.Sprintf("Scenario: %s | Energy %.1f%% | Latency %.1f%% | TCO %.1f%% | CO2: Not available — %s",
+			run.Profile, run.Outputs["energy_reduction_pct"].Value, run.Outputs["latency_reduction_pct"].Value, run.Outputs["tco_reduction_pct"].Value, model.CO2UnavailableReason))
+		caveat := widget.NewLabel("Caveat: Presentation mode simplifies outputs. Switch to Technical Review for raw assumptions and sensitivity (not statistical intervals).")
 		return widget.NewCard("Evidence Summary", "Presentation", container.NewVBox(summary, caveat))
 	}
 
@@ -629,9 +625,13 @@ func (ca *ComparisonApp) scheduleRecompute() {
 }
 
 func energyPowerCost(macs int, energyFJ, inferences float64) (energyUJ, powerW, monthlyCost float64) {
-	energyUJ = float64(macs) * energyFJ / 1e9
-	powerW = energyUJ * inferences / 1e6
-	monthlyCost = powerW / 1000 * hoursPerMonth * electricityCostPerKWh
+	use, err := model.EnergyAtRate(int64(macs), energyFJ, inferences)
+	if err != nil {
+		return 0, 0, 0
+	}
+	energyUJ = use.JPerInference * 1e6
+	powerW = use.PowerW
+	monthlyCost = use.MonthlyUSD
 	return energyUJ, powerW, monthlyCost
 }
 
@@ -668,25 +668,11 @@ func (ca *ComparisonApp) updateCalculations() {
 // getWorkloadMACs returns MACs per inference for common neural network workloads.
 // Model inputs derived from typical architecture descriptions (not validated).
 func (ca *ComparisonApp) getWorkloadMACs() int {
-	switch ca.currentWorkload {
-	case "MNIST":
-		// Simple 2-layer MLP: 784 input → 128 hidden → 10 output
-		return 101632 // (784×128) + (128×10)
-	case "ResNet-50":
-		// Deep residual network for image classification
-		return 4000000000 // ~4 GMACs
-	case "BERT-Base":
-		// Transformer for NLP (sequence length 512)
-		return 11000000000 // ~11 GMACs
-	case "GPT-2":
-		// Large language model (117M parameters)
-		return 35000000000 // ~35 GMACs
-	case "LLM-70B":
-		// Llama-2-70B or similar large model
-		return 140000000000000 // ~140 TMACs
-	default:
+	macs, err := model.ScenarioWorkloadMACs(ca.currentWorkload)
+	if err != nil {
 		return 101632
-	}
+	} // Preserve native unknown-workload compatibility.
+	return int(macs)
 }
 
 // updateStatus updates the status label using cache to prevent redundant SetText calls.
