@@ -74,28 +74,37 @@ func TestDemoControllerRunsAllSteps(t *testing.T) {
 		}},
 		{Name: "Step 3", Duration: 10 * time.Millisecond, Action: func() {
 			atomic.AddInt32(&step3, 1)
+			// Model a slow action that outlasts the former 50ms completion guess.
+			time.Sleep(75 * time.Millisecond)
 		}},
 	}
 	dc := NewDemoController(steps)
+	t.Cleanup(dc.Stop)
+	stopped := make(chan struct{})
+	dc.SetOnStop(func() { close(stopped) })
 
 	dc.Start()
 
-	// Wait for all steps to complete
-	time.Sleep(50 * time.Millisecond)
+	// Observe natural completion before cleanup can call Stop.
+	select {
+	case <-stopped:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Non-looping demo did not stop after all steps")
+	}
 
 	// Demo should auto-stop after completing (no loop)
 	if dc.IsRunning() {
 		t.Error("Non-looping demo should stop after all steps")
 	}
 
-	if atomic.LoadInt32(&step1) != 1 {
-		t.Errorf("Step 1 should have run once, ran %d times", step1)
+	if got := atomic.LoadInt32(&step1); got != 1 {
+		t.Errorf("Step 1 should have run once, ran %d times", got)
 	}
-	if atomic.LoadInt32(&step2) != 1 {
-		t.Errorf("Step 2 should have run once, ran %d times", step2)
+	if got := atomic.LoadInt32(&step2); got != 1 {
+		t.Errorf("Step 2 should have run once, ran %d times", got)
 	}
-	if atomic.LoadInt32(&step3) != 1 {
-		t.Errorf("Step 3 should have run once, ran %d times", step3)
+	if got := atomic.LoadInt32(&step3); got != 1 {
+		t.Errorf("Step 3 should have run once, ran %d times", got)
 	}
 }
 
