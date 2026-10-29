@@ -125,15 +125,27 @@ test("MNIST real local science and hosted read-only boundary", async ({
   await expect(page.getByTestId("mnist-identity")).toContainText(
     "Hidden neurons: 128",
   );
+  await expect(
+    page.getByRole("button", { name: "Load selected model", exact: true }),
+  ).toBeEnabled();
   await page.getByLabel("Noise coefficient", { exact: true }).fill("0");
   await page
     .getByRole("button", { name: "Apply configuration", exact: true })
     .click();
+  await expect(
+    page.getByRole("button", { name: "Apply configuration", exact: true }),
+  ).toBeEnabled();
   // Keyboard pixel editing is an accessible drawing alternative, not TS preprocessing.
   await page.getByLabel("Pixel row", { exact: true }).fill("2");
   await page.getByLabel("Pixel column", { exact: true }).fill("2");
   await page.getByRole("button", { name: "Set pixel", exact: true }).click();
   await page.getByRole("button", { name: "Use drawing", exact: true }).click();
+  await expect(page.getByTestId("mnist-identity")).toContainText(
+    "Current input source: drawing",
+  );
+  await expect(
+    page.getByRole("button", { name: "Use drawing", exact: true }),
+  ).toBeEnabled();
   await page
     .getByRole("button", { name: "Run paired inference", exact: true })
     .click();
@@ -149,29 +161,93 @@ test("MNIST real local science and hosted read-only boundary", async ({
   await expect(page.getByTestId("mnist-identity")).toContainText(
     "Actual selected corpus images: 10000",
   );
+  await expect(
+    page.getByRole("button", { name: "Load labelled corpus", exact: true }),
+  ).toBeEnabled();
+  // Terminal job publication precedes the refreshed snapshot. Keep the real
+  // response held until a read has captured the previous retained result.
+  const resultAfterRefresh = async (
+    button: string,
+    matches: (result: any) => void,
+  ) => {
+    const result = page.getByTestId("mnist-result");
+    const previous = await result.textContent();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let safetyReleased = false;
+    const safety = setTimeout(() => {
+      safetyReleased = true;
+      release();
+    }, 15_000);
+    let held = false;
+    await page.route(
+      "**/api/v1/module-sessions/*",
+      async (route) => {
+        const response = await route.fetch({ timeout: 10_000 });
+        held = true;
+        await gate;
+        await route.fulfill({ response });
+      },
+      { times: 1 },
+    );
+    try {
+      await page.getByRole("button", { name: button, exact: true }).click();
+      await expect.poll(() => held).toBe(true);
+      await expect(page.getByTestId("mnist-status")).toContainText("succeeded");
+      await expect(result).toHaveText(previous!);
+      expect(safetyReleased).toBe(false);
+      const read = async () => {
+        const next = JSON.parse((await result.textContent())!);
+        release();
+        matches(next);
+        return next;
+      };
+      let next: any;
+      await expect(async () => {
+        next = await read();
+      }).toPass({ timeout: 10_000 });
+      return next;
+    } finally {
+      release();
+      clearTimeout(safety);
+      await page.unrouteAll({ behavior: "wait" });
+    }
+  };
   await page.getByLabel("Dataset sample index", { exact: true }).fill("17");
   await page
     .getByRole("button", { name: "Use dataset sample", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Run paired inference", exact: true })
-    .click();
-  await expect(page.getByTestId("mnist-status")).toContainText("succeeded");
-  let r = JSON.parse((await page.getByTestId("mnist-result").textContent())!);
-  expect(r.inference).toEqual(expected.inference);
+  await expect(page.getByTestId("mnist-identity")).toContainText(
+    "Current input source: dataset",
+  );
+  await expect(
+    page.getByRole("button", { name: "Use dataset sample", exact: true }),
+  ).toBeEnabled();
+  let r = await resultAfterRefresh("Run paired inference", (next) => {
+    expect(next).toMatchObject({
+      source: "dataset",
+      start: 17,
+      count: 1,
+      preprocessing: "none",
+    });
+    expect(next.inference).toEqual(expected.inference);
+  });
   expect(r.preprocessing).toBe("none");
   expect(r.model_sha256).toMatch(/^[a-f0-9]{64}$/);
   expect(r.dataset_sha256).toMatch(/^[a-f0-9]{64}$/);
   await page.getByLabel("Subset start", { exact: true }).fill("17");
   await page.getByLabel("Selected images", { exact: true }).fill("3");
-  await page
-    .getByRole("button", { name: "Evaluate labelled subset", exact: true })
-    .click();
-  await expect(page.getByTestId("mnist-status")).toContainText("succeeded");
-  r = JSON.parse((await page.getByTestId("mnist-result").textContent())!);
-  expect(r.cases[0].total).toBe(3);
-  expect(r.cases[0].cim_confusion).toEqual(expected.metrics.CIM.Confusion);
-  expect(r.cases[0].fp_confusion).toEqual(expected.metrics.FP.Confusion);
+  r = await resultAfterRefresh("Evaluate labelled subset", (next) => {
+    expect(next).toMatchObject({
+      source: "dataset",
+      start: 17,
+      count: 3,
+      preprocessing: "none",
+    });
+    expect(next.cases[0].total).toBe(3);
+    expect(next.cases[0].cim_confusion).toEqual(expected.metrics.CIM.Confusion);
+    expect(next.cases[0].fp_confusion).toEqual(expected.metrics.FP.Confusion);
+  });
   await expect(page.locator("#mnist-confusion tbody tr")).toHaveCount(100);
   await page
     .getByRole("button", { name: "Next weight page", exact: true })
