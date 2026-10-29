@@ -65,7 +65,7 @@ func (w computeRunWorkflow) buildLog() *ComputeRunLog {
 	return &ComputeRunLog{
 		Schema:        "fecim.circuits.compute_run.v1",
 		ArraySize:     fmt.Sprintf("%dx%d", rows, cols),
-		Material:      "HZO default educational preset",
+		Material:      "Synthetic compatibility fixture; not device/material/coupling parity",
 		QuantLevels:   quantLevels,
 		Architecture:  w.state.Architecture,
 		CouplingTier:  w.state.CouplingTier,
