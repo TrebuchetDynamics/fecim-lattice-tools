@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-HYS-STATUS"
+candidate = "23d6232e686654b3f8130e8278d32e9a94690498"
+integration = "3ead789b2a2d3c8bbf7bf7a5e1693e489dfc3551"
+tree = "a8ed9b49a1b9957e36012b52ef33d72d564d9c4b"
+contract_hash = "75841a8eb2bc64b7591204a3cddc8f8ad43522fbd4fb7d173cbc9f6c13d9296f"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-HYS-STATUS"]
+result = "pass"
+review = "passed"
