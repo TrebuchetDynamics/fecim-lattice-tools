@@ -1,0 +1,37 @@
+{
+  "revision": "orca-synthetic-v1",
+  "qualification": "Invented acceptance values; not physics, measurements or human Orca qualification",
+  "model": "SYNTHETIC ORCA FIXTURE v1",
+  "assumptions": ["Invented acceptance values; not physics or measurements"],
+  "evidence": "simulation-default",
+  "units": {"energy_pj": "pJ", "latency_ns": "ns", "area_um2": "um2"},
+  "objectives": {"energy_pj": "minimize", "latency_ns": "minimize"},
+  "constraint": {"metric": "area_um2", "operator": "<=", "value": 5000, "unit": "um2"},
+  "checkpoint": {"completed": 3, "next_index": 3, "cancelled_after_release": 5, "resume_reused": 3},
+  "records": [
+    {"index": 0, "energy_pj": 1, "latency_ns": 10, "area_um2": 100, "feasible": true, "pareto": true},
+    {"index": 1, "energy_pj": 2, "latency_ns": 11, "area_um2": 200, "feasible": true, "pareto": false},
+    {"index": 2, "energy_pj": 3, "latency_ns": 12, "area_um2": 300, "feasible": true, "pareto": false},
+    {"index": 3, "energy_pj": 4, "latency_ns": 13, "area_um2": 400, "feasible": true, "pareto": false},
+    {"index": 4, "energy_pj": 5, "latency_ns": 14, "area_um2": 500, "feasible": true, "pareto": false},
+    {"index": 5, "energy_pj": 6, "latency_ns": 15, "area_um2": 600, "feasible": true, "pareto": false},
+    {"index": 6, "energy_pj": 7, "latency_ns": 16, "area_um2": 6000, "feasible": false, "pareto": false},
+    {"index": 7, "energy_pj": 8, "latency_ns": 17, "area_um2": 7000, "feasible": false, "pareto": false}
+  ],
+  "scenarios": {
+    "success": {"state": "succeeded", "completed": 8, "failed": 0, "cancelled": 0, "results": "complete", "counts": {"success": 8, "failed": 0, "feasible": 6, "infeasible": 2, "unusable": 0, "pareto": 1}},
+    "design-failure": {"state": "succeeded", "completed": 8, "failed": 1, "cancelled": 0, "results": "complete", "counts": {"success": 7, "failed": 1, "feasible": 6, "infeasible": 1, "unusable": 0, "pareto": 1}},
+    "cancel-resume": {"state": "cancelled", "completed": 3, "failed": 0, "cancelled": 5, "results": "partial", "counts": {"success": 3, "failed": 0, "feasible": 3, "infeasible": 0, "unusable": 0, "pareto": 1}},
+    "completion-wins": {"state": "succeeded", "completed": 8, "failed": 0, "cancelled": 0, "results": "complete", "counts": {"success": 8, "failed": 0, "feasible": 6, "infeasible": 2, "unusable": 0, "pareto": 1}},
+    "systemic-failure": {"state": "failed", "completed": 3, "failed": 0, "cancelled": 0, "results": "partial", "counts": {"success": 3, "failed": 0, "feasible": 3, "infeasible": 0, "unusable": 0, "pareto": 1}},
+    "report-failure": {"state": "failed", "completed": 8, "failed": 0, "cancelled": 0, "results": "complete", "counts": {"success": 8, "failed": 0, "feasible": 6, "infeasible": 2, "unusable": 0, "pareto": 1}}
+  },
+  "run_ids": {
+    "success": ["a2e8c80cecfb927327a8d215d9b4b82b6a5a24132058ba8c7755bea91ec7a5d8", "7cf7afaf0f38f15b1456325556efe4d633dcca8a349e58a73fda9452a710f9dc", "5d4953b99203333004ad4240cf6067551aab0e83198d40665484526d5795ddec", "abf1536f410f68979e74cc28f61fc5888774fe5c44dc130b636e24c02d18f419", "3ffb3cdac70a6526cee8131f61f966ade831aaff9f71d572fcb74d9a1a6e80c8", "51f64ef85a4eb42e670ce211a8ae5d17602d6288971f646ddfff78db6a895e36", "514894edb97967f18958f49e86219b4477802d8614f81b342be5122dec30b9dc", "141531bb61bab92458f299eaef6d18f60f6b329b4f893427e448dd1a9c18fd62"],
+    "design-failure": ["bf8431459bca4fd9c1f85c9e95c7f3133088d898d2322819d28a17bc9cfae9fa", "0b557bccff3df3ec2c636d4fd8a99a42faa525381a4c2a9802d467b246ef4d20", "4f40d0dd21d3492a8116c9b4822850039c81b9f1f8b196cb20105ed431109590", "8410323b8cd07eef1561c7b097b1e06821543f15458909ffb9449ac559a0db1f", "8d916213b01aecb574661536c386061d900a33120eb4ca0b120017eb2759ec1b", "9f3144eae03797f827f3f71cd7bb5a32f01e68cda3871be514b1edf3188df0ed", "0738f031474b9e1f052c9e5d7182a067f450d7f10cfa2c509a5e9217a3024a0d", "7ec53b48f972fa3aa5f4e143fd94508a660fc65c93461e08e929d1c18b9ebc5f"],
+    "cancel-resume": ["79463d452df0e6235bc4197ef71d4481cb63ecb2820f956f210a45470764490d", "f28e31dfaaf20366107cd002cedd0b158afb115e85d8d1945ca168d8ebae8d97", "32f217b8ec26c90b926c8727c262ccbc8a6f1da6b84d3b7c70e277ad001c29d7", "d89b3a902599f3017d0e35f0dbae9d34482fd04ff3d5c0ee48ddf1381397f00f", "318e807a7e17b8023769185df50c3118498b22023dbe5cfc5446dd9464719843", "098fa2049087923786a45e4a28b13cc51214d0c081e38e735c33f34d2becd34e", "63448c50f95b3abd41c362e698cba7349baf33e56524dbd909182b3b81971dae", "8be472012861f53112acbe76948a1a235882b5482a12ba4443e1035421d1549e"],
+    "completion-wins": ["67a1c750a03f38cdbb4f57316b560cf1ffe216f6fd3e6080bc86c35d2c22dff7", "01ee223cfe1c036f7710dc3cc4aa87fca7b8370dc33821054ab79eb2461e0541", "73af887cc2cd6492d41c76a19a9bb4311d5f35ee0b9ed54d6e658530f324329d", "0b58014be97b4202704b319fce1b80c2543a838099b2b672a76b17129795130a", "bd44ce8e2d552527cfe3e55de4dfb0a89dc3774e3f15f7d00543d44640d0187b", "c676cf6179abe1778c7d7f8bc4c90cc5824726b8b8868635864fa2353981168a", "6d371dfdf52933df8747c8fd41c45d79816eb9f72315a933ed9f81281208075e", "4f19993af888bb4b4b5f64ca071d77b72d6719fe3909391847f5b4f9204713bf"],
+    "systemic-failure": ["fb10befa24235cd7ed6de96b5beb25558401013fb8bb5337f79e13cfa185e5f7", "7e80c6d872e056d5a1f1a86bd2eb30a0175c2bddcf599c619f9603e015f983fd", "c4f7a162f44d427d75e7ee22c33a4e73a5871aeabbab89f1102409bc97d5f9bc", "f9e8d79626d71bae25263e9afd17e383e26f14b015adbe19f95dc7be6afb31b1", "7a6c9512901cf5a3501bfc95b76921f06aee028454dbfdd217c87f8f0d7599eb", "0c7640c29a7059f32f048a7f2b2f03ac629e4ea11aaa44a835d8fb50c3e8df1c", "46296168d41cc5efe96a0c5df5741dff3b3d3ba9edc7bff8a95fb5b8a2622963", "95318fb6088fcb9236abe7d631a750106317d141bd4841b12fa7b9f578bc2e0d"],
+    "report-failure": ["1c8e53771bb5ab73c0737eadfb3ab72e36517fea945e94b65dde78cb7935e3bb", "f42e85999be9152c450db630b6255d1870b2dd988b6aa931e38c9751b8681db3", "2a04f2b347f29ce3161e290e9a05345518e6efbf561c290e7adf7ad07c830cb6", "cd43d7623b125b79cc0c6a53bd262b5f7759750bb13c332f498b4aa9cc58260d", "bba4f3e270683dd812dcc7e7323861bc2e418d7348c915877a4231eb8d430d15", "115efae2b1d147c1b2da9cf2a6ccfd26a49cfff8e7e6faa06770863c5bcb25b1", "e3a6d3545b5f11012df9d5b3d032172adb56dc09b1c3af147f820cd595442ba9", "0bdc3b3024f98555fc0c817eb1126203cba21f19da3c6d28c66c47b17113cefa"]
+  }
+}
