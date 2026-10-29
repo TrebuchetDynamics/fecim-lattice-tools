@@ -147,9 +147,12 @@ func TestExternalValidationWorkflowRejectsNonGatingMutations(t *testing.T) {
 			name: "moved version step",
 			mutate: func(t *testing.T, workflow string) string {
 				workflow = replaceOnce(t, workflow, "      - name: Record Icarus Verilog version\n        run: iverilog -V\n\n", "")
-				ciStart := "  ci:\n    runs-on: ubuntu-latest\n    timeout-minutes: 20\n\n    steps:\n      - name: Checkout"
-				ciWithVersion := "  ci:\n    runs-on: ubuntu-latest\n    timeout-minutes: 20\n\n    steps:\n      - name: Record Icarus Verilog version\n        run: iverilog -V\n\n      - name: Checkout"
-				return replaceOnce(t, workflow, ciStart, ciWithVersion)
+				ciPrefix, external, found := strings.Cut(workflow, "\n  external-validation:")
+				if !found {
+					t.Fatal("external validation job boundary missing")
+				}
+				ciPrefix = replaceOnce(t, ciPrefix, "    steps:\n", "    steps:\n      - name: Record Icarus Verilog version\n        run: iverilog -V\n\n")
+				return ciPrefix + "\n  external-validation:" + external
 			},
 		},
 		{
