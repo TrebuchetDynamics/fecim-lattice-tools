@@ -191,6 +191,7 @@ export interface Catalogue {
   AnalysisColumns: Record<string, { Key: keyof AnalysisRow; Label: string }[]>;
 }
 export interface Manifest {
+  API?: string;
   UI: string;
   Catalogue: Catalogue;
   identity: Identity;
@@ -220,6 +221,7 @@ export interface Results {
 declare global {
   const __FECIM_PROFILE__: "hosted" | "local";
   const __FECIM_UI__: string;
+  const __FECIM_API__: string;
   var HysteresisWorkerClient: {
     new (options: Record<string, unknown>): {
       ready: Promise<void>;

@@ -120,3 +120,32 @@ func TestFormatMetricSpeech(t *testing.T) {
 		})
 	}
 }
+
+// Common module units must retain the canonical scale rather than parsing
+// legacy formatted UI strings or silently calling ratios percentages.
+func TestCommonModuleUnits(t *testing.T) {
+	for _, tt := range []struct{ unit, spoken string }{
+		{"%", "percent"}, {"bits", "bits"}, {"bits/cell", "bits per cell"},
+		{"cells", "cells"}, {"levels", "levels"}, {"samples", "samples"}, {"count", "count"},
+		{"operations", "operations"}, {"MACs", "multiply accumulate operations"},
+		{"mV", "millivolts"}, {"µA", "microamperes"}, {"mA", "milliamperes"}, {"pA", "picoamperes"},
+		{"µS", "microsiemens"}, {"nS", "nanosiemens"}, {"kΩ", "kiloohms"},
+		{"F", "farads"}, {"pF", "picofarads"}, {"fF", "femtofarads"},
+		{"W", "watts"}, {"mW", "milliwatts"}, {"µW", "microwatts"}, {"nW", "nanowatts"},
+		{"fJ", "femtojoules"}, {"nJ", "nanojoules"}, {"ms", "milliseconds"}, {"µs", "microseconds"}, {"ps", "picoseconds"},
+		{"nm", "nanometers"}, {"µm", "micrometers"}, {"mm2", "square millimeters"},
+		{"TOPS", "trillion operations per second"}, {"GOPS", "billion operations per second"},
+		{"TOPS/W", "trillion operations per second per watt"}, {"GOPS/W", "billion operations per second per watt"},
+		{"GB/s", "gigabytes per second"}, {"kWh", "kilowatt hours"},
+	} {
+		metric := experiment.Metric{Value: -1.25, Unit: tt.unit}
+		got := presentation.FormatMetric(metric, "")
+		displayUnit := tt.unit
+		if tt.unit == "mm2" {
+			displayUnit = "mm²"
+		}
+		if got.Availability != "available" || got.Display != "-1.25 "+displayUnit || got.Speakable != "minus 1 point 2 5 "+tt.spoken || metric.Value != -1.25 || metric.Unit != tt.unit {
+			t.Errorf("%s: %+v", tt.unit, got)
+		}
+	}
+}

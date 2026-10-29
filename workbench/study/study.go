@@ -37,6 +37,11 @@ type RunOptions struct {
 	// The caller owns the channel and must not close it during Run; Run never
 	// closes it. The returned outcome/error and committed runs are authoritative.
 	Progress chan<- experiment.ProgressSnapshot
+
+	// PointYield is a memory-adapter scheduling hook, called before each point.
+	// It may yield to a Worker event loop; it never changes numerical inputs.
+	// Native persisted runners do not use this hook.
+	PointYield func(context.Context) error
 }
 
 // OutcomeResultsState describes collection completeness, independently of operation errors.
@@ -54,18 +59,21 @@ type RunOutcome struct {
 	Summary           experiment.Summary
 	Analysis          experiment.Analysis
 	ResultsState      OutcomeResultsState
-	AnalysisAvailable bool // Partial analysis describes only the collected subset, not the full sweep.
+	AnalysisAvailable bool   // Partial analysis describes only the collected subset, not the full sweep.
+	ResultsJSON       []byte // RunMemory only: original report.WriteJSON bytes for the collected subset.
 }
 
-func CreateStarterProject(root string, options StarterSweepOptions) error {
+type starterDocument struct{ name, body string }
+
+func starterDocuments(options StarterSweepOptions) ([]starterDocument, error) {
 	if err := validateStarterValues("conductance levels", options.ConductanceLevels, 2, 64); err != nil {
-		return err
+		return nil, err
 	}
 	if err := validateStarterValues("array rows", options.Rows, 1, 4096); err != nil {
-		return err
+		return nil, err
 	}
 	if err := validateStarterValues("ADC bits", options.ADCBits, 1, 16); err != nil {
-		return err
+		return nil, err
 	}
 
 	config := project.Project{
@@ -96,19 +104,28 @@ func CreateStarterProject(root string, options StarterSweepOptions) error {
 	}
 	bundle := project.Bundle{Project: config, Design: design, Sweep: sweep}
 	if _, err := project.Expand(bundle); err != nil {
-		return fmt.Errorf("starter sweep: %w", err)
+		return nil, fmt.Errorf("starter sweep: %w", err)
 	}
 
-	contents := make([]struct{ name, body string }, 0, 3)
+	contents := make([]starterDocument, 0, 3)
 	for _, item := range []struct {
 		name  string
 		value any
 	}{{"project.yaml", config}, {"design.yaml", design}, {"sweep.yaml", sweep}} {
 		data, err := yaml.Marshal(item.value)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		contents = append(contents, struct{ name, body string }{item.name, string(data)})
+		contents = append(contents, starterDocument{item.name, string(data)})
+	}
+
+	return contents, nil
+}
+
+func CreateStarterProject(root string, options StarterSweepOptions) error {
+	contents, err := starterDocuments(options)
+	if err != nil {
+		return err
 	}
 
 	info, err := os.Stat(root)
@@ -219,19 +236,6 @@ func GenerateReport(root, citationDir string) (experiment.Analysis, error) {
 	}
 	defer closeRoots()
 	return GenerateReportRoot(handle, citations)
-}
-
-func ExportRun(root, runID string) (string, error) {
-	handle, err := os.OpenRoot(root)
-	if err != nil {
-		return "", err
-	}
-	defer handle.Close()
-	rel, err := ExportRunRoot(handle, runID)
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(root, rel), nil
 }
 
 // Legacy path adapters own these handles; rooted operations only borrow them.

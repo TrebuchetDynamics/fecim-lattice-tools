@@ -45,6 +45,9 @@ func Load(root string, opts LoadOptions) (Bundle, error) {
 // LoadRoot reads a bundle using only the supplied directory handles. The caller
 // owns both handles; nil citations skips citation existence checks. Bundle.Root
 // is descriptive metadata, not authority for subsequent filesystem access.
+// YAML reads require regular files and at most 1 MiB per document. Native input
+// reads require regular files, at most 8 MiB each and 8 MiB in aggregate; large
+// model/dataset files use native opaque resource capabilities instead.
 func LoadRoot(root, citations *os.Root) (Bundle, error) {
 	return loadConfigurationRoot(root, citations, nil)
 }
@@ -55,15 +58,26 @@ func loadConfigurationRoot(root, citations *os.Root, overlay *ConfigurationSnaps
 	if root == nil {
 		return Bundle{}, errors.New("project root is required")
 	}
-	bundle := Bundle{Root: root.Name()}
-	for i, dst := range []any{&bundle.Project, &bundle.Design, &bundle.Sweep} {
-		var err error
+	decode := func(name string, dst any) error {
 		if overlay == nil {
-			err = decodeRoot(root, configurationDocuments[i], dst)
-		} else {
-			err = decodeStrict(strings.NewReader(overlay.documents[i]), dst)
+			return decodeRoot(root, name, dst)
 		}
-		if err != nil {
+		return decodeStrict(strings.NewReader(overlay.documents[configurationDocumentIndex(name)]), dst)
+	}
+	var checkCitation func(string) error
+	if citations != nil {
+		checkCitation = func(key string) error { _, err := citations.Stat(key + ".md"); return err }
+	}
+	return loadBundle(root.Name(), decode, func(refs []InputRef) ([]ResolvedInput, error) {
+		return resolveInputs(root, refs)
+	}, checkCitation, true)
+}
+
+// loadBundle shares schema validation/defaults across rooted and byte adapters.
+func loadBundle(root string, decode func(string, any) error, resolve func([]InputRef) ([]ResolvedInput, error), checkCitation func(string) error, preflight bool) (Bundle, error) {
+	bundle := Bundle{Root: root}
+	for i, dst := range []any{&bundle.Project, &bundle.Design, &bundle.Sweep} {
+		if err := decode(configurationDocuments[i], dst); err != nil {
 			return Bundle{}, fmt.Errorf("%s: %w", configurationDocuments[i], err)
 		}
 	}
@@ -110,18 +124,18 @@ func loadConfigurationRoot(root, citations *os.Root, overlay *ConfigurationSnaps
 		if !citationRE.MatchString(key) {
 			return Bundle{}, fmt.Errorf("invalid citation key %q", key)
 		}
-		if citations != nil {
-			if _, err := citations.Stat(key + ".md"); err != nil {
+		if checkCitation != nil {
+			if err := checkCitation(key); err != nil {
 				return Bundle{}, fmt.Errorf("citation %s: %w", key, err)
 			}
 		}
 	}
-	inputs, err := resolveInputs(root, bundle.Project.Inputs)
+	inputs, err := resolve(bundle.Project.Inputs)
 	if err != nil {
 		return Bundle{}, err
 	}
 	bundle.Inputs = inputs
-	if overlay != nil {
+	if preflight {
 		if err := preflightConfigurationSweep(bundle.Sweep); err != nil {
 			return Bundle{}, fmt.Errorf("sweep: %w", err)
 		}
@@ -132,20 +146,12 @@ func loadConfigurationRoot(root, citations *os.Root, overlay *ConfigurationSnaps
 	return bundle, nil
 }
 
-func decodeRoot(root *os.Root, path string, dst any) error {
-	file, err := root.Open(path)
+func decodeRoot(root *os.Root, name string, dst any) error {
+	data, err := readRegularRoot(root, name, maxProjectFileBytes, true)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	info, err := file.Stat()
-	if err != nil {
-		return err
-	}
-	if info.Size() > maxProjectFileBytes {
-		return fmt.Errorf("file exceeds %d bytes", maxProjectFileBytes)
-	}
-	return decodeStrict(file, dst)
+	return decodeStrict(bytes.NewReader(data), dst)
 }
 
 func decodeStrict(reader io.Reader, dst any) error {
@@ -189,25 +195,37 @@ func ValidateDesign(design Design) error {
 }
 
 func resolveInputs(root *os.Root, refs []InputRef) ([]ResolvedInput, error) {
+	remaining := maxInputTotalBytes
+	return resolveInputBytes(func(name string) ([]byte, error) {
+		limit := min(maxInputFileBytes, remaining)
+		data, err := readRegularRoot(root, name, limit, true)
+		if err == nil {
+			remaining -= int64(len(data))
+		}
+		return data, err
+	}, refs)
+}
+
+func resolveInputBytes(read func(string) ([]byte, error), refs []InputRef) ([]ResolvedInput, error) {
 	out := make([]ResolvedInput, 0, len(refs))
 	for _, ref := range refs {
 		clean := filepath.Clean(ref.Path)
 		if filepath.IsAbs(clean) || clean == "." || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
-			return nil, fmt.Errorf("unsafe input path %q", ref.Path)
+			return nil, errors.New("unsafe relative input path")
 		}
-		data, err := root.ReadFile(clean)
+		data, err := read(clean)
 		if err != nil {
 			return nil, err
 		}
 		sum := sha256.Sum256(data)
 		actual := hex.EncodeToString(sum[:])
 		if actual != strings.ToLower(ref.SHA256) {
-			return nil, fmt.Errorf("input %s sha256 mismatch: got %s", ref.Path, actual)
+			return nil, errors.New("input sha256 mismatch")
 		}
 		switch ref.Evidence {
 		case "literature-backed", "experiment-calibrated", "simulation-default":
 		default:
-			return nil, fmt.Errorf("input %s has invalid evidence %q", ref.Path, ref.Evidence)
+			return nil, errors.New("input has invalid evidence")
 		}
 		out = append(out, ResolvedInput{
 			Path:     filepath.ToSlash(clean),

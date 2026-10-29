@@ -37,6 +37,7 @@ writeFileSync(
   JSON.stringify({
     profile: "local",
     UI: engine.UI,
+    API: engine.API,
     identity: engine.identity,
     assets,
   }),

@@ -15,7 +15,7 @@ const fingerprint = JSON.parse(
     encoding: "utf8",
   }),
 );
-if (fingerprint.build !== m.identity.build || fingerprint.UI !== m.UI)
+if (fingerprint.build !== m.identity.build || fingerprint.UI !== m.UI || fingerprint.API !== m.API)
   throw new Error(
     "browser-assets-unavailable: source drift; rerun npm run build:local before building native",
   );

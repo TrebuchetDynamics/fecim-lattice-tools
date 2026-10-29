@@ -28,7 +28,10 @@
           const go = new Go();
           const { instance } = await WebAssembly.instantiate(module, go.importObject);
           go.run(instance).catch(error => postMessage({ type: 'fault', error: String(error) }));
-          const identity = JSON.parse(globalThis.fecimHysteresisIdentity);
+          const prefix = data.prefix || 'fecimHysteresis';
+          if (!['fecimHysteresis', 'fecimModule'].includes(prefix)) throw new Error('unknown Go bridge');
+          globalThis.fecimWorkerPrefix = prefix;
+          const identity = JSON.parse(globalThis[prefix + 'Identity']);
           if (!same(identity, data.identity) || identity.build === 'unqualified') throw new Error('Go identity mismatch');
           ready = true;
           postMessage({ type: 'ready', identity });
@@ -38,7 +41,7 @@
         // One Go-bounded batch per dispatch; yielding a task permits cancel
         // and progress delivery between units, never an unbounded JS run loop.
         await new Promise(resolve => setTimeout(resolve, 0));
-        const json = globalThis.fecimHysteresisDispatch(data.json);
+        const json = globalThis[globalThis.fecimWorkerPrefix + 'Dispatch'](data.json);
         postMessage({ type: 'reply', json });
       } catch (error) { postMessage({ type: 'fault', error: String(error) }); }
     };

@@ -34,7 +34,7 @@ const server = createServer((req, res) => {
     path = resolve(
       root,
       "." +
-        (pathname === "/" || pathname === "/hysteresis"
+        (/^\/(?:hysteresis|projects|configuration|experiment|results|docs)?\/?$/.test(pathname) || /^\/modules\/[a-z][a-z0-9-]*\/?$/.test(pathname)
           ? "/index.html"
           : pathname),
     );

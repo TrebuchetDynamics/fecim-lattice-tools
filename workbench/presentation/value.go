@@ -92,6 +92,80 @@ func FormatMetric(metric experiment.Metric, unavailableReason string) Value {
 		spokenUnit = "ratio"
 	case "Ω":
 		spokenUnit = "ohms"
+	case "%":
+		spokenUnit = "percent"
+	case "bits":
+		spokenUnit = "bits"
+	case "bits/cell":
+		spokenUnit = "bits per cell"
+	case "cells":
+		spokenUnit = "cells"
+	case "levels":
+		spokenUnit = "levels"
+	case "samples":
+		spokenUnit = "samples"
+	case "count":
+		spokenUnit = "count"
+	case "operations":
+		spokenUnit = "operations"
+	case "MACs":
+		spokenUnit = "multiply accumulate operations"
+	case "mV":
+		spokenUnit = "millivolts"
+	case "µA":
+		spokenUnit = "microamperes"
+	case "mA":
+		spokenUnit = "milliamperes"
+	case "pA":
+		spokenUnit = "picoamperes"
+	case "µS":
+		spokenUnit = "microsiemens"
+	case "nS":
+		spokenUnit = "nanosiemens"
+	case "kΩ":
+		spokenUnit = "kiloohms"
+	case "F":
+		spokenUnit = "farads"
+	case "pF":
+		spokenUnit = "picofarads"
+	case "fF":
+		spokenUnit = "femtofarads"
+	case "W":
+		spokenUnit = "watts"
+	case "mW":
+		spokenUnit = "milliwatts"
+	case "µW":
+		spokenUnit = "microwatts"
+	case "nW":
+		spokenUnit = "nanowatts"
+	case "fJ":
+		spokenUnit = "femtojoules"
+	case "nJ":
+		spokenUnit = "nanojoules"
+	case "ms":
+		spokenUnit = "milliseconds"
+	case "µs":
+		spokenUnit = "microseconds"
+	case "ps":
+		spokenUnit = "picoseconds"
+	case "nm":
+		spokenUnit = "nanometers"
+	case "µm":
+		spokenUnit = "micrometers"
+	case "TOPS":
+		spokenUnit = "trillion operations per second"
+	case "GOPS":
+		spokenUnit = "billion operations per second"
+	case "TOPS/W":
+		spokenUnit = "trillion operations per second per watt"
+	case "GOPS/W":
+		spokenUnit = "billion operations per second per watt"
+	case "GB/s":
+		spokenUnit = "gigabytes per second"
+	case "kWh":
+		spokenUnit = "kilowatt hours"
+	case "mm2":
+		displayUnit, spokenUnit = "mm²", "square millimeters"
 	case "":
 		return unavailable("Metric unit is missing")
 	default:

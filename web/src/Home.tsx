@@ -74,9 +74,9 @@ export function Home() {
         <p className="eyebrow">Integrated workflow</p>
         <h2>Seven modules, one simulation story.</h2>
         <p>
-          The browser Hysteresis lab runs Go in a Worker. The other module
-          workflows remain in the Go application; these cards describe the
-          monorepo, not additional browser tools.
+          The Hysteresis lab and bounded research studies run Go in a Worker.
+          Unported module routes explain their unavailable capabilities; these
+          cards do not claim that every monorepo workflow is browser-qualified.
         </p>
         <div className="module-grid">
           {modules.map(([title, text], i) => (
@@ -84,7 +84,7 @@ export function Home() {
               <span className="eyebrow">0{i + 1}</span>
               <h3>{title}</h3>
               <p>{text}</p>
-              {i === 0 && <a href="/hysteresis">Explore Hysteresis</a>}
+              <a href={"/modules/" + ["hysteresis", "crossbar", "mnist", "circuits", "comparison", "eda", "docs"][i]}>Explore {title}</a>
             </article>
           ))}
         </div>
@@ -137,10 +137,11 @@ go run ./cmd/fecim-lattice-tools`}</code>
         <p>
           The existing command opens the legacy desktop application and needs
           its native build dependencies. This React application has hosted and
-          local asset profiles; the authenticated local adapter and serve
-          command are not yet implemented. Local-only browser actions show
-          instructions, never probe localhost. No runtime Node is required for
-          the hosted app.
+          local asset profiles. The additive authenticated local candidate is
+          launched with fecim-lattice-tools serve --root DIRECTORY after building
+          matching local assets. It is not the default desktop launch and is not
+          human Orca-qualified. Hosted local-only actions show instructions and
+          never probe localhost. No runtime Node is required for either distribution.
         </p>
       </section>
     </>
