@@ -80,7 +80,7 @@ func productionGate(t *testing.T, mode string) {
 	goroot := strings.TrimSpace(command(t, repo, nil, "go", "env", "GOROOT"))
 	shim := filepath.Join(goroot, "lib/wasm/wasm_exec.js")
 	names := strings.Fields(command(t, repo, nil, "git", "ls-files", "--cached", "--others", "--exclude-standard", "*.go", "go.mod", "go.sum"))
-	names = append(names, "config/constants.yaml", "config/materials.yaml", "web/src/worker/hysteresis-worker.mjs", "wasm_exec.js")
+	names = append(names, "config/constants.yaml", "config/materials.yaml", "web/src/worker/hysteresis-worker.mjs", "wasm_exec.js", "workbench/moduleapi/openapi.json", "workbench/moduleapi/research/example/project.yaml", "workbench/moduleapi/research/example/design.yaml", "workbench/moduleapi/research/example/sweep.yaml", "web/scripts/build-models.mjs", "web/scripts/generate-api.mjs")
 	sort.Strings(names)
 	hash := sha256.New()
 	for _, name := range names {

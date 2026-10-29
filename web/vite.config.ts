@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => ({
   define: {
     __FECIM_PROFILE__: JSON.stringify(mode === "local-app" ? "local" : "hosted"),
     __FECIM_UI__: JSON.stringify(manifest.UI),
+    __FECIM_API__: JSON.stringify(manifest.API),
   },
   build: {
     outDir: mode === "local-app" ? "dist-local" : "dist",

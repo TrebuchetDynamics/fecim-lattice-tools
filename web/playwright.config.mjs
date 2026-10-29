@@ -1,3 +1,4 @@
+import "./test/setup.mjs";
 import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
@@ -38,6 +39,12 @@ const smallPhoneChromiumProfile = {
 
 export default defineConfig({
   testDir: "./test/e2e",
+  // Discover future feature specs without another per-module CI registry edit.
+  // The explicit embedded-file fixture remains its own lane; hosted isolation
+  // is meaningful only in the hosted shared lane.
+  testIgnore: process.env.FECIM_WEB_SUITE === "shared"
+    ? ["**/hysteresis-local.spec.ts", ...(process.env.FECIM_WEB_PROFILE === "local" ? ["**/hosted-isolation.spec.ts"] : [])]
+    : [],
   outputDir: process.env.TMPDIR ? `${process.env.TMPDIR}/playwright-${process.env.FECIM_WEB_PROFILE || "hosted"}` : "test-results",
   timeout: 90_000,
   expect: { timeout: 10_000 },

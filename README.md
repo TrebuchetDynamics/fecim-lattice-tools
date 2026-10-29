@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools
 
-> **UI direction:** React web is the primary UI target; Fyne is **deprecated in this project** and retained for legacy compatibility. The React workbench is not yet a runnable distribution in this checkout. Use the existing CLI for reproducible studies; the Fyne instructions below describe the current legacy UI, not the future default. See the [React-primary migration policy](./docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy).
+> **UI direction:** React web is the primary UI target; Fyne is **deprecated in this project** and retained for legacy compatibility. A source-built React candidate provides Hysteresis and the shared research workflow in hosted/local profiles. It is not a qualified release: real Orca + Firefox/Linux acceptance is **NOT RUN**. Default launch and `launch.sh` still open Fyne. See the [React-primary migration policy](./docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy).
 
 <p align="center">
   <img src="./assets/readme/hero.svg" width="100%" alt="FeCIM Lattice Tools turns cited device assumptions into reproducible pre-silicon trade-off studies">
@@ -110,6 +110,21 @@ go run ./cmd/fecim-lattice-tools --module hysteresis
 go run ./cmd/fecim-lattice-tools --module crossbar
 go run ./cmd/fecim-lattice-tools --module eda
 ```
+
+### Optional React research candidate
+
+Build tools: Node **24.19.0**, npm **11.17.0**, and exact Go **1.26.10** for matching WASM/runtime/native assets.
+
+```bash
+make build-browser
+./fecim-lattice-tools serve --root "$HOME/fecim-projects"
+```
+
+Create the grant directory first. Open the short-lived terminal launch link, then choose **Projects → Configuration → Experiment → Results**. Local operations support explicit revision-checked edits, validation, persistent run/reuse/cancel/reconnect, inspection, 2–4-run comparison, stored-run verification, reports and selected-run export. A plain Go build has no embedded browser assets. Node is not required to use the built binary.
+
+The hosted profile runs Hysteresis and small studies in a Go Worker, without scientific upload, persistence, downloads or localhost probing. Its eight-point example uses 16/32-row arrays to fit the Go-owned 32×32 cap. The original 64-row study remains native-only. Other expert module routes state unavailable until their own web ports ship. See the [web build and protocol guide](./web/README.md) and [research workflow](./docs/guides/research-design-workbench.md#browser-research-workflow-candidate).
+
+`CGO_ENABLED=0` supports headless subcommands and `serve`, not desktop startup. Desktop startup requires CGO and native graphics libraries. No launch-default switch, Fyne removal, deployment or release qualification is implied.
 
 ## Expert workspaces
 

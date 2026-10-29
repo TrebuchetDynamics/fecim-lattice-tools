@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"fecim-lattice-tools/workbench/edaexport"
 	"fecim-lattice-tools/workbench/experiment"
 	"fecim-lattice-tools/workbench/fecim"
 	"fecim-lattice-tools/workbench/project"
@@ -56,6 +55,35 @@ func runRoot(ctx context.Context, root, citations *os.Root, opts RunOptions, eva
 	bundle, err := loadRoot(root, citations)
 	if err != nil {
 		return outcome, err
+	}
+	return runBundleRoot(ctx, root, citations, bundle, opts, evaluate, writeReport)
+}
+
+// RunBundleRoot executes a validated, captured bundle without reloading project
+// configuration. Obtain bundle from ValidateProjectRoot/LoadRoot and do not
+// mutate its slices while executing. Input hashes/citations retain that accepted
+// snapshot; neither Bundle.Root nor root.Name is filesystem authority. The
+// caller owns roots until all workers and report writes have settled.
+func RunBundleRoot(ctx context.Context, root, citations *os.Root, bundle project.Bundle, opts RunOptions) (RunOutcome, error) {
+	return runBundleRoot(ctx, root, citations, bundle, opts, fecim.Evaluate, report.GenerateRoot)
+}
+func runBundleRoot(ctx context.Context, root, citations *os.Root, bundle project.Bundle, opts RunOptions, evaluate experiment.Evaluator, writeReport func(*os.Root, project.Bundle, experiment.Analysis) error) (RunOutcome, error) {
+	outcome := RunOutcome{ResultsState: ResultsUnavailable}
+	if root == nil {
+		return outcome, errors.New("project root is required")
+	}
+	if opts.CitationDir != "" {
+		return outcome, errors.New("CitationDir is not allowed with supplied roots")
+	}
+	if opts.Workers < 1 {
+		return outcome, errors.New("workers must be at least 1")
+	}
+	for _, r := range []*os.Root{root, citations} {
+		if r != nil {
+			if _, err := r.Stat("."); err != nil {
+				return outcome, err
+			}
+		}
 	}
 	outcome.Bundle = bundle
 	points, err := experiment.Expand(bundle)
@@ -156,10 +184,4 @@ func GenerateReportRoot(root, citations *os.Root) (experiment.Analysis, error) {
 		return experiment.Analysis{}, fmt.Errorf("generate report: %w", err)
 	}
 	return analysis, nil
-}
-
-// ExportRunRoot exports a verified successful run and returns exports/<id>
-// relative to root. The caller retains root ownership on success and failure.
-func ExportRunRoot(root *os.Root, id string) (string, error) {
-	return edaexport.ExportSelectedRunRoot(root, id)
 }

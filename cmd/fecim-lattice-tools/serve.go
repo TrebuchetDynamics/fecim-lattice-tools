@@ -20,6 +20,22 @@ import (
 	localserver "fecim-lattice-tools/workbench/server"
 )
 
+// App cancellation precedes HTTP drain: open SSE and root-owning jobs must be
+// stopped before Shutdown waits for their handlers to return.
+func shutdownBrowserHTTP(ctx context.Context, app interface{ Close() }, server *http.Server) error {
+	app.Close()
+	return server.Shutdown(ctx)
+}
+
+// Validate immutable assets before claiming even a loopback socket. New repeats
+// validation before root admission after the listener supplies its exact origin.
+func listenBrowser(c localserver.Config, port int) (net.Listener, error) {
+	if err := localserver.ValidateAssets(c); err != nil {
+		return nil, err
+	}
+	return net.Listen("tcp4", "127.0.0.1:"+strconv.Itoa(port))
+}
+
 type serveRoots []string
 
 func (r *serveRoots) String() string         { return strings.Join(*r, ", ") }
@@ -28,7 +44,7 @@ func runServeSubcommand(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	var roots serveRoots
-	fs.Var(&roots, "root", "DIRECTORY granted for explicit local file operations (repeatable; required)")
+	fs.Var(&roots, "root", "DIRECTORY granted for rooted research projects and explicit local file operations (repeatable; required)")
 	port := fs.Int("port", 0, "Loopback port (0 selects an available port)")
 	fs.Usage = func() {
 		fmt.Fprintln(stdout, "Usage: fecim-lattice-tools serve --root DIRECTORY [--port PORT]")
@@ -52,7 +68,7 @@ func runServeSubcommand(args []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	listener, err := net.Listen("tcp4", "127.0.0.1:"+strconv.Itoa(*port))
+	listener, err := listenBrowser(localserver.Config{Assets: assets, UI: browserui.UIID, Identity: hysteresis.BridgeIdentity()}, *port)
 	if err != nil {
 		return err
 	}
@@ -65,7 +81,7 @@ func runServeSubcommand(args []string, stdout, stderr io.Writer) error {
 	defer app.Close()
 	// Never log request URLs, bodies, cookies or secrets. Only these terminal
 	// launch links intentionally contain the short-lived fragment bootstrap.
-	fmt.Fprintln(stdout, "Local browser simulation. Explicit file operations only; supplied snapshots are not verified studies.")
+	fmt.Fprintln(stdout, "Local browser simulation with rooted research projects. Supplied browser snapshots remain unverified; stored-run verification is an explicit research operation.")
 	fmt.Fprintln(stdout, app.BootstrapURL())
 	fmt.Fprintln(stdout, "Type renew then Enter for a new link. Ctrl-C stops the server and revokes the session.")
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -90,6 +106,6 @@ func runServeSubcommand(args []string, stdout, stderr io.Writer) error {
 	case <-ctx.Done():
 		shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		return httpServer.Shutdown(shutdown)
+		return shutdownBrowserHTTP(shutdown, app, httpServer)
 	}
 }

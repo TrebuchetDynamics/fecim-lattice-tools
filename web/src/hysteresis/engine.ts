@@ -1,4 +1,5 @@
 import "../worker/hysteresis-worker.mjs";
+import { claimScience, releaseScience } from "../worker/ownership";
 import type {
   AnalysisResult,
   AnalysisRow,
@@ -33,10 +34,18 @@ export class Engine {
   private alive = true;
   private operations = new Set<string>();
   private lastAnnouncement = 0;
+  private scientificRequests = 0;
   constructor(private changed: (data: Results) => void) {}
   private publish(patch: Partial<Results>) {
     if (this.alive) {
+      if (patch.active) {
+        try { claimScience(this); } catch (error) {
+          this.data = { ...this.data, error: String(error instanceof Error ? error.message : error) };
+          this.changed(this.data); return;
+        }
+      }
       this.data = { ...this.data, ...patch };
+      if (!this.data.active && this.scientificRequests === 0) releaseScience(this);
       this.changed(this.data);
     }
   }
@@ -95,6 +104,8 @@ export class Engine {
       if (generation !== this.generation) return;
       if (manifest.UI !== __FECIM_UI__)
         throw new Error("UI/Worker asset fingerprint mismatch");
+      if (manifest.API !== undefined && manifest.API !== __FECIM_API__)
+        throw new Error("API-contract fingerprint mismatch");
       this.publish({ catalogue: manifest.Catalogue });
       const client = (this.client = new HysteresisWorkerClient({
         identity: manifest.identity,
@@ -157,13 +168,17 @@ export class Engine {
     this.generation++;
     this.loop++;
     this.client?.terminate();
+    releaseScience(this);
   }
   private async send<T>(operation: string, input: unknown = null): Promise<T> {
     if (operation !== "session.new" && !this.operations.has(operation))
       throw new Error("Go capability unavailable: " + operation);
-    const reply: Reply<T> = JSON.parse(
-      await this.client!.request(operation, input),
-    );
+    const computes = !/page$|snapshot$|result$|session.new/.test(operation);
+    if (computes) { try { claimScience(this); } catch (error) { throw new GoInputError((error as Error).message); } }
+    if (computes) this.scientificRequests++;
+    let reply: Reply<T>;
+    try { reply = JSON.parse(await this.client!.request(operation, input)); }
+    finally { if (computes) { this.scientificRequests--; if (!this.data.active) releaseScience(this); } }
     this.publish({ revision: reply.revision });
     if (reply.error) {
       // Go can commit partial work and a terminal failure in the same envelope.
@@ -404,7 +419,7 @@ export class Engine {
               this.data.catalogue!.AnalysisBudget,
             ),
           });
-        if (performance.now() - this.lastAnnouncement >= 1000) {
+        if (performance.now() - this.lastAnnouncement >= 5000) {
           this.lastAnnouncement = performance.now();
           this.publish({
             status:

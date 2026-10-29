@@ -59,43 +59,7 @@ func ReadConfiguration(root *os.Root) (ConfigurationSnapshot, error) {
 }
 
 func readConfigurationDocument(root *os.Root, name string) ([]byte, error) {
-	before, err := root.Lstat(name)
-	if err != nil {
-		return nil, err
-	}
-	if !before.Mode().IsRegular() {
-		return nil, fmt.Errorf("configuration must be a regular file, not a link")
-	}
-	file, err := root.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	info, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-	if !info.Mode().IsRegular() || !os.SameFile(before, info) {
-		return nil, fmt.Errorf("configuration file changed during read")
-	}
-	if info.Size() > maxProjectFileBytes {
-		return nil, fmt.Errorf("file exceeds %d bytes", maxProjectFileBytes)
-	}
-	data, err := io.ReadAll(io.LimitReader(file, maxProjectFileBytes+1))
-	if err != nil {
-		return nil, err
-	}
-	if int64(len(data)) > maxProjectFileBytes {
-		return nil, fmt.Errorf("file exceeds %d bytes", maxProjectFileBytes)
-	}
-	after, err := root.Lstat(name)
-	if err != nil {
-		return nil, err
-	}
-	if !after.Mode().IsRegular() || !os.SameFile(info, after) {
-		return nil, fmt.Errorf("configuration file changed during read")
-	}
-	return data, nil
+	return readRegularRoot(root, name, maxProjectFileBytes, false)
 }
 
 // FieldChange replaces an existing allowlisted scalar with typed literal input,
@@ -104,6 +68,12 @@ type FieldChange struct {
 	Path  string
 	Value string
 }
+
+// ConfigurationFieldIssue identifies a scalar input/allowlist error without
+// exposing YAML source, input literals, filesystem paths or parser internals.
+type ConfigurationFieldIssue struct{ Document, Path, Reason string }
+
+func (e *ConfigurationFieldIssue) Error() string { return e.Reason }
 
 // PreparedConfiguration privately retains candidate bytes and a validated bundle
 // for persistence inside this package. Preparation itself performs no writes.
@@ -151,11 +121,11 @@ func PrepareConfiguration(root, citations *os.Root, base ConfigurationSnapshot, 
 			}
 			parts, err := configurationPath(change.Path)
 			if err != nil {
-				return PreparedConfiguration{}, err
+				return PreparedConfiguration{}, &ConfigurationFieldIssue{Document: document, Path: change.Path, Reason: "Use an existing editable field path"}
 			}
 			kind := configurationFieldKind(document, parts)
 			if kind == "" {
-				return PreparedConfiguration{}, fmt.Errorf("unsupported configuration field path")
+				return PreparedConfiguration{}, &ConfigurationFieldIssue{Document: document, Path: change.Path, Reason: "This field is not editable"}
 			}
 			key := strings.Join(parts, "/")
 			if seen[key] {
@@ -164,11 +134,18 @@ func PrepareConfiguration(root, citations *os.Root, base ConfigurationSnapshot, 
 			seen[key] = true
 			node, err := configurationScalar(&nodes[index], parts)
 			if err != nil {
-				return PreparedConfiguration{}, err
+				return PreparedConfiguration{}, &ConfigurationFieldIssue{Document: document, Path: change.Path, Reason: "Choose an existing scalar field"}
 			}
 			different, err := replaceConfigurationScalar(node, kind, change.Value)
 			if err != nil {
-				return PreparedConfiguration{}, err
+				reason := "Enter a valid literal text value"
+				if kind == "float" {
+					reason = "Enter a finite number in the displayed base unit"
+				}
+				if kind == "int" || kind == "int64" {
+					reason = "Enter a base-10 integer within the supported range"
+				}
+				return PreparedConfiguration{}, &ConfigurationFieldIssue{Document: document, Path: change.Path, Reason: reason}
 			}
 			changed = changed || different
 		}

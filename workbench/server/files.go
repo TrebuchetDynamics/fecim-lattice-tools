@@ -71,13 +71,19 @@ func (s *Server) files(w http.ResponseWriter, r *http.Request) {
 	if !readJSON(w, r, &q) {
 		return
 	}
+	releaseSession, err := s.beginSession(r.Context())
+	if err != nil {
+		problem(w, 401, "Session ended or replaced")
+		return
+	}
+	defer releaseSession()
 	if q.Identity != s.manifest.Identity || q.UI != s.manifest.UI {
-		http.Error(w, "asset fingerprint mismatch; rebuild and reload", 409)
+		problem(w, 409, "asset fingerprint mismatch; rebuild and reload")
 		return
 	}
 	root := s.roots[q.Root]
 	if root == nil || !safeRelative(q.Path) {
-		http.Error(w, "invalid granted root or relative path", 400)
+		problem(w, 400, "invalid granted root or relative path")
 		return
 	}
 	supported := false
@@ -87,7 +93,7 @@ func (s *Server) files(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !supported || (q.Operation != "save" && q.Operation != "load") || (q.Operation == "load" && q.Kind != "preset" && q.Kind != "calibration") {
-		http.Error(w, "unsupported file operation or artifact kind", 400)
+		problem(w, 400, "unsupported file operation or artifact kind")
 		return
 	}
 	if q.Operation == "load" {
@@ -95,40 +101,40 @@ func (s *Server) files(w http.ResponseWriter, r *http.Request) {
 		// independently prevents ancestor-link escapes even across rename races.
 		info, err := root.Lstat(q.Path)
 		if err != nil || !info.Mode().IsRegular() {
-			http.Error(w, "file unavailable or not regular", 400)
+			problem(w, 400, "file unavailable or not regular")
 			return
 		}
 		if info.Size() > MaxBodyBytes {
-			http.Error(w, "file exceeds 8 MiB", 413)
+			problem(w, 413, "file exceeds 8 MiB")
 			return
 		}
 		f, err := root.Open(q.Path)
 		if err != nil {
-			http.Error(w, "file unavailable within grant", 400)
+			problem(w, 400, "file unavailable within grant")
 			return
 		}
 		defer f.Close()
 		info, err = f.Stat()
 		if err != nil || !info.Mode().IsRegular() {
-			http.Error(w, "file is not regular", 400)
+			problem(w, 400, "file is not regular")
 			return
 		}
 		if info.Size() > MaxBodyBytes {
-			http.Error(w, "file exceeds 8 MiB", 413)
+			problem(w, 413, "file exceeds 8 MiB")
 			return
 		}
 		data, err := io.ReadAll(io.LimitReader(f, MaxBodyBytes+1))
 		if err != nil {
-			http.Error(w, "cannot read file", 400)
+			problem(w, 400, "cannot read file")
 			return
 		}
 		if len(data) > MaxBodyBytes {
-			http.Error(w, "file exceeds 8 MiB", 413)
+			problem(w, 413, "file exceeds 8 MiB")
 			return
 		}
 		value, err := loadFormat(q.Kind, data)
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+			problem(w, 400, "File data rejected; check the selected format and simulation state")
 			return
 		}
 		jsonReply(w, map[string]any{"status": "Loaded " + q.Path + "; imported/unverified, not stored-run verification", "provenance": provenance, "value": value})
@@ -136,11 +142,11 @@ func (s *Server) files(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := render(q.Kind, q.Snapshot, path.Base(q.Path))
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		problem(w, 400, "File data rejected; check the selected format and simulation state")
 		return
 	}
 	if len(data) > MaxBodyBytes {
-		http.Error(w, "artifact exceeds 8 MiB", 413)
+		problem(w, 413, "artifact exceeds 8 MiB")
 		return
 	}
 	// Publish a complete file without overwriting: write a private sibling,
@@ -149,14 +155,14 @@ func (s *Server) files(w http.ResponseWriter, r *http.Request) {
 	dir := path.Dir(q.Path)
 	parent, err := root.OpenRoot(dir)
 	if err != nil {
-		http.Error(w, "destination directory unavailable within grant", 400)
+		problem(w, 400, "destination directory unavailable within grant")
 		return
 	}
 	defer parent.Close()
 	temp := ".fecim-" + randomSecret()
 	f, err := parent.OpenFile(temp, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
-		http.Error(w, "cannot stage file", 400)
+		problem(w, 400, "cannot stage file")
 		return
 	}
 	defer parent.Remove(temp)
@@ -169,16 +175,16 @@ func (s *Server) files(w http.ResponseWriter, r *http.Request) {
 		err = closeErr
 	}
 	if err != nil {
-		http.Error(w, "cannot stage complete artifact", 500)
+		problem(w, 500, "cannot stage complete artifact")
 		return
 	}
 	err = parent.Link(temp, path.Base(q.Path))
 	if errors.Is(err, os.ErrExist) {
-		http.Error(w, "Conflict: destination exists; choose a new path. Nothing overwritten.", 409)
+		problem(w, 409, "Conflict: destination exists; choose a new path. Nothing overwritten.")
 		return
 	}
 	if err != nil {
-		http.Error(w, "cannot publish within granted root", 400)
+		problem(w, 400, "cannot publish within granted root")
 		return
 	}
 	jsonReply(w, map[string]string{"status": "Saved " + q.Path + "; " + provenance, "provenance": provenance})

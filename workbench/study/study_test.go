@@ -52,6 +52,21 @@ func TestStudyRootOperations(t *testing.T) {
 		}
 	}
 
+	t.Run("accepted bundle survives later configuration changes", func(t *testing.T) {
+		root, citations := fixture()
+		bundle, count, err := ValidateProjectRoot(root, citations)
+		must(err)
+		must(root.WriteFile("sweep.yaml", []byte("not a valid sweep\n"), 0600))
+		must(root.WriteFile("project.yaml", []byte("not a valid project\n"), 0600))
+		out, err := RunBundleRoot(context.Background(), root, citations, bundle, RunOptions{Workers: 1})
+		must(err)
+		if out.ResultsState != ResultsComplete || !out.AnalysisAvailable || len(out.Summary.Runs) != count || !reflect.DeepEqual(out.Bundle, bundle) {
+			t.Fatalf("captured bundle not executed: %+v", out)
+		}
+		if bad, err := RunBundleRoot(context.Background(), nil, citations, bundle, RunOptions{Workers: 1}); err == nil || bad.AnalysisAvailable {
+			t.Fatal("nil root accepted by prepared execution")
+		}
+	})
 	t.Run("renamed handles across evaluation and reuse", func(t *testing.T) {
 		root, citations := fixture()
 		bundle, count, err := ValidateProjectRoot(root, citations)

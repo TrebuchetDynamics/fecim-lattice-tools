@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"fecim-lattice-tools/workbench/hysteresis"
+	"fecim-lattice-tools/workbench/moduleapi/httpapi"
 )
 
 const testOrigin = "http://127.0.0.1:20200"
@@ -33,14 +34,20 @@ func testAssets(t *testing.T) fs.FS {
 			workerHashes[strings.TrimPrefix(name, "engine/")] = hex.EncodeToString(sum[:])
 		}
 	}
-	workerManifest, _ := json.Marshal(map[string]any{"UI": "ui-test", "identity": testIdentity(), "assets": workerHashes})
+	schema, err := httpapi.New(nil).JSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+	apiDigest := sha256.Sum256(append(schema, '\n'))
+	api := hex.EncodeToString(apiDigest[:])
+	workerManifest, _ := json.Marshal(map[string]any{"UI": "ui-test", "API": api, "identity": testIdentity(), "assets": workerHashes})
 	files["engine/manifest.json"] = &fstest.MapFile{Data: workerManifest}
 	hashes := map[string]string{}
 	for name, file := range files {
 		sum := sha256.Sum256(file.Data)
 		hashes[name] = hex.EncodeToString(sum[:])
 	}
-	manifest, _ := json.Marshal(Manifest{Profile: "local", UI: "ui-test", Identity: testIdentity(), Assets: hashes})
+	manifest, _ := json.Marshal(map[string]any{"profile": "local", "UI": "ui-test", "API": api, "identity": testIdentity(), "assets": hashes})
 	files["local-manifest.json"] = &fstest.MapFile{Data: manifest}
 	return files
 }

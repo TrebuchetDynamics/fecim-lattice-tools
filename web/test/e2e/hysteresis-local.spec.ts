@@ -163,7 +163,7 @@ test("real embedded local session, explicit file workflows, conflict, error and 
   await expect(page.getByTestId("file-status")).toContainText("Logged out");
   await page.getByRole("button", { name: "Save preset", exact: true }).click();
   await expect(page.getByTestId("file-status")).toContainText(
-    "authentication required",
+    /authentication required/i,
   );
   child.stdin!.write("renew\n");
   const renewed = await launchLink(signedInRenewal);

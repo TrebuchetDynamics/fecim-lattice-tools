@@ -67,13 +67,41 @@ root-relative hard link. A pre-existing destination returns **409 Conflict**;
 choose a new path. No overwrite, autosave, deletion or rename-based compare-and-swap
 against external editors is offered. Failed publication removes staging files.
 This is not a power-loss durability guarantee or protection against same-user
-malware. Stored-run verification and EDA buttons explain the separate existing
-native CLI; they do not pretend browser snapshots are verified runs.
+malware. Hysteresis file snapshots remain unverified browser simulation data.
+The separate research workflow below can explicitly verify real stored runs.
+
+## Rooted research workflow
+
+The same application now provides **Projects → Configuration → Experiment → Results**.
+Create/open only beneath a launch grant. Explicit field saves use exact ETags:
+missing `If-Match` returns 428, stale returns 412 with literal yours/on-disk text.
+A project mutation gate returns 409 for conflicting work. Runs use the accepted
+validated input snapshot and existing scientific identities, not browser-supplied
+results. Cancel acknowledgement is not terminal cancellation. Navigation or a lost
+stream never cancels server jobs. Reconnect, or reauthenticate/reopen after restart,
+then inspect integrity-checked stored runs. Reports and eligible selected-run
+exports are explicit operations; GET never regenerates them.
+
+Shutdown/logout cancels and drains root-owning work before closing roots. Session
+revocation also rejects delayed old-session requests after body decoding, including
+old logout requests against a replacement session. Execution snapshots are bounded
+at 64 with four active jobs; eviction returns 410, a pre-restart ID returns 404.
+Neither implies deletion of committed runs. SSE has four independent slots and
+bounded socket writes. It carries counts, not secrets or a durable event log.
+
+See the [research guide](../../docs/guides/research-design-workbench.md#browser-research-workflow-candidate)
+for the full workflow, field bounds, result selection and hosted limits. The
+source-built candidate is not a qualified release. Human Orca acceptance is
+**NOT RUN**. Default Fyne startup remains unchanged.
 
 ## Source-owned HTTP contract
 
-Handlers and typed structs in [workbench/server](../../workbench/server/) are the
-wire authority; there is no hosted API or scientific computation endpoint.
+Go DTOs and the internal Huma/stdlib router in
+[workbench/moduleapi](../../workbench/moduleapi/) generate the
+[OpenAPI contract](../../workbench/moduleapi/openapi.json). The server's existing
+security wrapper owns authentication, bootstrap and legacy files. This API is
+local-only; the hosted profile does not construct it. No automatic public docs,
+schema or PATCH route is enabled.
 
 | Route | Authentication/input | Output |
 |---|---|---|
@@ -82,7 +110,16 @@ wire authority; there is no hosted API or scientific computation endpoint.
 | GET /api/v1/roots | Session | Opaque grant IDs/names, admitted kinds, UI/core identity |
 | POST /api/v1/files | Session; typed `FileRequest` | Save confirmation or imported typed data |
 
-Every POST requires exact canonical Origin, `Content-Type: application/json`
+Research routes add project discovery/open/create/read/configuration PUT,
+validate/close, asynchronous experiments/state/events/cancel, paged runs/analysis,
+inspection/verification, explicit report/export/download operations and module
+sessions/jobs. Only the route-specific pagination/filter keys in the generated
+contract are allowed; roots/files/session routes still reject every query.
+Native resources bind explicit granted regular files to opaque read references
+(up to 256 MiB); they do not enlarge the 8 MiB JSON body ceiling or confer a
+browser path/open capability. Each scientific port must enforce stricter limits.
+
+Every POST and configuration PUT requires exact canonical Origin, `Content-Type: application/json`
 and `X-FeCIM-Request: 1`. Reads reject foreign Origin when supplied, but allow
 cookie-authenticated same-origin GET without Origin. File requests bind
 `identity` and `UI`, `root` ID, relative `path`, enumerated `kind`,
@@ -90,8 +127,10 @@ cookie-authenticated same-origin GET without Origin. File requests bind
 only for preset/calibration. Unknown fields, malformed/oversize input and unknown
 roots/kinds fail. No token is accepted in URLs/query parameters. Typical statuses:
 400 invalid typed input/path, 401 session/link required, 403 Host/Origin/CSRF,
-409 existing destination/fingerprint conflict, 413 size limit, 503 bounded
-admission/shutdown. Error bodies are plain text; success bodies are JSON.
+409 existing destination/fingerprint/mutation conflict, 412 stale revision,
+413 size limit, 428 missing revision, 503 bounded admission/shutdown. API errors
+use safe RFC 9457 `application/problem+json`; success bodies are typed JSON or
+enumerated downloads. Secrets and arbitrary host paths are not reflected in errors.
 
 The hosted profile never constructs this transport, probes localhost, uploads
 science, or persists files. Both profiles share React routes/components and the
