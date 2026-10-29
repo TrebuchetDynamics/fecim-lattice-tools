@@ -95,16 +95,25 @@ func TestModuleTransportContract(t *testing.T) {
 	if json.Unmarshal(w.Body.Bytes(), &modules) != nil || len(modules.Modules) != 7 {
 		t.Fatalf("module registry: %s", w.Body)
 	}
+	// Feature-owned Providers now include Documentation. Availability must be
+	// backed by an actual port, never by a legacy functional status badge.
+	available := map[string]bool{}
+	for _, factory := range nativeFactories {
+		port := nativePort(factory)
+		if port != nil {
+			available[factory.id] = port.Descriptor().Available
+			port.Close()
+		}
+	}
 	for _, m := range modules.Modules {
 		switch m.ID {
 		case "hysteresis", "crossbar", "eda", "comparison":
-			if !m.Available || m.Reason != "" {
+			if !m.Available {
 				t.Fatalf("implemented port unavailable: %+v", m)
 			}
-		default:
-			if m.Available || m.Reason == "" {
-				t.Fatalf("fabricated capability: %+v", m)
-			}
+		}
+		if m.Available != available[m.ID] || m.Available && m.Reason != "" || !m.Available && m.Reason == "" {
+			t.Fatalf("fabricated capability: %+v", m)
 		}
 	}
 	if w := request(s, "POST", "/api/v1/modules/crossbar/sessions", `{}`, cookie, nil); w.Code != 201 {

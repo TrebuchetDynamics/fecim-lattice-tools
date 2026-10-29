@@ -4,6 +4,14 @@
 
 ---
 
+## Shared web documentation reader
+
+Open `/docs` in either browser build for the curated learning library: real Go search, category/author/DOI queries, glossary aliases, citations, heading navigation, favorites and **Validation and evidence**. The current public corpus contains 13 repository-authored Markdown documents, not every file or paper mentioned in this repository. Counts and content hashes are generated from an explicit publication allowlist; no internal corpus, paper PDFs or private receipts are shipped.
+
+Public pages are readable before search loads its read-only Go Worker. Hosted favorites/recent pages remain ephemeral. The local profile can read explicitly granted additional Markdown and can save/load history only after an explicit project-root opt-in. Reading never runs checks. The web evidence view defaults to **not run/unverified**, not a blanket Pass/Measured badge.
+
+See [Module 7](../module7-docs/README.md) for build/generation commands, publication policy, bounds, native compatibility and tests. The [Validation and evidence page](modules/doc-viewer/validation-and-evidence.md) explains report identities; the [citation guide](modules/doc-viewer/citations.md) links four bibliography entries without redistributing papers. Real Orca + Firefox/Linux qualification remains **NOT RUN** for both profiles.
+
 ## 🎯 Find What You Need
 
 Choose your path based on your goals:
