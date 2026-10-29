@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"math"
 
-	fecimexport "fecim-lattice-tools/shared/export"
+	fecimexport "fecim-lattice-tools/shared/export/metadata"
 	"fecim-lattice-tools/shared/physics"
 )
 

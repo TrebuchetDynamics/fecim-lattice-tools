@@ -4,6 +4,7 @@ type CrossbarState struct {
 	Rows         int         `json:"rows"`
 	Cols         int         `json:"cols"`
 	Conductances [][]float64 `json:"conductances"`
+	EnableIRDrop bool        `json:"enable_ir_drop"`
 	IRDrop       float64     `json:"ir_drop"`
 	SneakPaths   bool        `json:"sneak_paths"`
 	DriftFactor  float64     `json:"drift_factor"`

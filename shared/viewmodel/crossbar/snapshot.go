@@ -55,7 +55,7 @@ func buildSnapshot(state CrossbarState) viewmodel.ModuleSnapshot {
 	sections = append(sections, viewmodel.Section{
 		ID:       "design_array",
 		Title:    "Array Design Tradeoffs",
-		Body:     fmt.Sprintf("Larger arrays increase parallelism but worsen IR drop. Recommended: start at 8×8, validate non-idealities, then scale. Quantization: %d discrete levels of %d configurable. Cross-reference: Module 1 for material → conductance mapping; Module 6 for array → layout export.", state.Cols*state.Rows, 30),
+		Body:     fmt.Sprintf("Larger arrays increase parallelism but worsen IR drop. Recommended: start at 8×8, validate non-idealities, then scale. Array contains %d cells; quantization uses %d discrete levels (configurable). Cross-reference: Module 1 for material → conductance mapping; Module 6 for array → layout export.", state.Cols*state.Rows, 30),
 		Category: "design",
 	})
 
@@ -90,14 +90,14 @@ func buildHeatmapPlots(state CrossbarState) []viewmodel.PlotData {
 		XLabel: "Column",
 		YLabel: "Row",
 		Series: []viewmodel.PlotSeries{{
-			Name:   "G (µS)",
+			Name:   "Programmed state (normalized)",
 			Points: flattenConductances(state.Conductances),
 		}},
 	}, {
 		ID:     "mvm_result",
 		Title:  "MVM Output Vector",
 		XLabel: "Row Index",
-		YLabel: "I_out (µA)",
+		YLabel: "Output (normalized, ADC-quantized)",
 		Series: []viewmodel.PlotSeries{{
 			Name:   "output",
 			Points: vectorToPoints(state.OutputVector),
