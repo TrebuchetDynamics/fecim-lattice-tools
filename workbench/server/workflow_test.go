@@ -274,6 +274,13 @@ func TestWebResearchWorkflow(t *testing.T) {
 	if w := request(s, "GET", base+"/exports/"+page.Rows[0].RunID+"/manifest.json", "", cookie, nil); w.Code != 200 {
 		t.Fatalf("export download: %d %s", w.Code, w.Body)
 	}
+	// Export downloads must verify the enumerated bundle, not just a static filename.
+	if err := root.WriteFile(filepath.Join("eight-point", "exports", page.Rows[0].RunID, "design.spice"), []byte("tampered"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if w := request(s, "GET", base+"/exports/"+page.Rows[0].RunID+"/design.spice", "", cookie, nil); w.Code != 409 {
+		t.Fatalf("tampered download: %d %s", w.Code, w.Body)
+	}
 	// Cancellation acknowledgement is not terminal cancellation. A fast finished
 	// study may succeed; otherwise cancellation must settle with exact counts.
 	saved = request(s, "PUT", base+"/configuration", `{"document":"sweep.yaml","changes":[{"path":"/seed","value":"18"}]}`, cookie, map[string]string{"If-Match": saved.Header().Get("ETag")})

@@ -19,7 +19,7 @@ What is provided:
 
 If you need production quality, use Module 6 outputs only as scaffolding and re-run full foundry signoff characterization/verification flows.
 
-See: `docs/4-research/validation/policies/eda-trust-boundary.md`
+See: [EDA trust boundary](../docs/research/validation/policies/eda-trust-boundary.md)
 
 ---
 
@@ -58,6 +58,12 @@ With optional weights (compute mode only):
 go run ./cmd/fecim-lattice-tools eda cli -mode compute -rows 64 -cols 64 \
   -input weights.json -output ./output -name my_design
 ```
+
+### Browser EDA candidate
+
+The authenticated local browser screen at `/modules/eda` supports typed freeform generation, verified stored-run export, escaped artifact inspection, integrity-checked downloads/packages and explicit structural/tool evidence. Hosted EDA provides Learn and imported/unverified read-only text only. No tool/PDK installation, Docker pull or network acquisition is performed.
+
+See the [browser EDA guide](../docs/guides/eda-web.md) for setup, distinct origins/units, admission limits, the tool/capability/provenance matrix and recovery. Placeholder/ESTIMATED_SCALAR outputs are not foundry-mapped or signoff-qualified. Automated offline fixtures do not qualify real tools; real Orca qualification remains NOT RUN. The default executable still opens legacy Fyne.
 
 ### GUI Application
 
