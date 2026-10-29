@@ -3,7 +3,7 @@ schema = 1
 id = "WEB-CROSSBAR"
 title = "Port real crossbar models and interactive matrices to the web"
 short = "Web crossbar physics workflows"
-status = "open"
+status = "done"
 goal = "WEB-ALL"
 section = "Next"
 rank = 3000
@@ -16,6 +16,8 @@ scope = "Implement M2 scope in roadmap: actual conductance/matrix/IR/sneak/input
 acceptance = ["Given fixed programmed matrix/vector/config/seed and basic/enhanced/FeCAP/parasitic profiles, when web adapter executes, then actual core vectors/cell/convergence outputs and declared normalization/units agree, toggling IR affects IR not SneakPaths and invalid shape/nonfinite state is rejected atomically; TestCrossbarWebWorkflow plus existing KCL/KVL/enhanced/charge tests.", "Given admitted hosted profiles and identical native inputs/versions, when real Node/Firefox feature Worker runs, then successful canonical scientific bytes exactly match native, Go allocation/work caps and cancellation hold and measured payload/default-result gate passes; extend TestModuleProductionParity for crossbar, no tolerance or empty/failure-only equivalence.", "Given real transports in both builds, when programming/selecting a cell, reading matrix/input/output, switching analysis modes and using file-only actions, then crossbar.spec.ts reaches every declared native workflow through keyboard/tables with Go values and honest unavailable states, hosted isolation holds and local file operations remain rooted; not a manual Orca pass."]
 checks = ["go test ./workbench/modules/crossbar ./shared/viewmodel/crossbar ./shared/crossbar -count=1", "env CGO_ENABLED=1 go test -race ./workbench/modules/crossbar ./shared/viewmodel/crossbar -count=1", "env FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -run 'TestModuleProductionParity|TestExampleResultsJSONNativeWASM' -count=1 -v", "cd web && npm test && npm run typecheck && npm run build:hosted && npm run build:local && npm run test:e2e -- test/e2e/crossbar.spec.ts", "go test ./shared/viewmodel -run TestAllModulesE2E -count=1"]
 exclusions = ["No implementation/deployment/service change follows from planning; future implementation preserves Go science/CLI, original example-byte parity, existing qualification gates and no hosted scientific upload/persistence/localhost probing.", "No automatic EDA-tool/model/dataset/PDK/container acquisition or installation; explicitly scoped pinned build/test dependency provisioning is allowed only during authorized implementation. No new physics/TS scientific model, fabricated accuracy/provenance/tool pass, premature Fyne deletion/default switch, public release or push."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/WEB-CROSSBAR.toml"
 +++
 
 
@@ -27,3 +29,4 @@ exclusions = ["No implementation/deployment/service change follows from planning
 - Verification status: All new feature tests/commands are proposed and unrun. Source inspection is not numerical/runtime/manual/tool validation. No implementation or dispatch in this planning occurrence.
 
 - CI ownership: WEB-WORKBENCH owns shared workflow/build discovery once; this task supplies real module tests/Screen/entry artifacts picked up by it, without editing a common CI or route registry. Declared cold all-module test/presentation overlaps still need merge review; no artificial dependency is added.
+- Pending live: Human Orca + Firefox/Linux acceptance for hosted and authenticated local crossbar workflows remains NOT RUN; automated keyboard/table/viewport checks do not qualify screen-reader speech.

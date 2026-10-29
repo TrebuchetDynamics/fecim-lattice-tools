@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-CROSSBAR"
+candidate = "8cd29b688657a37a61b3657131b854da55d32184"
+integration = "b68c9053ac3aaa66616c48a19d28200ed99881b6"
+tree = "5eb666acbc128fd2d25c1e4a443fe2bd0c11d52c"
+contract_hash = "599e6d8bc288bd69380b14c086b05fac1d5eddbe210d76cb7b836d684fdc0c48"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-CROSSBAR"]
+result = "pass"
+review = "passed"
