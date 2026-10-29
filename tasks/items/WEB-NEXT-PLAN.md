@@ -3,7 +3,7 @@ schema = 1
 id = "WEB-NEXT-PLAN"
 title = "Plan evidence-bound all-module qualification and legacy retirement"
 short = "All-module qualification frontier"
-status = "open"
+status = "done"
 goal = "WEB-ALL"
 section = "Next"
 rank = 8000
@@ -16,6 +16,11 @@ scope = "For WEB-ALL after every building outcome, reconcile actual code/reports
 acceptance = ["Given merged building reports/current source and exact candidate fingerprints, when bounded Plan For Me reconciles the full roadmap, then every module/shared-workflow/retirement outcome maps to existing or complete new records or a precise external owner gap; one read-only builder check and task validation pass, completed IDs/history retained, no duplicate HYS work.", "Given unrun Orca/tool/rights or missing behavior evidence, when round-2 tasks are saved, then only affected qualification/removal stays blocked, no human/tool result is fabricated, default switch/deletion depends on actual qualified replacements and preserved core/CLI, round 2 adds at most eight records and no successor beyond the limit. No implementation/service/publication in planning."]
 checks = ["Read all WEB/HYS task reports, actual source/import/asset graph and candidate-bound numeric/browser/security/manual/tool evidence; perform planning craft builder check.", "autowork tasks validate --worktree .", "git diff --check"]
 exclusions = ["No implementation/deployment/service change follows from planning; future implementation preserves Go science/CLI, original example-byte parity, existing qualification gates and no hosted scientific upload/persistence/localhost probing.", "No automatic EDA-tool/model/dataset/PDK/container acquisition or installation; explicitly scoped pinned build/test dependency provisioning is allowed only during authorized implementation. No new physics/TS scientific model, fabricated accuracy/provenance/tool pass, premature Fyne deletion/default switch, public release or push."]
+closure = "manual"
+closure_actor = "DOCS-MAINTAINER"
+closure_timestamp = "2026-10-29T04:44:26.255323+00:00"
+closure_reason = "Round 1 reconciled seven coordinator-verified WEB producers/current source and preserved the completed HYS stop. Saved five source-backed WEB-ALL records: bounded shared guidance/navigation/isolation repair, combined automated checkpoint, separate unrun human/tool proof, and exactly one final round-2 planner depending on both new building tasks. Source-reading builder approved after precise test ownership, retention and missing-manual-fixture dispositions. Manual planning closure only; no implementation, goal qualification, retirement authority or verification receipt."
+closure_evidence = "docs/tasks/WEB-NEXT-PLAN.md"
 +++
 
 
