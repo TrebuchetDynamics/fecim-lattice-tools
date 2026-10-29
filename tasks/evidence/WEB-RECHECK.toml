@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-RECHECK"
+candidate = "2f90641e5bcb2a46c38c48d90e42e61d92f96492"
+integration = "68ebe6dbfde8191c99560e2b66c1180cd9153c97"
+tree = "4199700ee840c28e192def65b24699c6e2731271"
+contract_hash = "8bea0b02c6076525ec0b3fbfec43aa5c212266536d58356401bf847ee7b19a5a"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-RECHECK"]
+result = "pass"
+review = "passed"
