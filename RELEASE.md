@@ -24,7 +24,7 @@ go test ./...
 
 ### Optional shared React candidate
 
-`web/` builds the same React routes for hosted-static and authenticated local use. Go/WASM owns browser science. The local profile embeds matching assets and adds rooted projects, revision-checked edits, persistent experiments and explicit reports/exports.
+`web/` builds the same seven module views and research routes for hosted-static and authenticated local use. Hosted provides Hysteresis, bounded studies, Crossbar, Circuits, Comparison and read-only Documentation. Go/WASM owns browser science. MNIST inference and EDA generation require the authenticated local application; their hosted views provide read-only help/imports. The local profile embeds matching assets and adds rooted projects, revision-checked edits, persistent experiments and explicit reports/exports. Real installed Icarus/Yosys qualification remains NOT RUN; fixture checks do not qualify tools or signoff artifacts.
 
 ```bash
 make build-browser

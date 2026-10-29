@@ -25,6 +25,17 @@ test("deep module routes are honest and Back/Forward uses heading focus without 
   await expect(page.getByRole("heading", { name: "Documentation", exact: true })).toBeFocused();
 });
 
+test("shared guidance reflects shipped candidates without claiming qualification", async ({ page }) => {
+  await page.goto("/");
+  for (const id of ["hysteresis", "crossbar", "mnist", "circuits", "comparison", "eda", "docs"])
+    await expect(page.locator(`.module-grid a[href="/modules/${id}"]`)).toHaveCount(1);
+  await expect(page.locator("#modules")).toContainText("MNIST inference and EDA generation require the authenticated local application");
+  await expect(page.locator("#modules")).toContainText("Real Orca qualification remains NOT RUN");
+  await page.goto("/modules/not-ported");
+  await expect(page.getByText(/not available|unavailable/i).first()).toBeVisible();
+  await expect(page.getByText("Documentation is a future read-only module", { exact: false })).toHaveCount(0);
+});
+
 test("module assets refuse an API-contract mismatch before instantiating science", async ({page}) => {
   test.skip(process.env.FECIM_WEB_PROFILE === "local", "hosted static Worker contract");
   await page.route("**/engine/manifest.json",async route=>{const response=await route.fetch();const manifest=await response.json();manifest.API="wrong-api";await route.fulfill({json:manifest});});
