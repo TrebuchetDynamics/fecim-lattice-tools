@@ -350,7 +350,7 @@ test("late Apply replies preserve newer input drafts", async ({ page }) => {
     .getByRole("button", { name: "Apply settings", exact: true })
     .click();
   await page.getByLabel("Frequency (Hz)", { exact: true }).fill("2");
-  await expect(page.getByRole("status").first()).toContainText(
+  await expect(page.locator('.status-line[role="status"]')).toContainText(
     "Settings/state applied",
   );
   await expect(page.getByLabel("Frequency (Hz)", { exact: true })).toHaveValue(
