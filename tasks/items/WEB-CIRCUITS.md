@@ -3,7 +3,7 @@ schema = 1
 id = "WEB-CIRCUITS"
 title = "Port material-aware circuit write read and compute workflows to the web"
 short = "Web circuits write read compute"
-status = "open"
+status = "done"
 goal = "WEB-ALL"
 section = "Next"
 rank = 4000
@@ -16,6 +16,8 @@ scope = "Implement M4 roadmap with persistent cell/array state, READ/WRITE/COMPU
 acceptance = ["Given a real material-aware array, when web commands WRITE then READ then COMPUTE including masks/signed inputs/undo/reset, then persistent cell/sense/coupling/timing results agree with native arraysim/GUI oracles, not synthetic fixtures; TestCircuitsWebWorkflow and existing TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware/dense/KCL/sense tests.", "Given valid/invalid sizes/bit/sense/solver parameters and cancellation, when admitted hosted circuits run natively/Node/Firefox, then canonical successful numerical bytes agree exactly, Go caps/yields preserve state and measured per-profile resource/payload gates pass; TestModuleProductionParity circuits cases and failure/transaction tests.", "Given both real deployment profiles, when keyboard users program/select/read/vector-compute and inspect timing/log/evidence/plots or exports, then circuits.spec.ts covers all declared workflows with complete Go-spoken table values and honest unsupported/GPU/file status; hosted isolation and local roots hold, real Orca is not claimed."]
 checks = ["go test ./workbench/modules/circuits ./shared/viewmodel/circuits ./module4-circuits/pkg/arraysim -count=1", "env CGO_ENABLED=1 xvfb-run -a go test ./module4-circuits/pkg/gui -run 'TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware|TestWriteVerifyRead_LevelRoundTrip|TestComputeSignedInputs|TestFullPipeline_WriteReadCompute' -count=1", "env FECIM_WASM_PARITY=1 CGO_ENABLED=1 go test ./validation/wasm -run 'TestModuleProductionParity|TestExampleResultsJSONNativeWASM' -count=1 -v", "env CGO_ENABLED=1 go test -race ./workbench/modules/circuits ./module4-circuits/pkg/arraysim -count=1", "cd web && npm test && npm run typecheck && npm run build:hosted && npm run build:local && npm run test:e2e -- test/e2e/circuits.spec.ts"]
 exclusions = ["No implementation/deployment/service change follows from planning; future implementation preserves Go science/CLI, original example-byte parity, existing qualification gates and no hosted scientific upload/persistence/localhost probing.", "No automatic EDA-tool/model/dataset/PDK/container acquisition or installation; explicitly scoped pinned build/test dependency provisioning is allowed only during authorized implementation. No new physics/TS scientific model, fabricated accuracy/provenance/tool pass, premature Fyne deletion/default switch, public release or push."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/WEB-CIRCUITS.toml"
 +++
 
 
@@ -27,3 +29,4 @@ exclusions = ["No implementation/deployment/service change follows from planning
 - Verification status: All new feature tests/commands are proposed and unrun. Source inspection is not numerical/runtime/manual/tool validation. No implementation or dispatch in this planning occurrence.
 
 - CI ownership: WEB-WORKBENCH owns shared workflow/build discovery once; this task supplies real module tests/Screen/entry artifacts picked up by it, without editing a common CI or route registry. Declared cold all-module test/presentation overlaps still need merge review; no artificial dependency is added.
+- Pending live: Real Orca + Firefox/Linux acceptance for both hosted and authenticated local Circuits workflows is NOT RUN. Automated keyboard/focus/axe and runtime checks do not qualify actual speech or human task completion.
