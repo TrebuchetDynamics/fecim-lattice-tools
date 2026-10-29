@@ -19,7 +19,7 @@ func TestModule7DocsViewModelE2ESearchCurriculumTrustWorkflow(t *testing.T) {
 		if got := metricValueDocsE2E(s, "search_query"); got != query {
 			t.Fatalf("search_query=%q want %q", got, query)
 		}
-		if body := sectionBodyDocsE2E(s, "search_results"); !strings.Contains(body, query) || !strings.Contains(body, "cross-module") {
+		if body := sectionBodyDocsE2E(s, "search_results"); !strings.Contains(body, query) || !strings.Contains(body, "matches in") {
 			t.Fatalf("search results body invalid: %q", body)
 		}
 	}

@@ -7,7 +7,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "prepare:assets": "node src/build/build.mjs",
+    "prepare:assets": "npm run generate:docs && node src/build/build.mjs",
     "dev": "npm run prepare:assets && vite --host 127.0.0.1",
     "build": "npm run build:hosted",
     "build:hosted": "npm run prepare:assets && vite build --mode hosted",
@@ -19,7 +19,9 @@
     "test": "node --import ./test/setup.mjs --test test/*.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:build": "npm run build:hosted && npm run build:local && npm run test:e2e",
-    "generate:api": "node scripts/generate-api.mjs"
+    "generate:api": "node scripts/generate-api.mjs",
+    "generate:docs": "cd .. && go run ./cmd/fecim-docs-index",
+    "check:docs": "cd .. && go run ./cmd/fecim-docs-index --check"
   },
   "dependencies": {
     "openapi-fetch": "0.17.0",
