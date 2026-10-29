@@ -7,70 +7,29 @@ import (
 	"math"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
-	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // conductanceBounds returns the material conductance bounds with a safe fallback.
 func (ds *DeviceState) conductanceBounds() (float64, float64) {
-	mat := ds.material
-	if mat == nil {
-		mat = sharedphysics.FeCIMMaterial()
-	}
-	gmin := mat.Gmin
-	gmax := mat.Gmax
-	if gmin == 0 && gmax == 0 {
-		gmin = 1e-6   // Match material.DiscreteLevel fallback
-		gmax = 100e-6 // Match material.DiscreteLevel fallback
-	}
-	scale := ds.cellGeometry.Film.ConductanceScale(sharedphysics.GeometryFromMaterial(mat))
-	return gmin * scale, gmax * scale
+	return arraysim.DeviceConductanceBounds(ds.numericalSettingsLocked())
 }
-
-// levelToConductance maps a discrete level to conductance using the active material.
 func (ds *DeviceState) levelToConductance(level, levels int) float64 {
-	mat := ds.material
-	if mat == nil {
-		mat = sharedphysics.FeCIMMaterial()
-	}
-	levels = ds.resolveConductanceLevels(levels)
-	baseG := mat.DiscreteLevel(level, levels)
-	referenceGeom := sharedphysics.GeometryFromMaterial(mat)
-	return baseG * ds.cellGeometry.Film.ConductanceScale(referenceGeom)
+	return arraysim.DeviceConductance(ds.numericalSettingsLocked(), level, levels)
 }
-
-// resolveConductanceLevels picks quantization levels used for level->conductance mapping.
-// READ defaults to material-native levels so material selection propagates into READ current.
-func (ds *DeviceState) resolveConductanceLevels(quantLevels int) int {
-	if ds.opMode == OpModeRead && ds.material != nil {
-		if materialLevels := ds.material.GetNumLevels(); materialLevels > 0 {
-			return materialLevels
-		}
+func (ds *DeviceState) resolveConductanceLevels(levels int) int {
+	if ds.opMode == OpModeRead && ds.material != nil && ds.material.GetNumLevels() > 0 {
+		return ds.material.GetNumLevels()
 	}
-	if quantLevels > 0 {
-		return quantLevels
+	if levels > 0 {
+		return levels
 	}
-	if ds.material != nil {
-		if materialLevels := ds.material.GetNumLevels(); materialLevels > 0 {
-			return materialLevels
-		}
+	if ds.material != nil && ds.material.GetNumLevels() > 0 {
+		return ds.material.GetNumLevels()
 	}
 	return 30
 }
-
-// conductanceToLevel maps conductance to a discrete level using material bounds.
-func (ds *DeviceState) conductanceToLevel(gPhys float64, levels int) int {
-	if levels <= 0 {
-		levels = ds.writeRange.NumLevels
-	}
-	if levels <= 0 {
-		levels = sharedphysics.DefaultLevels
-	}
-	gmin, gmax := ds.conductanceBounds()
-	if gmax <= gmin {
-		return 0
-	}
-	gNorm := (gPhys - gmin) / (gmax - gmin)
-	return sharedphysics.GetLevel(gNorm, levels)
+func (ds *DeviceState) conductanceToLevel(g float64, levels int) int {
+	return arraysim.DeviceConductanceLevel(ds.numericalSettingsLocked(), g, levels)
 }
 
 // GetEffectiveCellVoltage returns the effective cell voltage considering WL/BL biasing.

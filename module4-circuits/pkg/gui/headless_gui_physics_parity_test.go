@@ -1,14 +1,18 @@
 package gui
 
 import (
+	"context"
+	webcircuits "fecim-lattice-tools/workbench/modules/circuits"
 	"fmt"
 	"math"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -153,6 +157,108 @@ func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(
 				headlessWrite := runHeadlessWriteStepParity(headlessWriteDS, cloneInt2D(weights), ca.quantLevels, row, col, target)
 				artifact.Records = append(artifact.Records, compareWriteAndRecord(t, mc.name, ac.name, guiWrite, headlessWrite, 1e-6))
 			})
+		}
+	}
+}
+
+// This oracle exercises the web action orchestration against actual native GUI
+// actions, not the legacy synthetic viewmodel matrices.
+func TestCircuitsWebNativeDeviceParity(t *testing.T) {
+	for _, material := range []string{"FeCIM", "BTO"} {
+		for _, arch := range []string{"0T1R", "1T1R", "2T1R"} {
+			for _, coupling := range []string{"Ideal", "TierA", "TierB"} {
+				t.Run(material+"/"+arch+"/"+coupling, func(t *testing.T) {
+					embedded, app, win := setupUnifiedTestApp(t)
+					defer app.Quit()
+					defer win.Close()
+					defer embedded.Stop()
+					ca := embedded.CircuitsApp
+					cfg := webcircuits.DefaultConfig()
+					cfg.Material = material
+					cfg.Architecture = arch
+					cfg.Coupling = coupling
+					cfg.MaxPulses = 1
+					cfg.Node = 14
+					cfg.Gain, cfg.SenseMin, cfg.SenseMax = 500e3, 0.2, 0.8
+					ca.architecture = sharedwidgets.Architecture0T1R
+					if arch == "1T1R" {
+						ca.architecture = sharedwidgets.Architecture1T1R
+					}
+					if arch == "2T1R" {
+						ca.architecture = sharedwidgets.Architecture2T1R
+					}
+					d := cfg.DeviceSettings()
+					ca.tia, ca.adc = peripherals.DefaultTIA(), peripherals.DefaultADC()
+					ca.applySensePreset("Ultra-Low Current")
+					ca.quantLevels = d.Material.GetNumLevels()
+					ca.deviceState = NewDeviceState(cfg.Rows, cfg.Cols, ca.tia, ca.adc)
+					ds := ca.deviceState
+					ds.SetMaterial(d.Material)
+					ds.SetCellGeometry(d.Geometry)
+					ds.SetWireParams(d.Wire)
+					ds.SetSelectorSeriesParams(d.SelectorEnabled, d.SelectorRon, d.SelectorLeakage)
+					ds.SetDACBits(cfg.DACBits)
+					ds.SetCouplingMode(d.Coupling)
+					ds.SetPassiveMode(d.Passive)
+					state := webcircuits.Initial(cfg, false)
+					state.Row, state.Col = 2, 3
+					state.Weights = makeParityWeights(cfg.Rows, cfg.Cols, ca.quantLevels)
+					if d.Passive {
+						for r := range state.Weights {
+							for col := range state.Weights[r] {
+								state.Weights[r][col] = 1
+							}
+						}
+					}
+					state.Input = makeParityInputs(cfg.Cols)
+					setParityWeights(ca, state.Weights)
+					target := state.Weights[state.Row][state.Col] + 4
+					if d.Passive {
+						target = 12
+					}
+					if target >= ca.quantLevels {
+						target = ca.quantLevels - 1
+					}
+					guiWrite := runGUIWriteStepParity(ca, state.Row, state.Col, target)
+					ca.applyColumnWrite(state.Row, state.Col, guiWrite.AppliedVoltage)
+					ca.mu.Lock()
+					ca.arrayWeights[state.Row][state.Col] = guiWrite.Trajectory[1]
+					nativeWeights := cloneInt2D(ca.arrayWeights)
+					ca.mu.Unlock()
+					result, err := webcircuits.Execute(context.Background(), cfg, state, "write", target, 8, nil)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if len(result.Pulses) != 1 {
+						t.Fatalf("missing actual write pulse: %+v", result)
+					}
+					pulse := result.Pulses[0]
+					assertParityFloatClose(t, "web requested", pulse.Requested, guiWrite.RequestedVoltage, 1e-12)
+					assertParityFloatClose(t, "web applied", pulse.Applied, guiWrite.AppliedVoltage, 1e-12)
+					assertParityFloatClose(t, "web coupled", pulse.Effective, guiWrite.EffectiveVoltage, 1e-12)
+					if pulse.Code != guiWrite.DACCode || pulse.Level != guiWrite.Trajectory[1] {
+						t.Fatalf("web/native pulse mismatch: %+v %+v", pulse, guiWrite)
+					}
+					if !reflect.DeepEqual(result.State.Weights, nativeWeights) {
+						t.Fatalf("web/native persistent column state differs: web=%v native=%v", result.State.Weights, nativeWeights)
+					}
+					state = result.State
+					setParityWeights(ca, state.Weights)
+					for _, op := range []string{"read", "compute"} {
+						result, err = webcircuits.Execute(context.Background(), cfg, state, op, 0, 8, nil)
+						if err != nil {
+							t.Fatal(err)
+						}
+						var gui paritySnapshot
+						if op == "read" {
+							gui = runGUIReadParity(ca, state.Row, state.Col)
+						} else {
+							gui = runGUIComputeParity(ca, state.Row, state.Col, state.Input)
+						}
+						assertParitySnapshotEqual(t, "web/native "+op, gui, paritySnapshot{result.Device.CellVoltages[state.Row][state.Col], result.Device.RowCurrents, result.Device.RowLevels}, 1e-10, 1e-8)
+					}
+				})
+			}
 		}
 	}
 }

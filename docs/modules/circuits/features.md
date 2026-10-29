@@ -9,7 +9,16 @@
 
 Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It models the complete analog signal chain from digital input to digital output, with configurable array sizes, architecture selection, and noise-aware readout.
 
-**Three views:** Operations (WRITE/READ/COMPUTE), Comparison (CPU/GPU/FeFET benchmarks), Reference (timing diagrams + specs).
+**Legacy GUI views:** Operations (WRITE/READ/COMPUTE), Comparison, and Reference.
+
+### Browser candidate boundary
+
+The [module README](../../../module4-circuits/README.md#browser-circuit-workflow) owns the browser capability matrix, exact limits and checks.
+The persistent Go port supports WRITE/READ/COMPUTE, selection, signed vectors, manual DAC voltages, sense presets, masks, undo/reset/randomize, tables, timing references and explicit rooted local exports.
+Hosted arrays are limited to 8×8. Local Ideal and sparse TierB retain native size choices through 128×128; dense TierA is capped at 8×8.
+Circuit level ISPP remains distinct from Hysteresis waveform programming. The separate native animated LK-controller workflow is not a browser engine.
+GPU execution, hosted persistence/file writes and instrument access are unavailable. Real Orca qualification is **NOT RUN** for both profiles.
+The catalogue below describes native/core features, not blanket browser availability or numerical qualification.
 
 ---
 
@@ -20,10 +29,10 @@ Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It m
 |---------|--------|----------------|
 | Select target cell (row, col) | IMPLEMENTED | `tab_unified.go` row/col selectors |
 | Select target level (0–29) | IMPLEMENTED | Level slider + label |
-| ISPP write engine (shared with Module 1) | IMPLEMENTED | `shared/physics/ispp.go` SSOT |
+| Circuit level ISPP | IMPLEMENTED | Native circuit calculator and `arraysim` LK pulse update; distinct from Hysteresis waveform ISPP |
 | DAC voltage generation | IMPLEMENTED | `shared/peripherals/dac.go` |
 | Charge pump voltage boosting | IMPLEMENTED | `shared/peripherals/chargepump.go` |
-| Half-select disturb tracking | IMPLEMENTED | `tab_unified_voltage.go` residue accumulation |
+| Passive column programming effects | IMPLEMENTED | Native `applyColumnWrite` updates neighbor levels; no V/2 residue model in this path |
 | Per-cell signed voltage overlay | IMPLEMENTED | `tab_unified_voltage.go` + `device_state.go` |
 | Write data path visualization (Digital→DAC→FeFET) | IMPLEMENTED | `tab_unified_actions.go` |
 
@@ -52,7 +61,7 @@ Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It m
 
 | Feature | Status | Implementation |
 |---------|--------|----------------|
-| Configurable NxN size (4–128) | IMPLEMENTED | Size selector dropdown, `MaxArraySize=128` (`cba7c17`) |
+| Native array dimension choices | IMPLEMENTED | 1, 2, 4, 8, 16, 32, 64, 128; browser solver/profile admission is narrower |
 | Visual array canvas with zoom | IMPLEMENTED | `tab_unified_canvas.go`, `tab_unified_drawing.go` |
 | Color-coded conductance levels | IMPLEMENTED | Heatmap in drawing code |
 | Cell selection (click) | IMPLEMENTED | Canvas click handler |
@@ -67,7 +76,7 @@ Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It m
 |---------|--------|----------------|
 | 0T1R (passive crossbar) | IMPLEMENTED | `device_state.go`, `arraysim/` |
 | 1T1R (single transistor selector) | IMPLEMENTED | Architecture toggle + solver path |
-| 2T1R (dual transistor selector) | IMPLEMENTED | Full electrical isolation via masks |
+| 2T1R selector abstraction | IMPLEMENTED | Separate read/write masks with optional finite selector resistance and leakage |
 | Sneak path physics (0T1R present, 1T1R suppressed, 2T1R eliminated) | IMPLEMENTED | `module2-crossbar/pkg/crossbar/enhanced.go` |
 | Half-select voltage indicators | IMPLEMENTED | `tab_unified_voltage.go` |
 | **MOSFET selector device model (W/L, Vth, Ion/Ioff)** | **PLANNED** | M4-CMOS-01: Replace boolean mask with physical transistor |
@@ -91,7 +100,7 @@ Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It m
 | Configurable gain (kΩ) | IMPLEMENTED | UI presets + slider |
 | I×Gain + offset conversion | IMPLEMENTED | `shared/peripherals/tia.go` |
 | Output clamping | IMPLEMENTED | Min/max clamp |
-| SNR reporting | IMPLEMENTED | TIA SNR method |
+| Composed SNR reporting | IMPLEMENTED | Shared `arraysim.ComposedSenseSNR`: TIA input noise, shot noise and ADC quantization |
 
 ### 5.3 ADC (Analog-to-Digital Converter)
 | Feature | Status | Implementation |
@@ -126,12 +135,12 @@ Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It m
 | Feature | Status | Implementation |
 |---------|--------|----------------|
 | Tier 0: Ideal (no coupling) | IMPLEMENTED | `CouplingIdeal` in `arraysim/` |
-| Tier A: Approximate IR-drop model | IMPLEMENTED | Iterative solver with damping + contact R |
+| Tier A: Dense DC nodal reference | IMPLEMENTED | Native dense WL/BL network solve; browser/local web admission capped at 8×8 |
 | Tier B: Full DC nodal MNA/KCL | IMPLEMENTED | Matrix-free PCG solver |
 | Wire resistance from geometry (ρ·L/A) | IMPLEMENTED | `arraysim/types.go` WireParams |
 | Cell geometry: pitch, wire width/thickness, metal resistivity | IMPLEMENTED | `CellGeometry` with SKY130 defaults |
 | Boundary conditions (drive R, termination R) | IMPLEMENTED | `BoundaryParams` |
-| **Selector device series resistance** | **PLANNED** | M4-CMOS-04: Currently boolean mask, needs conductance model |
+| Selector series resistance and leakage | IMPLEMENTED | `SolveParams` selector conductances and `SelectorRon`; educational parameters |
 
 ---
 
@@ -146,7 +155,7 @@ Module 4 is the **peripheral circuit simulator** for FeCIM crossbar arrays. It m
 | P→G transfer function | IMPLEMENTED | `shared/physics/transfer.go` |
 | 30 discrete conductance levels | IMPLEMENTED | `HZOMaterial.DiscreteLevel()` |
 | **Cell layout footprint (FeFET + selector + routing)** | **PLANNED** | M4-CMOS-02: Area in F² for density calculation |
-| **Technology node scaling** | **PLANNED** | M4-CMOS-03: Impact on wire R, transistor params |
+| Technology node controls | IMPLEMENTED | Shared 130/65/28/14 nm geometry, wire resistance and selector assumptions; not transistor-level qualification |
 | **Gate capacitance loading on wordline** | **PLANNED** | M4-CMOS-05: WL RC = R_wire × (C_wire + N×C_gate) |
 
 ---
