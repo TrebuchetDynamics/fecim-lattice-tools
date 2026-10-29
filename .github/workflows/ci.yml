@@ -9,7 +9,8 @@ jobs:
   ci:
     # Playwright 1.60.0 supports this host, not ubuntu-latest's Ubuntu 26.04.
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Serial hosted/local, parity, race and coverage gates exceed the old 20m cap.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout

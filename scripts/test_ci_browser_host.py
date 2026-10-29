@@ -19,6 +19,11 @@ class TestCIBrowserHost(unittest.TestCase):
         self.assertRegex(self.job, re.compile(r"^    runs-on: ubuntu-24\.04$", re.M))
         self.assertIn("npx playwright install --with-deps chromium firefox", self.job)
 
+    def test_complete_browser_matrix_has_a_bounded_job_budget(self):
+        match = re.search(r"^    timeout-minutes: (\d+)$", self.job, re.M)
+        self.assertIsNotNone(match)
+        self.assertEqual(int(match.group(1)), 60)
+
     def test_platform_guard_runs_in_the_browser_job(self):
         self.assertIn(
             "python3 -m unittest discover -s scripts -p 'test_ci_browser_host.py'",
