@@ -11,6 +11,12 @@ func TestModuleImplementsModulePort(t *testing.T) {
 	if m == nil {
 		t.Fatal("New() returned nil")
 	}
+	for _, dimensions := range [][2]int{{-1, 0}, {129, 8}} {
+		bounded := New(dimensions[0], dimensions[1]).DesignState()
+		if bounded.ArrayRows != 8 || bounded.ArrayCols != 8 {
+			t.Fatal("invalid constructor dimensions did not use the bounded default")
+		}
+	}
 }
 
 func TestDescriptorHasCorrectID(t *testing.T) {
@@ -126,5 +132,19 @@ func TestConductancesInitialized(t *testing.T) {
 	s := m.Snapshot()
 	if s.Descriptor.Status != viewmodel.StatusFunctional {
 		t.Errorf("Status = %v, want %v", s.Descriptor.Status, viewmodel.StatusFunctional)
+	}
+	values := map[float64]bool{}
+	for _, plot := range s.Plots {
+		if plot.ID == "conductance_matrix" {
+			for _, p := range plot.Series[0].Points {
+				if p.V < 0 || p.V > 1 {
+					t.Fatal("default state is not normalized")
+				}
+				values[p.V] = true
+			}
+		}
+	}
+	if len(values) < 2 {
+		t.Fatal("default matrix saturated to a placeholder constant")
 	}
 }

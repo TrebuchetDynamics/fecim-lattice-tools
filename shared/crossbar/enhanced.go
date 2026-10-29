@@ -36,6 +36,8 @@ func scaleAroundMidpoint01(x, factor float64) float64 {
 
 // MVMOptions configures which non-idealities to include in MVM computation.
 type MVMOptions struct {
+	// Yield is an optional bounded-work cancellation/host scheduling boundary.
+	Yield            func() error `json:"-"`
 	EnableIRDrop     bool
 	EnableSneakPaths bool
 	EnableVariation  bool
@@ -194,10 +196,11 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 			params.RwordLine *= tempFactor
 			params.RbitLine *= tempFactor
 		}
-		irAnalysis := a.AnalyzeIRDrop(input, params)
-		// Debug: log the architecture and max IR drop
-		fmt.Printf("[IR Drop] Architecture=%s, RwordLine=%.2f, MaxDrop=%.4f%%\n",
-			archName, params.RwordLine, irAnalysis.MaxIRDrop*100)
+		irAnalysis, err := a.analyzeIRDropControlled(input, params, nil, opts.Yield)
+		if err != nil {
+			return nil, err
+		}
+		getLog().Calculation("IR Drop", map[string]interface{}{"architecture": archName, "maxDrop": irAnalysis.MaxIRDrop}, nil)
 		result.IRDropAnalysis = irAnalysis
 		effectiveVoltages = irAnalysis.EffectiveVoltage
 	} else {
@@ -213,6 +216,11 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 
 	// Step 3: Compute actual output with non-idealities
 	for i := 0; i < a.config.Rows; i++ {
+		if opts.Yield != nil {
+			if err := opts.Yield(); err != nil {
+				return nil, err
+			}
+		}
 		var sum float64
 		for j := 0; j < len(input); j++ {
 			// Get conductance (normalized [0,1] in this simulator).

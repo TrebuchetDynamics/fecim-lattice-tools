@@ -96,12 +96,17 @@ func TestModuleTransportContract(t *testing.T) {
 		t.Fatalf("module registry: %s", w.Body)
 	}
 	for _, m := range modules.Modules {
-		if m.ID != "hysteresis" && (m.Available || m.Reason == "") {
+		if m.ID != "hysteresis" && m.ID != "crossbar" && (m.Available || m.Reason == "") {
 			t.Fatalf("fabricated capability: %+v", m)
 		}
 	}
-	if w := request(s, "POST", "/api/v1/modules/crossbar/sessions", `{}`, cookie, nil); w.Code != 409 {
-		t.Fatalf("unavailable module session: %d %s", w.Code, w.Body)
+	if w := request(s, "POST", "/api/v1/modules/crossbar/sessions", `{}`, cookie, nil); w.Code != 201 {
+		t.Fatalf("real crossbar module session: %d %s", w.Code, w.Body)
+	} else {
+		var snapshot moduleapi.Snapshot
+		if err := json.Unmarshal(w.Body.Bytes(), &snapshot); err != nil || snapshot.Descriptor.ID != "crossbar" || len(snapshot.Tables) == 0 {
+			t.Fatalf("missing typed crossbar state: %s", w.Body)
+		}
 	}
 	t.Run("generated safe problem schema", func(t *testing.T) {
 		schema, err := s.api.JSON()

@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 test("deep module routes are honest and Back/Forward uses heading focus without resetting Hysteresis", async ({ page }) => {
-  await page.goto("/modules/crossbar");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Crossbar");
+  await page.goto("/modules/not-ported");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Not-ported");
   await expect(page.getByText(/not available|unavailable/i).first()).toBeVisible();
   await page.getByRole("link", { name: "Hysteresis lab", exact: true }).first().click();
   await expect(page.getByLabel("Material", { exact: true })).toBeEnabled();
