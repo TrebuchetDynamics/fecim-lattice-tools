@@ -1,0 +1,9 @@
+schema = 1
+task = "WEB-AVAILABILITY"
+candidate = "43ddcf512cec74578e729dd8fd4ce9ee336f7e4d"
+integration = "da4a10eeeb65f583936b676f06f3075d11fde131"
+tree = "8265d5bfc33fcce496516fa96a9ec4e0c893327f"
+contract_hash = "67bf2c00a12f6a4c9cc0750f83f7a43ac5bdabeae0d809d358d80cce921856b3"
+checks = ["<path>", "<path>", "--verify", "<path>", "WEB-AVAILABILITY"]
+result = "pass"
+review = "passed"
