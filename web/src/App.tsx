@@ -46,13 +46,13 @@ export function App() {
   return()=>{current=false;};
  },[id,path]);
  const title=descriptor?.title || (id==="docs"?"Documentation":id? id[0].toUpperCase()+id.slice(1):"Page not found");
- return <><a className="skip-link" href="#main">Skip to content</a><header className="nav"><a className="brand" href="/"><b className="brand-mark" aria-hidden="true">Fe</b> FeCIM Lattice Tools</a><nav className="nav__links" aria-label="Primary navigation"><a href="/hysteresis">Hysteresis lab</a><a href="/projects">Projects</a><a href="/docs">Documentation</a><a href="/#modules">Modules</a></nav></header>
+ return <><a className="skip-link" href="#main">Skip to content</a><header className="nav"><a className="brand" href="/"><b className="brand-mark" aria-hidden="true">Fe</b> FeCIM Lattice Tools</a><nav className="nav__links" aria-label="Primary navigation"><a href="/hysteresis">Hysteresis lab</a><a href="/projects">Projects</a><a href="/docs">Documentation</a><a href="/#modules">Modules</a><a href="/#science">Science</a><a href="/#start">Local setup</a></nav></header>
  <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{researchOwner.announcement}</p>
  <main id="main" ref={main}><Suspense fallback={<p>Loading interface…</p>}>
  {path==="/"&&<Home/>}
  {view&&<Workbench view={view}/>}
  {[...new Set([...visited,...(canMount&&id?[id]:[])])].map(key=>{const Screen=screens[key];return <div key={key} hidden={key!==id||!canMount}><Screen/></div>;})}
- {id&&!canMount&&<section className="section"><h1>{title}</h1><p>{descriptor?.reason || "This browser module is not available in this build. No scientific port or screen is advertised as complete."}</p>{moduleError&&<p>{moduleError}</p>}<p>Use the existing Go application for unported workflows. Documentation is a future read-only module; reading this page never stops active science.</p><a href="/projects">Projects</a></section>}
+ {id&&!canMount&&<section className="section"><h1>{title}</h1><p>{descriptor?.reason || "This browser module is not available in this build. No scientific port or screen is advertised as complete."}</p>{moduleError&&<p>{moduleError}</p>}<p>Choose an available module from the home page. Documentation is available as a read-only browser candidate; reading it never stops active science.</p><a href="/projects">Projects</a></section>}
  {!view&&!id&&path!=="/"&&<section className="section"><h1>Page not found</h1><a href="/">Home</a></section>}
  </Suspense></main><footer>FeCIM / Simulation only · MIT · Go scientific core</footer></>;
 }

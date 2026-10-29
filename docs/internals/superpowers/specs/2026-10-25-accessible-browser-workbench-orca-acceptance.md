@@ -1,6 +1,6 @@
 # Accessible browser workbench — Orca manual acceptance gate
 
-Status: Required future acceptance scripts; **not executed**. The browser workbench is not implemented. This file specifies a release gate, not a test receipt or an implementation plan.
+Status: Required acceptance scripts; **not executed**. Source-built candidates now provide the shared research workflow and all seven module views. Hosted provides Hysteresis, bounded studies, Crossbar, Circuits, Comparison and read-only Documentation. MNIST inference and EDA generation require the authenticated local application; their hosted views provide read-only help/imports. Real Orca + Firefox/Linux acceptance remains **NOT RUN** for both profiles. Real installed EDA tool qualification also remains NOT RUN. See the [current outcome/proof matrix](../../../tasks/WEB-NEXT-PLAN.md#delivered-module-and-proof-matrix). This file specifies a release gate, not a test receipt or an implementation plan.
 
 Related owner: [approved design direction and decision register](2026-10-25-accessible-browser-workbench-design.md). Update both documents together when the interaction contract changes. These scripts implement decisions BW-07 through BW-14; they do not reopen them.
 

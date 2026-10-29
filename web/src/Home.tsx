@@ -70,14 +70,17 @@ export function Home() {
           </article>
         ))}
       </section>
-      <section id="modules" className="section">
-        <p className="eyebrow">Integrated workflow</p>
-        <h2>Seven modules, one simulation story.</h2>
-        <p>
-          The Hysteresis lab and bounded research studies run Go in a Worker.
-          Unported module routes explain their unavailable capabilities; these
-          cards do not claim that every monorepo workflow is browser-qualified.
-        </p>
+      <section className="section">
+        {/* Focus the introduction, not the viewport-tall grid, on fragment navigation. */}
+        <header id="modules">
+          <p className="eyebrow">Integrated workflow</p>
+          <h2>Seven modules, one simulation story.</h2>
+          <p>
+            Browser candidates provide Hysteresis, bounded research studies,
+            Crossbar, Circuits, Comparison and Documentation. MNIST inference and EDA generation require the authenticated local application;
+            their hosted views are read-only help/imports. Real Orca qualification remains NOT RUN.
+          </p>
+        </header>
         <div className="module-grid">
           {modules.map(([title, text], i) => (
             <article className="module-card" key={title}>

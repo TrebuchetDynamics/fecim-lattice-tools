@@ -204,6 +204,10 @@ footer {
   padding: 3rem 0;
   scroll-margin-top: 1.5rem;
 }
+/* Keep the native fragment/focus target above the fold, with room to read on. */
+#modules {
+  scroll-margin-block: 1.5rem 30vh;
+}
 .module-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));

@@ -1,6 +1,6 @@
 # FeCIM Lattice Tools
 
-> **UI direction:** React web is the primary UI target; Fyne is **deprecated in this project** and retained for legacy compatibility. A source-built React candidate provides Hysteresis and the shared research workflow in hosted/local profiles. It is not a qualified release: real Orca + Firefox/Linux acceptance is **NOT RUN**. Default launch and `launch.sh` still open Fyne. See the [React-primary migration policy](./docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy).
+> **UI direction:** React web is the primary UI target; Fyne is **deprecated in this project** and retained for legacy compatibility. A source-built React candidate provides all seven module views and the shared research workflow. Hosted MNIST/EDA are read-only help/imports; inference and generation require the authenticated local application. It is not a qualified release: real Orca + Firefox/Linux acceptance is **NOT RUN**. Default launch and `launch.sh` still open Fyne. See the [React-primary migration policy](./docs/internals/superpowers/specs/2026-10-25-accessible-browser-workbench-design.md#react-primary-deprecation-policy).
 
 <p align="center">
   <img src="./assets/readme/hero.svg" width="100%" alt="FeCIM Lattice Tools turns cited device assumptions into reproducible pre-silicon trade-off studies">
@@ -122,7 +122,7 @@ make build-browser
 
 Create the grant directory first. Open the short-lived terminal launch link, then choose **Projects → Configuration → Experiment → Results**. Local operations support explicit revision-checked edits, validation, persistent run/reuse/cancel/reconnect, inspection, 2–4-run comparison, stored-run verification, reports and selected-run export. A plain Go build has no embedded browser assets. Node is not required to use the built binary.
 
-The hosted profile runs Hysteresis and small studies in a Go Worker, without scientific upload, persistence, downloads or localhost probing. Its eight-point example uses 16/32-row arrays to fit the Go-owned 32×32 cap. The original 64-row study remains native-only. Other expert module routes state unavailable until their own web ports ship. See the [web build and protocol guide](./web/README.md) and [research workflow](./docs/guides/research-design-workbench.md#browser-research-workflow-candidate).
+The hosted profile provides Hysteresis, bounded studies, Crossbar, Circuits, Comparison and read-only Documentation. Go Workers own browser computation, without scientific upload, persistence, downloads or localhost probing. Its eight-point example uses 16/32-row arrays to fit the Go-owned 32×32 cap. The original 64-row study remains native-only. MNIST inference and EDA generation require the authenticated local application; their hosted views provide read-only help/imports. Real installed EDA tool qualification remains NOT RUN. See the [web build and protocol guide](./web/README.md) and [research workflow](./docs/guides/research-design-workbench.md#browser-research-workflow-candidate).
 
 `CGO_ENABLED=0` supports headless subcommands and `serve`, not desktop startup. Desktop startup requires CGO and native graphics libraries. No launch-default switch, Fyne removal, deployment or release qualification is implied.
 

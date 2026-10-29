@@ -12,6 +12,12 @@ The complete roadmap covers: Hysteresis; Crossbar; MNIST; Circuits; Comparison; 
 
 Non-goals: new physics, TS numerical models, a second marketing app, hosted computation service, localhost probing, accounts/cloud storage, WebGPU rewrite, automatic package/PDK/container downloads, new training features absent from the existing GUI, invented hardware accuracy/speed/energy claims, publication/DOI/JOSS/outreach or rewriting every existing CLI utility into a browser page. Existing headless training/tools remain available; any currently mounted training workflow discovered during implementation must be classified explicitly, not silently dropped or invented.
 
+### Current delivery status
+
+All seven WEB producers have delivered source-built candidates: shared Projects/Configuration/Experiment/Results, Docs, Crossbar, Circuits, Comparison, MNIST and EDA. Hysteresis remains delivered under its original records. Hosted provides Hysteresis, bounded studies, Crossbar, Circuits, Comparison and read-only Documentation. MNIST inference and EDA generation require the authenticated local application; hosted MNIST/EDA provide read-only help/imports. The actual ports/screens and module guides are indexed in [web/README.md](../../../../web/README.md) and [module outcomes and historical proof](../../../tasks/WEB-NEXT-PLAN.md#delivered-module-and-proof-matrix).
+
+These historical per-module results are not combined-candidate qualification. The [closeout plan](../../../tasks/WEB-NEXT-PLAN.md) owns the final-source automated checkpoint and remaining proof. Real Orca + Firefox/Linux qualification remains **NOT RUN** for both profiles; actual installed Icarus/Yosys qualification remains **NOT RUN**. Required manual fixtures also remain incomplete as recorded there. Fyne/default launch remains unchanged until replacement qualification and separately authorized retirement. The original sequencing and implementation requirements below remain the accepted historical plan, not instructions to reimplement completed ports.
+
 ## Delivery map and sequencing
 
 | Milestone | Deliverable | Dependency / exit |

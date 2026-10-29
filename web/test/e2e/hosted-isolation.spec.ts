@@ -164,7 +164,8 @@ test("all hosted workflow families, imports, local actions and faults remain iso
   await page.getByLabel("Import study byte bundle", { exact: true }).setInputFiles({name:"original.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify({documents}))});
   await expect(page.getByRole("alert")).toContainText("dimension");
   await page.getByRole("link", { name: "Documentation", exact: true }).first().click();
-  await expect(page.getByText(/(?:not available|unavailable) in this build/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Documentation", exact: true })).toBeVisible();
+  await expect(page.getByRole("article", { name: "Document reader", exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).forbidden)).toEqual([]);
   expect(downloads).toEqual([]);
   const origin = new URL(page.url()).origin;
@@ -172,7 +173,8 @@ test("all hosted workflow families, imports, local actions and faults remain iso
     const url = new URL(request.url);
     expect(url.origin).toBe(origin); // only the explicitly opened test origin, never discovery
     if (url.protocol === "blob:") continue; // same-origin in-memory Worker/runtime, no network
-    expect(url.pathname).toMatch(/^\/(?:$|hysteresis$|assets\/|engine\/)/);
+    // Reviewed public corpus IDs only; not arbitrary documents or filesystem paths.
+    expect(url.pathname).toMatch(/^\/(?:$|hysteresis$|assets\/|engine\/|docs-manifest\.json$|docs-content\/(?:curriculum|hysteresis|crossbar|mnist|circuits|comparison|eda|glossary|trust|honesty|park-correction|validation|citations)\.json$)/);
     expect(request.method).toBe("GET");
     expect(request.body).toBeNull();
   }
