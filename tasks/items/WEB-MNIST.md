@@ -3,7 +3,7 @@ schema = 1
 id = "WEB-MNIST"
 title = "Deliver real local web MNIST inference evaluation and model inspection"
 short = "Real local web MNIST workflows"
-status = "open"
+status = "done"
 goal = "WEB-ALL"
 section = "Next"
 rank = 6000
@@ -16,6 +16,8 @@ scope = "Implement M3 roadmap as a local same-origin web module over shared/neur
 acceptance = ["Given known inputs/model bytes and user-drawing versus dataset source, when Go initializes/preprocesses/infers through the API, then paired predictions/probabilities/layers and quantization identity equal direct shared/neural execution, preprocessing is identical/once and unlabelled input has no accuracy; TestMNISTWebWorkflow plus a focused preprocessing characterization.", "Given a real labelled subset or malformed/missing/oversize model/IDX input, when evaluate/sweep/cancel occurs, then actual counts/confusion/model/data fingerprints/config restoration are correct, no synthetic fallback or fixed accuracy leaks through, failures preserve state and all I/O stays rooted; TestMNISTWebEvidence and decoder/transaction tests reuse native metrics/sweep/loader oracles. TestMNISTWebAdmission enforces roadmap local H/shape/scalar/32MiB-model/10000-image/decoded-memory/MAC/time/sweep limits at boundaries while admitting all committed H=128 models, the full 10000-image test corpus and 500-image sweep workflow; no silent sample reduction.", "Given local real services and hosted profile, when keyboard users select/draw via an accessible alternative, inspect probabilities/weights and evaluate/export or request unsupported hosted inference, then mnist.spec.ts sees complete Go data and truthful statuses, local jobs/roots/auth hold and hosted neither uploads inputs nor contacts a server; no MNIST accuracy threshold or human accessibility pass fabricated."]
 checks = ["go test ./workbench/modules/mnist ./shared/viewmodel/mnist ./shared/neural ./module3-mnist/pkg/mnist -count=1", "env CGO_ENABLED=1 go test -race ./workbench/modules/mnist ./shared/neural -count=1", "env CGO_ENABLED=1 xvfb-run -a go test ./module3-mnist/pkg/gui -run 'Test.*Preprocess' -count=1", "cd web && npm test && npm run typecheck && npm run build:hosted && npm run build:local && npm run test:e2e -- test/e2e/mnist.spec.ts", "go test ./shared/viewmodel -run TestAllModulesE2E -count=1"]
 exclusions = ["No implementation/deployment/service change follows from planning; future implementation preserves Go science/CLI, original example-byte parity, existing qualification gates and no hosted scientific upload/persistence/localhost probing.", "No automatic EDA-tool/model/dataset/PDK/container acquisition or installation; explicitly scoped pinned build/test dependency provisioning is allowed only during authorized implementation. No new physics/TS scientific model, fabricated accuracy/provenance/tool pass, premature Fyne deletion/default switch, public release or push."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/WEB-MNIST.toml"
 +++
 
 
@@ -29,3 +31,4 @@ exclusions = ["No implementation/deployment/service change follows from planning
 - Builder disposition: Builder P2 admission decision resolved: the roadmap's Initial local admission policy is normative (784→H→10, 1<=H<=1024, optional 784→10 calibration, <=2M scalars, model <=32MiB, corpus <=10000 images, compressed <=32MiB/IDX decoded <=16MiB, estimated allocation <=256MiB, <=64 sweep cases/500 selected sweep images, <=1e11 estimated MACs and 15-minute cancellable job). Token/shape limits precede allocation and live-network mutation; test +/-1 boundaries and committed H=128 model minima in TestMNISTWebAdmission. These are initial policy bounds, not measured performance or an instruction to invent a threshold.
 
 - CI ownership: WEB-WORKBENCH owns shared workflow/build discovery once; this task supplies real module tests/Screen/entry artifacts picked up by it, without editing a common CI or route registry. Declared cold all-module test/presentation overlaps still need merge review; no artificial dependency is added.
+- Pending live: Real human Orca + Firefox/Linux keyboard and speech qualification for hosted and authenticated local MNIST remains NOT RUN; automated browser checks are not human accessibility sign-off.
