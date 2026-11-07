@@ -5,8 +5,8 @@ title = "Record actual installed Icarus and Yosys web EDA structural qualificati
 short = "Real installed-tool EDA proof"
 status = "open"
 goal = "WEB-ALL"
-section = "Needs decision"
-rank = 3000
+section = "Now"
+rank = 4000
 depends_on = ["WEB-EDA"]
 touches = ["docs/internals/testing/web-eda-installed-tools.md"]
 resources = []
@@ -26,3 +26,4 @@ exclusions = ["Preserve Go science/defaults/units/speech/identities, exact origi
 - Repo obligations triggered: ADR capability/rights boundaries; roadmap M6 provenance/process limits and docs/guides/eda-web.md tool matrix. Reuse typed server commands and existing one-process-group/job limit/private roots; no new resource/policy, executable script, model/PDK, fixture/generated/code changes. Preserve complete logs and stated warnings.
 - Next action: After external inputs are available, record exact candidate/setup and run the existing iverilog -V and syntax/elaboration action plus yosys -V and server-owned structural action against matching generated artifacts. Do not run arbitrary client commands or install anything.
 - Verification status: Real installed Icarus/Yosys qualification NOT RUN. No owner waiver or execution authority inferred from planning.
+- Owner decision: 2026-11-07: approved
