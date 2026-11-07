@@ -5,7 +5,7 @@ title = "Qualify React Hysteresis with real Orca in both deployment profiles"
 short = "Real dual-profile Orca acceptance"
 status = "open"
 goal = "HYS-REACT"
-section = "Needs decision"
+section = "Now"
 rank = 1000
 depends_on = ["HYS-UI", "HYS-LOCAL"]
 touches = ["docs/internals/testing/react-hysteresis-orca.md", "docs/internals/superpowers/plans/2026-10-25-hosted-hzo-first-slice.md"]
@@ -25,3 +25,4 @@ exclusions = ["Go owns science/defaults/display/speech; simulation-only evidence
 - Next action: When candidate profiles and tester desktop are available, record setup and perform hosted HYS-1 before the local sequence.
 - Verification status: New tests/commands are proposed/unrun; no implementation evidence or manual qualification is claimed by planning.
 - Question: Missing external input is real dual-profile Orca/keyboard evidence from a tester; this is not a reopened product-design question. Keep Needs decision until that evidence exists; no waiver inferred.
+- Owner decision: 2026-11-07: approved
