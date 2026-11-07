@@ -28,4 +28,12 @@ No successor planning task is saved. Existing Needs decision records WEB-ORCA an
 - Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
 - Kind: owner_action
 
+### Q-WEB-ORCA — USER_INPUT — effort input — unblocks 1
+
+- Task: WEB-ORCA — Qualify shared research and six new web modules with real Orca
+- Needs: WEB-ORCA requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-07: approved. Another approval is not requested.
+- Since: 2026-11-07T21:53:04Z
+- Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
+- Kind: owner_action
+
 <!-- pi-autowork:questions:end -->
