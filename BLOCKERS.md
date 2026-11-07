@@ -36,4 +36,12 @@ No successor planning task is saved. Existing Needs decision records WEB-ORCA an
 - Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
 - Kind: owner_action
 
+### Q-WEB-TOOLS — USER_INPUT — effort input — unblocks 1
+
+- Task: WEB-TOOLS — Record actual installed Icarus and Yosys web EDA structural qualification
+- Needs: WEB-TOOLS requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-07: approved. Another approval is not requested.
+- Since: 2026-11-07T21:53:14Z
+- Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
+- Kind: owner_action
+
 <!-- pi-autowork:questions:end -->
