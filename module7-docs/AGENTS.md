@@ -19,14 +19,12 @@ Key features:
 ## Key Files
 
 ### Core GUI
-- `pkg/gui/embedded.go` - EmbeddedDocsApp, main UI builder, file tree navigation
-- `pkg/gui/app.go` - Application lifecycle (BuildContent, Start, Stop)
+- `pkg/gui/embedded.go` - EmbeddedDocsApp, main UI builder, file tree navigation, and application lifecycle (BuildContent, Start, Stop)
 
 ### Navigation & Search
 - `pkg/gui/navigation.go` - Navigation logic and state management
-- `pkg/gui/search.go` - Search index and query matching
+- `pkg/gui/search.go` - Search index, query matching, and keyboard shortcuts/input handling
 - `pkg/gui/persistence.go` - History tracking and navigation state persistence
-- `pkg/gui/keyboard.go` - Keyboard shortcuts and input handling
 
 ### Layout & Widgets
 - `pkg/gui/layout.go` - Custom layout managers for doc viewer
