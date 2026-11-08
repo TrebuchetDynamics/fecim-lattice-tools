@@ -89,7 +89,7 @@ go test ./module2-crossbar/pkg/gui -run TestArrayIntegration -v
 
 ### Internal
 
-- `module2-crossbar/pkg/crossbar` - Array simulation
+- `shared/crossbar` - Array simulation
 - `shared/physics` - Conductance models, units
 - `shared/widgets` - Custom Fyne widgets (tooltips, color legends, etc.)
 - `shared/theme` - Application theme

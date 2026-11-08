@@ -50,7 +50,7 @@
 | `weight_matrix.go` | Weight matrix validation (dimensions, NaN/Inf checks) |
 | `array_design.go` | Array design validation (rows/cols, architecture) |
 | `openlane.go` | OpenLane flow config validation (paths, required fields) |
-| `cmd/validate/main.go` | Standalone CLI tool |
+| `configvalidator/cmd/validate/main.go` | Standalone CLI tool |
 | `README.md` | CLI documentation and validation rules |
 
 ### `testdata/`
@@ -209,8 +209,8 @@ git add benchmarks/bench_baseline.txt
 ```
 
 **External Tool Integration:**
-- Heracles: `external/heracles_wrapper.go` calls HZO compact model
-- CrossSim: `external/crosssim_wrapper.go` calls crossbar simulator
+- Heracles: `heracles/spice_netlist.go` calls HZO compact model
+- CrossSim: `external/interop/crosssim_interop_test.go` calls crossbar simulator
 - ngspice: `external/spice_wrapper.sh` validates exported netlists
 - All tools are OPTIONAL; validation runs without them
 

@@ -11,7 +11,7 @@ MNIST digit recognition module using ferroelectric crossbar arrays for inference
 
 | File | Purpose |
 |------|---------|
-| `pkg/core/network.go` | Network configuration and inference path |
+| `shared/neural/network.go` | Network configuration and inference path |
 | `pkg/gui/dualmode_demo.go` | Quick demo (~30s) showing 30→2 level degradation |
 | `pkg/training/network.go` | Full 2-layer network training (784→256→10) |
 | `pkg/training/single_layer.go` | Single-layer network (784→10) for hardware calibration |
@@ -32,7 +32,7 @@ MNIST digit recognition module using ferroelectric crossbar arrays for inference
 
 ### Working In This Directory
 
-- **Network config**: `NetworkConfig` struct in `pkg/core/network.go` controls quantization, noise, peripherals.
+- **Network config**: `NetworkConfig` struct in `shared/neural/network.go` controls quantization, noise, peripherals.
 - **Quantization levels**: Default 30 (conference claim). Configurable per-layer via `PerLayerQuant` flag.
 - **Inference path**: Two engines:
   1. **Full-precision**: No quantization (baseline)
@@ -56,7 +56,7 @@ Key test files:
 - `pkg/training/training_test.go` - Quantization and noise injection
 - `pkg/training/extended_test.go` - Edge cases and stress tests
 - `pkg/mnist/loader_test.go` - Dataset loading and bounds validation
-- `pkg/core/inference_test.go` - Inference path with various configs
+- `shared/neural/network_inference_test.go` - Inference path with various configs
 
 ### Common Patterns
 
