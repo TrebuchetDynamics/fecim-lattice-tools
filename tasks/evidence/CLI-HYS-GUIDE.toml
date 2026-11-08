@@ -1,0 +1,9 @@
+schema = 1
+task = "CLI-HYS-GUIDE"
+candidate = "54b6a9c84a90167cd90cf38d9cc897d9b85509ca"
+integration = "b7b95a6a158fd340a956b3ca408b6d7d7cf5c5c6"
+tree = "83c47248092be289ba095aa4ed8e8691945d930d"
+contract_hash = "e52d45557bf6e3c3ca1b8336bda8ace1a8e77ffd8d69197a60bd01f5c5e9791b"
+checks = ["<path>", "<path>", "--verify", "<path>", "CLI-HYS-GUIDE"]
+result = "pass"
+review = "passed"

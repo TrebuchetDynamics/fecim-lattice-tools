@@ -3,7 +3,7 @@ schema = 1
 id = "CLI-HYS-GUIDE"
 title = "Correct unsupported Hysteresis commands in the installed CLI reference"
 short = "Executable Hysteresis CLI guidance"
-status = "open"
+status = "done"
 goal = "CLI-GUIDANCE"
 section = "Next"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Documentation-only correction of the installed fecim-lattice-tools Hyst
 acceptance = ["A user following the corrected Hysteresis section can invoke help and material listing with the installed binary and sees the actual plain-text output. The options table matches runHysteresisSubcommand, includes the preisach/lk engine default and does not advertise nonexistent material/frequency/TUI/Vulkan/config/batch/JSON switches or precedence. Any material-selection explanation matches runRoot versus runHysteresisMode rather than pretending calibration --material selects headless simulation.", "No positive Hysteresis JSON/config/batch/output-redirection-flag examples survive elsewhere in this guide, including the scripting and jq sections; illustrative material data is not represented as actual CLI JSON. General flag/config/batch wording explicitly limits availability to supporting subcommands. Existing valid project/experiment/report/export guidance and unrelated module tables remain intact. Record TDD: N/A for documentation-only changes, with actual command evidence; no product behavior changes."]
 checks = ["CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools hysteresis --help", "CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools hysteresis --list-materials", "CGO_ENABLED=0 go test ./cmd/fecim-lattice-tools -run \"TestRunSubcommandDispatchReportsHysteresisFlagErrorToStderr|TestExperimentAndReportCommandsEndToEnd\" -count=1", "Read back every Hysteresis command/option and all universal flag claims in docs/guides/cli-reference.md against subcommands.go::runHysteresisSubcommand, main.go::runRoot and mode.go::runHysteresisMode; git diff --check; env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Only docs/guides/cli-reference.md. No CLI/parser/physics/model/GUI implementation, new flags, global documentation rewrite, material/default/golden changes, dependency/tool acquisition, instruction/task/goal/runtime edits, push/publication or qualification claims. Do not alter closed accepted work or owner priorities; HYS/WEB final planning stops and owner-only Orca/tool/release evidence remain untouched."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/CLI-HYS-GUIDE.toml"
 +++
 - Sources: README.md#documentation; docs/guides/cli-reference.md#module-1-hysteresis; cmd/fecim-lattice-tools/subcommands.go::runHysteresisSubcommand; cmd/fecim-lattice-tools/main.go::runRoot; cmd/fecim-lattice-tools/cli_parse_unit_test.go::TestRunSubcommandDispatchReportsHysteresisFlagErrorToStderr
 
