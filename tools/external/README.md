@@ -12,7 +12,7 @@ This document tracks external open-source tooling used for FeCIM validation and 
 | OpenROAD | `v2.0-2025.02` | BSD-3-Clause | OpenROAD-flow-scripts / source build | Place-and-route validation path for FeCIM digital integration |
 | OpenLane2 | `v2.1.2` | Apache-2.0 | Python package (`pip install openlane==2.1.2`) or container | End-to-end open-source RTL→GDS flow orchestration |
 | Python scientific stack (`numpy`, `scipy`) | `numpy==2.1.3`, `scipy==1.14.1` | BSD-3-Clause | `pip install numpy==2.1.3 scipy==1.14.1` | Helper scripts for curve fitting, interpolation, and metric post-processing |
-| Go toolchain | `1.24.x` | BSD-style | official tarball / distro | Build and test FeCIM source + validation harnesses |
+| Go toolchain | `1.26.10` | BSD-style | official tarball / distro | Build and test FeCIM source + validation harnesses |
 
 ## Notes
 

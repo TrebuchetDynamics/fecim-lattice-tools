@@ -23,7 +23,9 @@ get_current_version() {
       ;;
     "python")
       command -v python3 >/dev/null 2>&1 || { echo ""; return; }
-      python3 --version 2>&1 | awk '{print $2}' | head -n1
+      # Compare the documented scientific-stack pin against installed numpy,
+      # not the python3 interpreter version.
+      python3 -c 'import numpy; print(numpy.__version__)' 2>/dev/null | head -n1
       ;;
     *)
       echo ""
