@@ -3,7 +3,7 @@ schema = 1
 id = "INSTR-DOC-LINKS"
 title = "Repair nonexistent documentation paths in developer and AI instruction files"
 short = "Fix broken doc links in instructions"
-status = "open"
+status = "done"
 goal = "DEV-TOOLING"
 section = "Next"
 rank = 2000
@@ -16,6 +16,8 @@ scope = "Correct only the broken `docs/...` references in root AGENTS.md and the
 acceptance = ["Every `docs/...` file or directory reference in AGENTS.md, .codex/AGENTS.md, .opencode/command/fecim-citation.md, .opencode/command/fecim-honesty-audit.md, .opencode/command/fecim-researcher.md, config/AGENTS.md, module5-comparison/AGENTS.md and module7-docs/AGENTS.md resolves to an existing tracked path using the canonical targets already used by CLAUDE.md (docs/internals/..., docs/research/..., docs/modules/eda/..., docs/guides/...).", "A new offline test under scripts/ fails when any listed instruction file references a nonexistent docs/... path and passes on the repaired tree; the correction changes only paths and preserves every instruction's meaning, the AGENTS.md MANUAL section and the `Full check: env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m` line.", "No policy, behavior, whitelist, .gitignore, public-release boundary, generated file, existing task/goal or other documentation is changed; `go test ./scripts -count=1` and the final offline check pass."]
 checks = ["go test ./scripts -run 'TestInstructionDocPaths' -count=1", "go test ./scripts -count=1", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Only the listed instruction files and one new offline test. No policy/meaning/behavior/whitelist/.gitignore/public-release/CI change, no broader documentation or research-metadata cleanup, no task/goal/instruction-policy rewrite, no generated-file regeneration, and no release or qualification claim.", "Preserve owner-only qualification tasks and HYS/WEB final planning stops. Recheck actual file/worktree ownership before implementation; do not revert the set-aside staged proposal worktree."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/INSTR-DOC-LINKS.toml"
 +++
 - Sources: AGENTS.md#for-ai-agents; CLAUDE.md#for-ai-agents; docs/internals/TODO.md#2026-07-16-scientific-research-audit-broken-by-documentation-folder-migration
 
