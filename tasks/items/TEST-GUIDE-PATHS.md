@@ -3,7 +3,7 @@ schema = 1
 id = "TEST-GUIDE-PATHS"
 title = "Repair nonexistent go test package paths in the offline test guide"
 short = "Fix stale test paths in the test guide"
-status = "open"
+status = "done"
 goal = "DEV-TOOLING"
 section = "Next"
 rank = 2000
@@ -16,6 +16,8 @@ scope = "Correct only the `go test` package selectors in docs/internals/testing/
 acceptance = ["Every `go test` package selector in docs/internals/testing/TEST_GUIDE.md resolves to an existing Go package: ./crossbar/pkg/crossbar/... becomes ./shared/crossbar/... (Phase 0 moved the crossbar engine), ./eda/pkg/export/... becomes ./module6-eda/pkg/export/..., ./mnist/pkg/core/... becomes ./module3-mnist/pkg/core/..., and the two ./hysteresis/pkg/... selectors become ./module1-hysteresis/pkg/...; the ./shared/physics, ./shared and ./validation selectors are unchanged.", "The GUI E2E/visual/crawler/layout commands in section H target ./cmd/fecim-lattice-tools-fyne/... (where TestE2EGUI, VisualXvfb, UICrawler and LayoutAudit live) instead of ./cmd/fecim-lattice-tools/..., which currently prints `[no tests to run]` and exits 0; the headless E2E and Integration commands that do exist under cmd/fecim-lattice-tools, and the FECIM_RUN_XVFB/FECIM_UI_CRAWL/FECIM_LAYOUT_AUDIT env markers, are preserved.", "A new offline scripts/testing_doc_paths_test.go extracts the `go test ... ./<selector>` tokens from docs/internals/testing/TEST_GUIDE.md, requires each to resolve with `go list`, and requires the E2EGUI/VisualXvfb/UICrawler/LayoutAudit selectors to name a package whose test list contains a matching test; it fails against the current file (RED) and passes after the repair (GREEN). It must not read docs/internals/testing/TESTING.md.", "No behavior, source, test, generated file, script, CI, Makefile or other documentation changes; TESTING.md and the module AGENTS guides are untouched. `go test ./scripts -count=1` and the final `env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m` pass."]
 checks = ["go test ./scripts -run 'TestTestingDocPaths' -count=1", "go test ./scripts -count=1", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m", "git diff --check"]
 exclusions = ["Only docs/internals/testing/TEST_GUIDE.md and the new scripts/testing_doc_paths_test.go. Do not edit TESTING.md, module AGENTS guides, docs/modules/*, docs/internals/automation/*, scripts, Makefile, CI or any Go/source file, and do not change physics, thresholds, goldens or test behavior.", "Offline building only: no network, deployment, push, Live authorization, runtime/service change, launch-default switch or planning chain. Preserve the four owner-only qualification tasks (HYS-ORCA, T-013-a31914c8, WEB-ORCA, WEB-TOOLS) and the HYS/WEB final planning stops. Recheck actual file/worktree ownership before implementation; docs/internals/testing/TESTING.md is held by the split-eda-export and staged-proposals-validation worktrees, and docs/internals/testing/physics-race-lane.md and widget-progress-flake.md by staged-proposals-validation."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/TEST-GUIDE-PATHS.toml"
 +++
 - Sources: docs/internals/testing/TEST_GUIDE.md#how-to-run-each-category; docs/internals/architecture/shared-refactor-plan.md#phase-0
 
