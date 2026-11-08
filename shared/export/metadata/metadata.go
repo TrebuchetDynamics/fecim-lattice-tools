@@ -25,7 +25,7 @@ func DefaultSimulationMetadata() SimulationMetadata {
 	return SimulationMetadata{
 		Tool:        "FeCIM Lattice Tools",
 		Version:     "0.1.0-education",
-		Disclaimer:  "SIMULATION ONLY — not validated against silicon measurements. Parameters are educational defaults unless otherwise noted. See docs/4-research/honesty-audit.md.",
+		Disclaimer:  "SIMULATION ONLY — not validated against silicon measurements. Parameters are educational defaults unless otherwise noted. See docs/research/honesty-audit.md.",
 		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 }
@@ -34,7 +34,7 @@ func DefaultSimulationMetadata() SimulationMetadata {
 func SimulationDisclaimer() string {
 	return "SIMULATION ONLY — FeCIM Lattice Tools v0.1.0-education\n" +
 		"Parameters are educational defaults, NOT validated against silicon.\n" +
-		"See: docs/4-research/honesty-audit.md\n"
+		"See: docs/research/honesty-audit.md\n"
 }
 
 // SPICEDisclaimer returns a standard comment block for SPICE netlist headers.
@@ -51,7 +51,7 @@ func SPICEDisclaimer() string {
 	b.WriteString("* silicon measurements. Do not use for tapeout or hardware\n")
 	b.WriteString("* correlation without independent calibration.\n")
 	b.WriteString("*\n")
-	b.WriteString("* See: docs/4-research/honesty-audit.md\n")
+	b.WriteString("* See: docs/research/honesty-audit.md\n")
 	b.WriteString("* ============================================================\n")
 	return b.String()
 }

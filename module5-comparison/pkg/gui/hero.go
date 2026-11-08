@@ -30,7 +30,7 @@ var (
 )
 
 // Energy values in picojoules per MAC follow the current honesty audit in
-// docs/4-research/honesty-audit.md.
+// docs/research/honesty-audit.md.
 const (
 	cpuEnergyPJ   = 1000.0 // 1000 pJ/MAC
 	gpuEnergyPJ   = 100.0  // 100 pJ/MAC

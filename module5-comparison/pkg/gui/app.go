@@ -28,7 +28,7 @@ func init() {
 }
 
 // Energy specs (model inputs) follow the current honesty audit in
-// docs/4-research/honesty-audit.md.
+// docs/research/honesty-audit.md.
 const (
 	cpuEnergyPJPerMAC   = 1000.0 // 1000 pJ/MAC
 	gpuEnergyPJPerMAC   = 100.0  // 100 pJ/MAC
