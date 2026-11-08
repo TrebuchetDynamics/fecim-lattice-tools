@@ -28,7 +28,7 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 	}
 
 	// Initialize energy specs using constants from app.go (model inputs).
-	// See docs/4-research/honesty-audit.md for the current claim boundary.
+	// See docs/research/honesty-audit.md for the current claim boundary.
 	ca.cpuSpec = EnergySpec{
 		Name:          "CPU + DRAM",
 		EnergyFJ:      cpuEnergyPJPerMAC * 1000, // 1,000,000 fJ/MAC

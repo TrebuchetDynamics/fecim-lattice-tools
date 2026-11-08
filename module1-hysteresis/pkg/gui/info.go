@@ -405,7 +405,7 @@ func (a *App) showELI5Dialog() {
 			"enables memory! The loop REMEMBERS which\n" +
 			"way you pushed it.\n\n" +
 			"📚 Full Documentation:\n" +
-			"See docs/hysteresis/hysteresis.ELI5.md for\n" +
+			"See docs/modules/hysteresis/eli5.md for\n" +
 			"detailed explanations with diagrams.")
 	content.Wrapping = fyne.TextWrapWord
 
