@@ -1,0 +1,9 @@
+schema = 1
+task = "TOOL-PIN-DRIFT"
+candidate = "de240f466b7c17b1691ac20463ab13f453cc2570"
+integration = "27faadd5c375474d4ca9280cd1f09b687bcbde98"
+tree = "9cc74cd26c3337aa49b4c97c4d4179c1c43298a7"
+contract_hash = "3f8536ce72ce28400e389a4bdad0d543b765bcf977715749f0a549e612410afc"
+checks = ["<path>", "<path>", "--verify", "<path>", "TOOL-PIN-DRIFT"]
+result = "pass"
+review = "passed"

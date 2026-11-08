@@ -3,7 +3,7 @@ schema = 1
 id = "TOOL-PIN-DRIFT"
 title = "Make the external-tool drift detector and Go pin agree with go.mod"
 short = "Fix toolchain drift detection"
-status = "open"
+status = "done"
 goal = "DEV-TOOLING"
 section = "Next"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Repair only the offline external-tool version drift detector and the in
 acceptance = ["On a host whose Go satisfies the corrected pin, `bash scripts/toolchain/drift_detector.sh` prints the `go` row as `match` (not `drift`), and tools/external/README.md's Go pin prefix-matches the `go` directive in go.mod; a new offline test fails when they disagree.", "The scientific-stack row compares the documented numpy pin against the installed numpy version (a `2.x.y` string), not the `python3` interpreter version, so it reports `match` when they are equal and `drift` when they differ; the checker's column format and nonzero-exit-on-drift/missing behavior are preserved.", "No tool is installed, upgraded or fetched; go.mod/go.sum and the other inventory pins are unchanged; `go test ./scripts -count=1` and the final `env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m` pass."]
 checks = ["bash scripts/toolchain/drift_detector.sh", "go test ./scripts -run 'TestToolchainDrift|TestExternalToolPins' -count=1", "go test ./scripts -count=1", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Only the drift detector, its pin-extraction helper, the external-tool inventory pins and one new offline test. No tool installation/upgrade/fetch, network, go.mod/go.sum change, unrelated scripts/Makefile/CI wiring, instruction/task/goal/runtime/launch-default edits, or release/qualification claims.", "Preserve owner-only qualification tasks and HYS/WEB final planning stops. Recheck actual file/worktree ownership before implementation."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/TOOL-PIN-DRIFT.toml"
 +++
 - Sources: tools/external/README.md; scripts/toolchain/drift_detector.sh; scripts/toolchain/lib/tool_versions.sh; scripts/toolchain/check_tools.sh; go.mod
 
