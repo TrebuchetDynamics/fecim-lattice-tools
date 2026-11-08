@@ -3,7 +3,7 @@ schema = 1
 id = "QA-PACKAGE-TERMINALS"
 title = "Reject incomplete Go test streams instead of counting individual tests as packages"
 short = "Require real package completion in QA summaries"
-status = "open"
+status = "done"
 goal = "OFFLINE-QA"
 section = "Next"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Repair only the offline go-test JSON summarizer and focused tests. Dist
 acceptance = ["Given individual test/subtest pass or skip without package completion, when runPkgSum reads stdin or a file, then it cannot return success or count these as completed passing/skipped packages. Add table-driven RED fixtures including a completed package plus another started package with only test-level pass/skip; GREEN returns nonzero, names the incomplete package and makes no all-complete claim.", "Given complete interleaved streams with package pass/fail/skip and test/subtest events, when summarized, then PKG_SUM counts package terminal events only; skipped tests inside a passing package do not make it skipped, any observed failure remains non-success, and package failure dominance stays intact. Preserve existing noise/open/scan/empty-input handling and complete-stream output format with focused tests.", "Given unchanged make qa-a0 -> scripts/qa_a0.sh semantics, when executable file/stdin fixtures run, then complete streams retain output/exit behavior and incomplete streams fail. Preserve all caller test-exit and LIST_TOTAL-vs-JSON_TOTAL protections without changing caller/workload. Record focused automated RED/GREEN and final checks. This record is not implementation or qualification."]
 checks = ["go test ./scripts/gotest_pkgsum -count=1", "go test -race ./scripts/gotest_pkgsum -count=1", "go test ./scripts -count=1", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["No physics/model/default/golden/tolerance changes, sample/coverage reductions, new dependencies/toolchains, weakened caller checks, CI/launch-policy changes, global serialization, instruction/task-history edits, UI features or qualification receipts.", "Offline building only: no network/deployment/publication/push, installed EDA tools, real Orca claims, Live authorization, service/runtime changes or new planning chain. Preserve all owner-owned tasks and HYS/WEB final planning stops."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/QA-PACKAGE-TERMINALS.toml"
 +++
 
 - Sources: README.md#validation-and-development; Makefile (qa-a0); scripts/qa_a0.sh; scripts/gotest_pkgsum/main.go; scripts/gotest_pkgsum/main_test.go
