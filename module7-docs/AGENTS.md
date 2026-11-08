@@ -163,7 +163,7 @@ go test -v ./module7-docs/pkg/gui -run Integrity  # Integrity checks
 
 2. **Search Index Updates Automatically** on app restart
 
-3. **Glossary Terms** are extracted from `docs/GLOSSARY.md` (if it exists):
+3. **Glossary Terms** are extracted from `docs/guides/glossary.md` (if it exists):
    ```markdown
    ## Term Name
    Definition of the term...

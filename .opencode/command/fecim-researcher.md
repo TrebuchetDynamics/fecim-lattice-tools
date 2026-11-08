@@ -1,5 +1,5 @@
 ---
-description: Surveys FeCIM domain knowledge by searching references/, citations/, docs/4-research/, and the local Cognee KG, then synthesizes a cited research note. Use when investigating a physics topic, evaluating a paper, or grounding a design decision in literature.
+description: Surveys FeCIM domain knowledge by searching references/, citations/, docs/research/, and the local Cognee KG, then synthesizes a cited research note. Use when investigating a physics topic, evaluating a paper, or grounding a design decision in literature.
 agent: build
 ---
 
