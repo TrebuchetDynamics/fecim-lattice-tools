@@ -3,7 +3,7 @@ schema = 1
 id = "SKILLS-SYNC"
 title = "Regenerate agent skill adapters from corrected canonical sources"
 short = "Restore fecim-skills sync"
-status = "open"
+status = "done"
 goal = "DEV-TOOLING"
 section = "Next"
 rank = 1000
@@ -16,5 +16,7 @@ scope = "The canonical FeCIM skills under tools/fecim-skills/<name>/SKILL.md gen
 acceptance = ["bash scripts/install-fecim-skills.sh --check exits 0 with no DRIFT, and bash scripts/test-install-fecim-skills.sh passes; the .opencode/command/fecim-citation.md, .opencode/command/fecim-honesty-audit.md, .opencode/command/fecim-researcher.md and .codex/AGENTS.md adapter content is produced by the generator from the canonical SKILL.md sources rather than hand-edited.", "The canonical sources tools/fecim-skills/{fecim-citation,fecim-honesty-audit,fecim-researcher}/SKILL.md and tools/fecim-skills/_shared/fecim-context.md reference only existing tracked paths (docs/research/honesty-audit.md and docs/research/); skill names, trigger descriptions, steps and meaning are otherwise unchanged, and the .claude/skills/* symlinks still resolve to the sources.", "No policy, behavior, physics, task/goal, CI workflow, Python research script or held file changes and docs/4-research/papers/ is untouched. `rg -n 'docs/4-research' tools/fecim-skills .opencode .codex` returns no match and `env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m` passes."]
 checks = ["bash scripts/install-fecim-skills.sh --check", "bash scripts/test-install-fecim-skills.sh", "rg -n 'docs/4-research' tools/fecim-skills .opencode .codex || true", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Only the listed canonical skill sources and their generator-produced adapters. No new or renamed skill; no policy, workflow or skill-meaning change beyond the path token; no edit to scripts/install-fecim-skills.sh or scripts/test-install-fecim-skills.sh; no CI workflow edit; no docs/4-research/papers/ change; no claim of skill or tool qualification.", "Offline building only: no network, deployment, push, Live authorization, runtime/service change or launch-default switch. Preserve the owner-only qualification tasks (HYS-ORCA, T-013-a31914c8, WEB-ORCA, WEB-TOOLS) and the HYS/WEB final planning stops. Recheck actual file/worktree ownership before implementation; do not touch the staged-proposals-validation or split-eda-export worktrees."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/SKILLS-SYNC.toml"
 +++
 - Sources: .github/workflows/ci.yml#verify-fecim-skills-are-in-sync; docs/internals/TODO.md#2026-07-16-scientific-research-audit-broken-by-documentation-folder-migration

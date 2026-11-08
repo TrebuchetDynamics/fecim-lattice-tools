@@ -1,0 +1,9 @@
+schema = 1
+task = "SKILLS-SYNC"
+candidate = "18e2decc4b49c4a1b335d9eb8c5224affd1a3579"
+integration = "763a3f54be7c2feb22f231bd9a8099c5b74a2ca0"
+tree = "1cc75d79e2fbb4d13266ee7da8e4b9d844d2e3da"
+contract_hash = "e85125e0239253c7d621f75940d5f327618036b4d69d650477c15528a32614e8"
+checks = ["<path>", "<path>", "--verify", "<path>", "SKILLS-SYNC"]
+result = "pass"
+review = "passed"
