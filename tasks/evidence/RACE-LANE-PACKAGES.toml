@@ -1,0 +1,9 @@
+schema = 1
+task = "RACE-LANE-PACKAGES"
+candidate = "6fc9da8d3936594c6380a0fc13f0f0bd23ffa04a"
+integration = "1220801cbf9e427d8e7931ae89428cd5705b0c24"
+tree = "40ffb0f9e0b781e313176b9975997d438aa2d947"
+contract_hash = "136d702760960b4c91524dbd1856ea66d032d535be437ccac299c5b9adb878c7"
+checks = ["<path>", "<path>", "--verify", "<path>", "RACE-LANE-PACKAGES"]
+result = "pass"
+review = "passed"
