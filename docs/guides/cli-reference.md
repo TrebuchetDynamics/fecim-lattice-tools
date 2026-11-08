@@ -27,7 +27,7 @@ Use `fecim-lattice-tools --help` for the canonical, runtime-generated list.
 
 ## Common CLI Flags
 
-All CLI commands support these common flags:
+These flags are available only on supporting subcommands, not on every command. Check the specific subcommand's `--help` before use. The root launcher, installed `hysteresis` subcommand and workbench commands do not inherit this table.
 
 | Flag                | Description                                              |
 | ------------------- | -------------------------------------------------------- |
@@ -40,15 +40,7 @@ All CLI commands support these common flags:
 
 ## Configuration Files
 
-All CLI commands support loading configuration from YAML or JSON files via the `--config` flag.
-
-### Example YAML Config (hysteresis.yaml)
-
-```yaml
-material: superlattice
-frequency: 1000000
-temperature: 300
-```
+Only subcommands that advertise `--config` in their help accept configuration files. Accepted formats and keys depend on that subcommand. The root launcher, installed `hysteresis` subcommand and workbench commands do not support this common configuration-file interface.
 
 ### Example JSON Config (mnist.json)
 
@@ -63,7 +55,9 @@ temperature: 300
 
 ## Batch Processing
 
-Use the `--batch` flag to process multiple items from a file. Batch files can be:
+Only subcommands that advertise a batch-file option accept batch files. The root launcher, installed `hysteresis` subcommand and workbench commands do not support `--batch FILE`. Other uses of `--batch`, such as an inference batch size, do not imply file input.
+
+The following are illustrative file formats, not a Hysteresis material-batch interface. Consult the supporting subcommand's help for its accepted format:
 
 1. **Line-based** (one item per line, `#` for comments):
 
@@ -85,7 +79,7 @@ hzo32
 
 ## Module 1: Hysteresis
 
-Visualize ferroelectric hysteresis in HfO2-ZrO2 superlattice materials.
+Visualize ferroelectric hysteresis or run headless simulation diagnostics. Material presets and discrete levels are educational simulation parameters, not validated device measurements.
 
 ### Basic Usage
 
@@ -93,58 +87,70 @@ Visualize ferroelectric hysteresis in HfO2-ZrO2 superlattice materials.
 fecim-lattice-tools hysteresis [options]
 ```
 
+Without options (or with `hysteresis gui`), the installed binary opens the legacy Fyne Hysteresis view. Desktop startup requires a CGO-enabled build. Help, material listing and headless diagnostics also work with `CGO_ENABLED=0`.
+
 ### Options
 
-| Flag               | Description              | Default      |
-| ------------------ | ------------------------ | ------------ |
-| `--material NAME`  | Material type            | superlattice |
-| `--freq HZ`        | Waveform frequency       | 1e6          |
-| `--headless`       | Static ASCII output      | false        |
-| `--tui`            | Terminal UI mode         | false        |
-| `--vulkan`         | Vulkan graphics mode     | false        |
-| `--list-materials` | List available materials | -            |
+| Flag               | Description                                  | Default  |
+| ------------------ | -------------------------------------------- | -------- |
+| `--engine NAME`    | Headless engine: `preisach` or `lk`            | preisach |
+| `--headless`       | Run headless hysteresis diagnostics           | false    |
+| `--list-materials` | Print material names as plain text and exit    | false    |
+| `-h, --help`       | Show help and exit                            | -        |
 
-### Available Materials
+These are the installed subcommand's options. It has no material, frequency, TUI, Vulkan, config, batch, JSON or output-file switches. `--engine` selects the headless engine, not the GUI engine.
 
-- `default` - HZO (Si-doped)
-- `fecim` - FeCIM HZO
-- `superlattice` - Literature Superlattice (Cheema 2020)
-- `cryogenic` - Cryogenic HZO (4K)
-- `hzo32` - HZO Standard (32 states)
-- `ftj140` - HZO FTJ (140 states)
-- `alscn` - AlScN (8-16 states)
+Source: `cmd/fecim-lattice-tools/subcommands.go::runHysteresisSubcommand`, `main.go::runRoot` and `mode.go::runHysteresisMode` in the same directory.
 
-Mode precedence (if flags are combined): `--headless` → `--tui` → `--vulkan` → GUI default.
+### Help and Available Materials
 
-For authoritative run-mode and Preisach/L-K default behavior, see:
-`docs/modules/hysteresis/run-modes.md`.
-
-### Examples
-
-List materials as JSON:
+Show the runtime-generated help:
 
 ```bash
-fecim-lattice-tools hysteresis --list-materials --json
+fecim-lattice-tools hysteresis --help
 ```
 
-Headless mode with JSON output:
+List material names:
 
 ```bash
-fecim-lattice-tools hysteresis --headless --json --material superlattice
+fecim-lattice-tools hysteresis --list-materials
 ```
 
-Batch process multiple materials:
+The listing is plain text, not JSON or a table of material properties:
+
+```text
+Available materials:
+  - HZO (Si-doped, Park 2015 midpoint)
+  - FeCIM HZO
+  - FeCIM HZO (TARGET)
+  - Literature Superlattice
+  - Cryogenic HZO
+  - HZO Standard (32 states)
+  - HZO FTJ (140 states)
+  - AlScN (8-16 states)
+  - α-In₂Se₃
+```
+
+### Headless Examples
+
+Run diagnostics with the default Preisach engine or opt into Landau-Khalatnikov (L-K):
 
 ```bash
-echo -e "superlattice\nfecim\ncryogenic" > materials.txt
-fecim-lattice-tools hysteresis --headless --batch materials.txt --json
+fecim-lattice-tools hysteresis --headless
+fecim-lattice-tools hysteresis --headless --engine lk
 ```
 
-Using config file:
+Headless runs do not produce static ASCII plots or JSON material data. Console diagnostic logging is off by default. Runs attempt to write Hysteresis CSV logs separately (see retention below).
+
+For headless runs, optional `FECIM_MATERIAL` selects a preset. When unset, the default is `FeCIMMaterial`. For example:
 
 ```bash
-fecim-lattice-tools hysteresis --config hysteresis.yaml --headless
+FECIM_MATERIAL=superlattice fecim-lattice-tools hysteresis --headless --engine preisach
 ```
+
+The root launcher's `--material` selects a material for `--calibrate` only. It does not select the material for headless simulation.
+
+For plain-text console diagnostics and file logging, use `fecim-lattice-tools --logger --mode hysteresis --engine lk`. This root invocation uses the same headless runner and `FECIM_MATERIAL` selection.
 
 ---
 
@@ -402,23 +408,9 @@ fecim-lattice-tools eda cli --config eda.yaml --json-output
 
 ## JSON Output Examples
 
-### Hysteresis Material Info
+### Hysteresis: No JSON Output
 
-```json
-{
-  "material": "Literature Superlattice (Cheema 2020)",
-  "remanent_polarization_uC_cm2": 25.0,
-  "saturation_polarization_uC_cm2": 30.0,
-  "coercive_field_MV_cm": 1.5,
-  "coercive_voltage_V": 0.75,
-  "thickness_nm": 5.0,
-  "permittivity": 30.0,
-  "switching_time_ns": 100.0,
-  "endurance_cycles": 1e12,
-  "discrete_levels": 30,
-  "bits_per_cell": 4.91
-}
-```
+The installed `hysteresis` subcommand has no JSON output option or material-info JSON schema. Use `hysteresis --list-materials` for plain-text names, not machine-readable material properties.
 
 ### Circuits Result
 
@@ -495,27 +487,27 @@ fecim-lattice-tools eda cli --config eda.yaml --json-output
 
 ## Scripting Examples
 
-### Batch Processing Script
+### Shell Loop for Headless Diagnostics
+
+Use a shell loop and redirection, not Hysteresis batch or output-file flags. Each root invocation below enables logging and runs diagnostics for one preset. Text capture does not redirect the separate CSV or diagnostic log files.
 
 ```bash
 #!/bin/bash
-# Process all materials and collect results
-
+mkdir -p results
 materials=(superlattice fecim cryogenic hzo32 ftj140 alscn)
 
 for mat in "${materials[@]}"; do
     echo "Processing $mat..."
-    fecim-lattice-tools hysteresis --headless --json --material "$mat" \
-        -o "results/${mat}.json"
+    FECIM_MATERIAL="$mat" fecim-lattice-tools --logger --mode hysteresis \
+        > "results/${mat}.txt" 2>&1
 done
 ```
 
 ### JSON Processing with jq
 
-```bash
-# Get all material properties
-fecim-lattice-tools hysteresis --list-materials --json | jq '.[].name'
+Use `jq` only with commands that produce JSON. Hysteresis help, material listing and diagnostic output are plain text.
 
+```bash
 # Extract specific field from circuits
 fecim-lattice-tools circuits cli --all --json | jq '.dac.energy_fj'
 
