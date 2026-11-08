@@ -201,7 +201,7 @@ Benchmark with `go test -bench=. ./validation/benchmarks/...`
 Each YAML file implicitly has a version:
 - Fields are added, never removed
 - Default values are provided for missing fields
-- Breaking changes require documentation in `docs/development/CONFIG_MIGRATION.md`
+- Breaking changes require documentation in `docs/internals/config-migration.md`
 
 **Adding New Physics Constants:**
 1. Add to `constants.yaml` with units
