@@ -1,0 +1,9 @@
+schema = 1
+task = "SHIPPED-DOC-PATHS"
+candidate = "b0a339c5a3291b947be9a47bb00658d28e36d4fc"
+integration = "6d2e66204a0a1100595a548b6ed1f1466f927c45"
+tree = "b5e00fbdd91ffb4dbb35e54c27e107ea315c18ac"
+contract_hash = "303cabfc253abe62ebe27e7b51690f4023b3a51a55ef15a349d14cf26f823682"
+checks = ["<path>", "<path>", "--verify", "<path>", "SHIPPED-DOC-PATHS"]
+result = "pass"
+review = "passed"

@@ -3,7 +3,7 @@ schema = 1
 id = "SHIPPED-DOC-PATHS"
 title = "Repair removed documentation paths in shipped user-facing text and comments"
 short = "Fix shipped doc paths"
-status = "open"
+status = "done"
 goal = "DEV-TOOLING"
 section = "Next"
 rank = 2000
@@ -16,5 +16,7 @@ scope = "The 2026-07-16 documentation-folder migration moved docs/4-research/ to
 acceptance = ["Every reference listed in the scope to a removed path now uses the existing canonical path (docs/research/honesty-audit.md, docs/research/validation/claims/scientific-claims-matrix.md, docs/modules/hysteresis/eli5.md); the exported Disclaimer/SimulationDisclaimer/SPICEDisclaimer text and the comparison banner, glossary and info wording keep their meaning, changing only the path token.", "A new scripts/shipped_doc_paths_test.go scans a curated list of these shipped and comment surfaces for `docs/...` references, skips the research PDF-collection path docs/4-research/papers/, fails when a referenced path does not exist, and fails against the current tree (RED) then passes after the repair (GREEN).", "No behavior, physics, API, policy, generated file, .gitignore, public-release boundary, existing task/goal or held file changes; all docs/4-research/papers/ references and workbench/modules/docs/port.go's alias are unchanged. `go test ./shared/export/... ./shared/widgets/... ./module5-comparison/... ./scripts -count=1` and `env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m` pass."]
 checks = ["go test ./scripts -run 'TestShippedDocPaths' -count=1", "go test ./shared/export/... ./shared/widgets/... ./module5-comparison/... ./scripts -count=1", "rg -n 'docs/4-research/honesty-audit|docs/4-research/validation/claims|docs/hysteresis/hysteresis.ELI5|/docs/comparison/HONESTY_AUDIT' shared/export/metadata/metadata.go module5-comparison/cmd/comparison/main.go module1-hysteresis/pkg/gui/info.go shared/widgets/help/glossary.go (expect no matches)", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Only the listed shipped/comment files and one new offline test. No docs/4-research/papers/ change, no .gitignore or public-release boundary change, no workbench/modules/docs/port.go alias change, no behavior/physics/API/policy change, no generated-file regeneration, no held-file (scripts/cognee-ingest*.py, module6-eda export split, staged proposals, HYS-WORKER set-aside) change, and no release or qualification claim.", "Offline building only: no network, deployment, push, Live authorization, runtime/service change or launch-default switch. Preserve the owner-only qualification tasks (HYS-ORCA, T-013-a31914c8, WEB-ORCA, WEB-TOOLS) and the HYS/WEB final planning stops. Recheck actual file/worktree ownership before implementation."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/SHIPPED-DOC-PATHS.toml"
 +++
 - Sources: AGENTS.md#for-ai-agents; docs/internals/TODO.md#2026-07-16-scientific-research-audit-broken-by-documentation-folder-migration
