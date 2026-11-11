@@ -15,7 +15,7 @@ No successor planning task is saved. Existing Needs decision records WEB-ORCA an
 ### Q-HYS-ORCA — USER_INPUT — effort input — unblocks 1
 
 - Task: HYS-ORCA — Qualify React Hysteresis with real Orca in both deployment profiles
-- Needs: HYS-ORCA requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-07: approved. Another approval is not requested.
+- Needs: HYS-ORCA requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-10: approved. Another approval is not requested.
 - Since: 2026-11-07T21:52:39Z
 - Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
 - Kind: owner_action
