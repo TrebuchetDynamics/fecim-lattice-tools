@@ -25,4 +25,4 @@ exclusions = ["Go owns science/defaults/display/speech; simulation-only evidence
 - Next action: When candidate profiles and tester desktop are available, record setup and perform hosted HYS-1 before the local sequence.
 - Verification status: New tests/commands are proposed/unrun; no implementation evidence or manual qualification is claimed by planning.
 - Question: Missing external input is real dual-profile Orca/keyboard evidence from a tester; this is not a reopened product-design question. Keep Needs decision until that evidence exists; no waiver inferred.
-- Owner decision: 2026-11-07: approved
+- Owner decision: 2026-11-10: approved
