@@ -53,6 +53,7 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
   page.on("request", (r) => {
     if (r.url().includes("/api/")) scientificRequests.push(r.url());
   });
+  let snapshotURL = "";
   if (local) {
     await page.goto(launch);
     await expect(page.getByLabel("Material", { exact: true })).toBeEnabled();
@@ -71,9 +72,19 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
       .getByRole("link", { name: /FeCIM Lattice Tools/ })
       .first()
       .click();
+    const sessionResponse = page.waitForResponse(
+      (r) =>
+        r.url().endsWith("/api/v1/modules/eda/sessions") &&
+        r.request().method() === "POST",
+    );
     await page
       .getByRole("link", { name: "Explore EDA Export", exact: true })
       .click();
+    const response = await sessionResponse;
+    snapshotURL = new URL(
+      `/api/v1/module-sessions/${(await response.json()).session}`,
+      response.url(),
+    ).href;
   } else await page.goto("/modules/eda");
   await expect(
     page.getByRole("heading", { name: "EDA", exact: true }),
@@ -125,9 +136,86 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
   await expect(page.getByTestId("eda-preview")).toContainText(
     "* Array: 64 cells",
   );
+  const reconnect = page.getByRole("button", {
+    name: "Reconnect authoritative state",
+    exact: true,
+  });
+  const defaults = page.getByRole("button", {
+    name: "Load Go defaults",
+    exact: true,
+  });
+  const builder = page.getByLabel("Typed builder config (JSON)", {
+    exact: true,
+  });
+  // Fetch the authoritative response before holding delivery, not job polling.
+  async function gateResponse(
+    url: string,
+    method: string,
+    trigger: () => Promise<void>,
+    pending: () => Promise<void>,
+  ) {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const bound = setTimeout(release, 20_000);
+    let captured = false;
+    const handler = async (route: import("@playwright/test").Route) => {
+      if (route.request().method() !== method) return route.continue();
+      const response = await route.fetch({ timeout: 10_000 });
+      captured = true;
+      await gate;
+      await route.fulfill({ response });
+    };
+    await page.route(url, handler);
+    try {
+      await trigger();
+      await expect.poll(() => captured).toBe(true);
+      await pending();
+    } finally {
+      clearTimeout(bound);
+      release();
+      await page.unrouteAll({ behavior: "wait" });
+    }
+  }
+  await gateResponse(
+    snapshotURL,
+    "GET",
+    () => reconnect.click(),
+    async () => {
+      await expect(defaults).toBeDisabled();
+      await expect(reconnect).toBeDisabled();
+    },
+  );
+  await expect(reconnect).toBeEnabled();
+  await page.getByLabel("Rows", { exact: true }).fill("4");
+  await gateResponse(
+    `${snapshotURL}/actions`,
+    "POST",
+    () => defaults.click(),
+    async () => {
+      await expect(reconnect).toBeDisabled();
+    },
+  );
+  await expect(builder).toContainText('"array_rows": 4');
+  await expect(reconnect).toBeEnabled();
   await page
     .getByRole("button", { name: "Validate structure", exact: true })
     .click();
+  await expect(reconnect).toBeEnabled();
+  await expect(builder).toContainText('"array_rows": 4');
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  const retainedDraft = await builder.inputValue();
+  const retainedPreview = await page.getByTestId("eda-preview").textContent();
+  await page.route(snapshotURL, (route) => route.abort(), { times: 1 });
+  await reconnect.click();
+  await expect(page.getByRole("alert")).toBeFocused();
+  await expect(reconnect).toBeEnabled();
+  await expect(defaults).toBeEnabled();
+  await expect(builder).toHaveValue(retainedDraft);
+  await expect(page.getByTestId("eda-preview")).toHaveText(retainedPreview!);
+  await reconnect.click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(page.getByTestId("eda-tool")).toContainText("structural-only");
   const downloaded = page.waitForEvent("download");
   await page
