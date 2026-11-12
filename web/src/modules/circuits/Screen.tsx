@@ -142,6 +142,10 @@ export default function Screen() {
       lastAnnounce.current = Date.now();
     }
   };
+  const retireAddressDrafts = () => {
+    setRow((current) => (current === row ? undefined : current));
+    setCol((current) => (current === col ? undefined : current));
+  };
   const enqueue = <T,>(fn: () => Promise<T>) => {
     const next = tail.current.then(fn);
     tail.current = next.catch(() => {});
@@ -198,7 +202,22 @@ export default function Screen() {
                 (e as Error).message,
             );
           }
-        } else publish(await transport.current.action(command));
+        } else {
+          const next = await transport.current.action(command);
+          publish(next);
+          const selectionReset =
+            action === "configure" &&
+            ["rows", "cols", "material"].some(
+              (id) =>
+                next.snapshot.fields?.find((f) => f.id === id)?.input !==
+                data.snapshot.fields?.find((f) => f.id === id)?.input,
+            );
+          if (
+            ["select", "reset", "randomize", "undo"].includes(action) ||
+            selectionReset
+          )
+            retireAddressDrafts();
+        }
       });
       return true;
     } catch (e) {
@@ -347,6 +366,7 @@ export default function Screen() {
                 releaseScience(owner.current);
                 transport.current = await connect();
                 publish(await transport.current.read());
+                retireAddressDrafts();
                 setError("");
               })
                 .catch((e) => setError((e as Error).message))
