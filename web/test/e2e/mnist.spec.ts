@@ -135,10 +135,98 @@ test("MNIST real local science and hosted read-only boundary", async ({
   await expect(
     page.getByRole("button", { name: "Apply configuration", exact: true }),
   ).toBeEnabled();
+  // A disabled fieldset does not disable canvas pointer events or an earlier drag.
+  const canvas = page.locator("canvas");
+  const raw = page.getByRole("textbox", { name: /^Raw input pixels/ });
+  const setPixel = page.getByRole("button", { name: "Set pixel", exact: true });
+  await canvas.scrollIntoViewIfNeeded();
+  const box = (await canvas.boundingBox())!;
+  const point = { x: box.x + box.width / 4, y: box.y + box.height / 4 };
+  await canvas.evaluate((c) => {
+    c.dataset.captures = "0";
+    c.addEventListener("gotpointercapture", () => {
+      c.dataset.captures = String(Number(c.dataset.captures) + 1);
+    });
+  });
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.down();
+  await page.mouse.move(point.x + 10, point.y);
+  await expect(canvas).toHaveAttribute("data-captures", "1");
+  const draft = JSON.stringify(
+    Array.from({ length: 784 }, (_, i) => (i % 13) / 16),
+  );
+  await raw.fill(draft);
+  const buffer = await canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL());
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  let held = false;
+  let safetyReleased = false;
+  const safety = setTimeout(() => {
+    safetyReleased = true;
+    release();
+  }, 15_000);
+  await page.route(
+    "**/api/v1/module-sessions/*/actions",
+    async (route) => {
+      const response = await route.fetch({ timeout: 10_000 });
+      held = true;
+      await gate;
+      await route.fulfill({ response });
+    },
+    { times: 1 },
+  );
+  try {
+    // Start the action without releasing the canvas's captured mouse drag.
+    await page
+      .getByRole("button", { name: "Apply configuration", exact: true })
+      .focus();
+    await page.keyboard.press("Enter");
+    await expect.poll(() => held).toBe(true);
+    await expect(canvas.locator("..")).toHaveJSProperty("disabled", true);
+    await expect(setPixel).toBeDisabled();
+    await canvas.scrollIntoViewIfNeeded();
+    const lockedBox = (await canvas.boundingBox())!;
+    const lockedPoint = {
+      x: lockedBox.x + lockedBox.width / 2,
+      y: lockedBox.y + lockedBox.height / 2,
+    };
+    await page.mouse.move(lockedPoint.x, lockedPoint.y);
+    await expect(raw).toHaveValue(draft);
+    expect(await canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL())).toBe(
+      buffer,
+    );
+    await page.mouse.up();
+    await page.mouse.click(lockedPoint.x + 20, lockedPoint.y + 20);
+    await page.mouse.move(lockedPoint.x + 20, lockedPoint.y + 20);
+    await page.mouse.down();
+    await page.mouse.move(lockedPoint.x + 30, lockedPoint.y + 30);
+    await page.mouse.up();
+    await expect(raw).toHaveValue(draft);
+    expect(await canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL())).toBe(
+      buffer,
+    );
+    await expect(canvas).toHaveAttribute("data-captures", "1");
+    expect(safetyReleased).toBe(false);
+  } finally {
+    await page.mouse.up();
+    release();
+    clearTimeout(safety);
+    await page.unrouteAll({ behavior: "wait" });
+  }
+  await expect(setPixel).toBeEnabled();
+  await expect(raw).toHaveValue(draft);
+  await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
+  await expect(raw).not.toHaveValue(draft);
+  expect(JSON.parse(await raw.inputValue())[14 * 28 + 14]).toBe(1);
+  expect(
+    await canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL()),
+  ).not.toBe(buffer);
   // Keyboard pixel editing is an accessible drawing alternative, not TS preprocessing.
   await page.getByLabel("Pixel row", { exact: true }).fill("2");
   await page.getByLabel("Pixel column", { exact: true }).fill("2");
-  await page.getByRole("button", { name: "Set pixel", exact: true }).click();
+  await setPixel.focus();
+  await page.keyboard.press("Enter");
+  expect(JSON.parse(await raw.inputValue())[2 * 28 + 2]).toBe(1);
   await page.getByRole("button", { name: "Use drawing", exact: true }).click();
   await expect(page.getByTestId("mnist-identity")).toContainText(
     "Current input source: drawing",

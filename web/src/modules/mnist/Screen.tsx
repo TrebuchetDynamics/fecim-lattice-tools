@@ -560,6 +560,7 @@ export default function Screen() {
                   height={280}
                   aria-hidden="true"
                   onPointerDown={(e) => {
+                    if (locked) return;
                     e.currentTarget.setPointerCapture(e.pointerId);
                     const r = e.currentTarget.getBoundingClientRect();
                     setPixel(
@@ -569,7 +570,7 @@ export default function Screen() {
                     );
                   }}
                   onPointerMove={(e) => {
-                    if (e.buttons) {
+                    if (!locked && e.buttons) {
                       const r = e.currentTarget.getBoundingClientRect();
                       setPixel(
                         Math.floor(((e.clientY - r.top) * 28) / r.height),
