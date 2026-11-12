@@ -3,7 +3,7 @@ schema = 1
 id = "QA-REPORT-FAILURE-DOMINANCE"
 title = "Preserve failed regression evidence when release reports aggregate duplicate combinations"
 short = "Keep failures in aggregated regression reports"
-status = "open"
+status = "done"
 goal = "OFFLINE-QA"
 section = "Next"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Repair only cmd/release-report/main.go and its existing unit tests so a
 acceptance = ["Given temporary accepted artifacts for the same material/model with one all_pass=false and one all_pass=true, when runReleaseReport writes JSON and Markdown with either lexical order and either same-suite duplicates or distinct suite names, then by_model for that combination and all_models_pass are false in both outputs. Rename/reorder the input files without changing verdicts and assert the verdict remains false. Record the focused expected RED before production edits and GREEN after the minimal fix.", "Given single-file pass/fail, duplicate all-pass, duplicate all-fail, multiple materials/models and a missing expected model, when reports are generated, then passing combinations remain true only when every accepted artifact passes, failed combinations never affect unrelated combinations, and missing expected models still prevent AllModelsPass. Both observed files and suite provenance remain retained and deterministically ordered under existing behavior. Checks execute the actual CLI runner with temporary input/output paths, not only a detached helper.", "Given all existing flag, artifact-filtering, output-directory-error and rendering behaviors, when the full release-report package and repository checks run, then those contracts remain intact. Do not change coverage denominator/count policy, input schema admission, model/physics thresholds or generator exit code based on scientific failures; a successfully generated report may truthfully contain failed verdicts. No archive, DOI, real-tool, human accessibility or qualified-release claim follows."]
 checks = ["go test ./cmd/release-report -run TestRunReleaseReportAggregation -count=1", "go test ./cmd/release-report -count=1", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["No existing task/goal/instruction edits, shell-script/CI wiring, release metadata/generated report changes, artifact/golden/physics/default/model/data/threshold edits, new dependencies, broad validation policy or output rollback refactor. Keep CLI/Go science and default-built Fyne launch/guards intact.", "Ordinary offline building only; no publication/push/deployment, service/runtime state change, Live grant, installed EDA execution or tool/model/dataset acquisition. Preserve owner-only HYS-ORCA, WEB-ORCA, WEB-TOOLS and T-013-a31914c8, both final HYS/WEB planning stops and all other worktree claims. Recheck file ownership at dispatch; do not release another owner."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/QA-REPORT-FAILURE-DOMINANCE.toml"
 +++
 - Sources: README.md#validation-and-development; scripts/gen_release_report.sh; cmd/release-report/main.go; module1-hysteresis/pkg/controller/headless_regression_test.go
 
