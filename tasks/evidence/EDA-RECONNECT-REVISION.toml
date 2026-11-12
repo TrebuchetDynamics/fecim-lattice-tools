@@ -1,0 +1,25 @@
+schema = 1
+task = "EDA-RECONNECT-REVISION"
+candidate = "feeb061fa849ae0434da3d17d7b79e742330d36d"
+integration = "0f2eb201b53cb7e139495b81b2c32cb3abb32d4b"
+tree = "caa0df5f5b3b7ea485e9cc754a6477d5c269ec02"
+contract_hash = "c4d3820aafc1d760f633475c1cb46dcfdbe4c98dc160a156b13fb0f48c69ae7b"
+checks = ["<path>", "<path>", "--verify", "<path>", "EDA-RECONNECT-REVISION"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "RED first: extend the existing authenticated-local EDA spec with a deterministic bounded GET-response gate for the exact module-session snapshot URL (not job polling). Obtain the old response before delaying delivery. Start Reconnect authoritative state and assert Load Go defaults and duplicate reconnect are disabled while that response is pending. The original implementation must fail because reconnect leaves controls enabled, not because of setup/timeouts. Release the gate in cleanup. After release, change rows/load defaults and perform another revision-checked action successfully; retain the expected config and no stale-revision alert. Also gate an Apply response and assert reconnect cannot overlap it. Avoid sleeps and real external tools."
+result = "met"
+evidence = "RED before production edits: cd web && FECIM_WEB_PROFILE=local timeout 240 npm run test:e2e -- test/e2e/eda.spec.ts --project=desktop-chromium failed specifically at Load Go defaults toBeDisabled: received enabled after route.fetch captured the old snapshot (<path> GREEN same focused command passed (<path> Extended existing local case obtains exact session URL from creation response, gates fetched GET and Apply responses with bounded cleanup, asserts defaults/duplicate reconnect disabled, then rows=4/defaults and revision-checked Validate structure succeed with retained config and no alert. Final local suite passed all five projects; no sleeps or real external tools added."
+
+[[acceptance]]
+item = "Minimally acquire/release the existing busy state for reconnect, including failure/finally paths, and disallow overlapping reconnect while an action/start/reconnect owns the snapshot. Preserve drafts and current artifacts on errors. Reconnect must remain enabled after a transport outage once busy clears, even if the remembered job is still active; preserve existing cancel/reconnect job recovery and Go revision rejection. Do not weaken stale checks or silently replay mutations. Retain the existing first-error focus assertion and add a reconnect-failure unlock assertion if needed for the new finally path."
+result = "met"
+evidence = "Screen.tsx reconnect guards busy, sets busy before job/refresh requests and clears busy in finally. Button disables on busy, not active, reusing existing locked controls; no backend/stale-check/replay changes. Browser case verifies failure unlock, focused alert and unchanged draft/preview. Existing polling-outage, cancel/reconnect and original first-error focus assertions remain and pass in all five local projects. Reused existing busy owner, adapter and private fixture; omitted new dependencies, backend/export changes and unrelated scope."
+
+[[acceptance]]
+item = "Run typecheck, unit tests and the existing EDA spec in both hosted and local profiles after rebuilding matching assets per web/README.md. Existing private cancellation fixture remains fixture evidence only; hosted remains read-only without local API construction. Record RED/GREEN and final check receipts. Recheck actual worktree/claim ownership before implementation. No scientific, human accessibility, installed-tool or release qualification is implied."
+result = "met"
+evidence = "Final typecheck and all 6 unit tests passed. Matching local and hosted builds passed; local EDA spec passed 5/5 projects (<path> hosted EDA spec passed 5/5 (<path> including Chromium/mobile/Firefox. Local beforeAll builds matching embedded native binary; private cancellation fixture remains fixture-only. Hosted still asserts no scientific API requests. Verified clean starting worktree, assigned branch/baseline, git worktree list and own slot claim; only the two named files changed. No scientific, human accessibility, installed-tool or release qualification claimed. full check: runner gate"
