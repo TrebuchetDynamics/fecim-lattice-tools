@@ -230,6 +230,91 @@ test("persistent circuit WRITE READ COMPUTE, masks, keyboard tables, undo and ro
   ).toBe(true);
 });
 
+test("cell address drafts follow acknowledged selection changes, not unrelated publications", async ({
+  page,
+}) => {
+  if (local) {
+    if (cookies.length) {
+      await page.context().addCookies(cookies);
+      await page.goto(`http://127.0.0.1:${port}/modules/circuits`);
+    } else {
+      await page.goto(launch);
+      await expect(page.getByLabel("Material", { exact: true })).toBeEnabled();
+      await page.goto(`http://127.0.0.1:${port}/modules/circuits`);
+    }
+  } else await page.goto("/modules/circuits");
+  const button = (name: string) => page.getByRole("button", { name, exact: true });
+  const row = page.getByLabel("Cell row", { exact: true });
+  const col = page.getByLabel("Cell column", { exact: true });
+  const selection = page.locator("#circuits-selection tbody tr").first();
+  const addresses = async (r: string, c: string) => {
+    await expect(selection.locator("th")).toContainText(`${r} count`);
+    await expect(selection.locator("td").first()).toContainText(`${c} count`);
+    await expect(row).toHaveValue(r);
+    await expect(col).toHaveValue(c);
+  };
+  const selectNonzero = async () => {
+    await row.fill("01");
+    await col.fill("01");
+    await button("Select cell").focus();
+    await page.keyboard.press("Enter");
+    await addresses("1", "1");
+  };
+  await expect(button("Select cell")).toBeEnabled();
+  await page.getByLabel("Rows", { exact: true }).selectOption("2");
+  await page.getByLabel("Columns", { exact: true }).selectOption("2");
+  await page.getByLabel("Architecture", { exact: true }).selectOption("2T1R");
+  await button("Apply configuration").click();
+  await expect(page.locator("#circuits-cells tbody tr")).toHaveCount(4);
+  await selectNonzero();
+  await button("Reset array").click();
+  await addresses("0", "0");
+  await button("READ selected cell").click();
+  await expect(page.getByTestId("circuits-status")).toContainText("read completed");
+  await expect(page.getByText(/Retained operation read;.*selected cell \[0,0\]/)).toBeVisible();
+
+  // Unsent addresses must not silently select a cell or disappear on publication.
+  await row.fill("1");
+  await col.fill("1");
+  for (const action of ["Step timing", "READ selected cell", "COMPUTE vector"]) {
+    await button(action).click();
+    await expect(button("Select cell")).toBeEnabled();
+    await expect(row).toHaveValue("1");
+    await expect(col).toHaveValue("1");
+    await expect(selection.locator("th")).toContainText("0 count");
+    await expect(selection.locator("td").first()).toContainText("0 count");
+  }
+  await page.getByLabel("Sense preset", { exact: true }).selectOption("High Sensitivity");
+  await button("Apply configuration").click();
+  await expect(button("Select cell")).toBeEnabled();
+  await expect(row).toHaveValue("1");
+  await expect(col).toHaveValue("1");
+  await row.fill("2");
+  await button("Select cell").click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(row).toHaveValue("2");
+  await expect(col).toHaveValue("1");
+  await expect(selection.locator("th")).toContainText("0 count");
+  await expect(selection.locator("td").first()).toContainText("0 count");
+  await button("Dismiss error").click();
+  await selectNonzero();
+  await page.getByLabel("Write target level", { exact: true }).fill("17");
+  await page.getByLabel("Signed input codes (JSON)", { exact: true }).fill("[7,8]");
+  await button("Randomize array").click();
+  await addresses("0", "0");
+  await button("Undo device change").click();
+  await addresses("1", "1");
+  await expect(page.getByLabel("Write target level", { exact: true })).toHaveValue("17");
+  await expect(page.getByLabel("Signed input codes (JSON)", { exact: true })).toHaveValue("[7,8]");
+  await page.getByLabel("Rows", { exact: true }).selectOption("4");
+  await button("Apply configuration").click();
+  await addresses("0", "0");
+  await selectNonzero();
+  await page.getByLabel("Material", { exact: true }).selectOption("BTO");
+  await button("Apply configuration").click();
+  await addresses("0", "0");
+});
+
 test("lost circuit job response retains ownership across navigation until authoritative recovery", async ({
   page,
 }) => {
