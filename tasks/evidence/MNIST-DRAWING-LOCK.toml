@@ -1,0 +1,25 @@
+schema = 1
+task = "MNIST-DRAWING-LOCK"
+candidate = "1d93fd698ba10e1083a0aa05e0d8eeca1b8e0116"
+integration = "ba3de5612c32794d738e7a5aef7d8c2c9bb626ee"
+tree = "0e1d32b7ab7c154d69d4ed880660e05cf3edc7d2"
+contract_hash = "c500875ae686e139413154b5852bd7ea296c4c0370c38d8baaddd1862dbb8b73"
+checks = ["<path>", "<path>", "--verify", "<path>", "MNIST-DRAWING-LOCK"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Add a focused automated RED case to the existing local MNIST browser spec before production edits. Use the existing temporary authenticated local server/checked-in model fixture and a bounded route-response gate (not arbitrary sleeps or long science) to hold an action pending. Seed a distinctive valid raw-pixel JSON draft, assert the input fieldset/keyboard Set pixel control is disabled, perform a real canvas pointer click and a buttons-held pointer move, and prove the raw draft and rendered pixel buffer remain unchanged while locked. Ensure the regression fails for draft mutation on the original code, not fixture setup."
+result = "met"
+evidence = "Test-only edit preceded production changes. RED: local desktop-chromium failed at mnist.spec.ts:194 toHaveValue(draft), after a captured held-button move replaced the distinctive 784-pixel JSON draft with drawing pixels; fixture and disabled-control assertions succeeded. Log: <path> GREEN: all five local browser projects pass the bounded action-response gate, locked click/move, raw retention and canvas toDataURL equality assertions."
+
+[[acceptance]]
+item = "Minimally guard canvas pointer-down and pointer-move editing with the existing locked state, including no new pointer capture on locked pointer-down. Continued movement from an earlier captured drag must not mutate pixels after locking. Do not clear or replace drafts as a side effect of entering/leaving the lock; after releasing the bounded gate and completing the action, ordinary pointer editing works again and keyboard Set pixel still works. Preserve clear/input actions, coordinate/finite validation, canonical Go preprocessing, job/science ownership and recovery semantics."
+result = "met"
+evidence = "Screen.tsx adds only an early locked return before pointer capture and !locked to pointer-move admission. The extended existing case verifies no extra gotpointercapture while locked, continued captured-drag safety, retained raw draft after unlock, and restored pointer and keyboard Set pixel edits. Existing clear/input/validation/Go preprocessing and recovery code is unchanged. Reused existing lock, fixture, route gating pattern and prior attempt test evidence; omitted backend, transport, styles, dependencies and unrelated UI improvements."
+
+[[acceptance]]
+item = "Run the focused existing MNIST spec in local and hosted profiles plus typecheck and unit tests; hosted remains read-only with no local science/API probing. Record RED/GREEN and final checks honestly. This is an interaction repair, not real Orca/installed-tool/scientific/release qualification. Recheck file/worktree ownership before implementation."
+result = "met"
+evidence = "Before implementation, git status/worktree list and named-file status across existing worktrees showed no dirty overlap. Final standard local and hosted MNIST specs each pass all five browser projects; typecheck and six unit tests pass. Existing native oracle, inference/results/recovery and hosted no-API assertions remain intact. RED/GREEN are recorded in commit and this report; no Orca, installed-tool, scientific or release qualification claimed; full check: runner gate"
