@@ -1,0 +1,25 @@
+schema = 1
+task = "DOCS-OUTPUT-ROOT"
+candidate = "6d1f5e836f1ca19646114c572a9d6a0de633ec8a"
+integration = "abcdfb2fa11e26bbca2720651ade9b33e0b48b11"
+tree = "e6ca6e7e24fed5a46e9abbd9ebdbb76cc02b4507"
+contract_hash = "a8925ccc7af4c2b9eb151ccdea88f807958b6d741906d9e9bd43b019c71b7953"
+checks = ["<path>", "<path>", "--verify", "<path>", "DOCS-OUTPUT-ROOT"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "RED first: add cmd/fecim-docs-index/main_test.go with isolated temporary fixture roots and subprocess execution of the actual command (or an equivalent test subprocess helper invoking run with isolated flag state). Copy only the current PublicationPolicy source files from the repository into the fixture; never invoke generation against actual checked-in output. Symlink fixture/workbench to a separate empty outside directory, run generation with --root fixture, require nonzero exit and no success message, and assert the complete outside directory tree and sentinel bytes remain unchanged. Original code must fail because it creates outside/modules/docs, not because of source drift, setup or permissions. Use a real symlink on supported Linux; no root/permission-dependent fault injection."
+result = "met"
+evidence = "TestDocsIndex/escaping_output_parent_and_retry invokes main/run in an isolated test subprocess with fresh flag state. Copies only PublicationPolicy paths. Real symlink targets an empty outside directory; sibling sentinel and entire external tree are snapshotted. Before production edits, test failed specifically with outside/modules and outside/modules/docs added despite exit 1/path escapes from parent, with sentinel unchanged. Final focused test passes and verifies no success output."
+
+[[acceptance]]
+item = "Minimally keep output-directory creation under the already-open os.Root so escaping parent symlinks cannot cause outside filesystem mutations. Audit the existing docs-content inventory access in the same function and use the selected root consistently without weakening unknown-output rejection. Preserve the explicit source allowlist, source size/hash/rights checks, deterministic output formats/bytes, CLI flags, successful output message and nonzero errors. Do not broaden allowed output locations, follow escaping symlinks, swallow errors or fall back to unconstrained path operations."
+result = "met"
+evidence = "main.go now uses existing root.MkdirAll and fs.ReadDir(root.FS()); missing inventory is allowed, all other inventory errors propagate. Unknown-output rejection remains. No changes to allowlist, Build, limits, hashes/rights, output serialization, flags, WriteFile or success message. Reused standard-library confinement; no dependencies, rollback, transaction framework or unrelated changes."
+
+[[acceptance]]
+item = "GREEN: ordinary generation into a fresh temporary root succeeds, produces all 13 document files plus manifest and embedded corpus, and subsequent --check succeeds without changing bytes or creating directories. After removing the escaping symlink, retry in the same failed fixture succeeds and --check passes. Cover an escaping source symlink remaining rejected, unknown docs-content output remaining rejected, and --check with missing output remaining non-mutating. Tests must use policy-provided source paths rather than hard-coded source bytes/hashes; no policy or generated-file edits. Record RED/GREEN and focused/final checks honestly. This is developer-tool filesystem safety, not browser/Orca/scientific/installed-tool/release qualification."
+result = "met"
+evidence = "TestDocsIndex passes fresh generation and retry in the failed fixture after symlink removal, verifies policy-count (currently 13) document files, manifest and corpus, and tree/byte equality around --check. Separate cases reject source escape, unknown public output and escaping inventory, and verify missing-output --check is non-mutating. Both focused packages and repository generator --check pass. No policy/generated-file edits or browser/scientific/release qualification claimed; full check: runner gate"
