@@ -183,6 +183,60 @@ func TestValidationAnalysis(t *testing.T) {
 		analysisCase{name: "lane and module regression", previous: []event{aPass, bPass}, current: []event{aPass}, history: 2, wantExit: 1,
 			regressions: []string{"[MODULE REGRESSION] module=shared: pass count 2 -> 1", laneRegression("shared", 1)}, setup: laneStatuses("shared", 0, 1)},
 	)
+	historyPath := func(root string) string { return filepath.Join(root, "output/validation/history.jsonl") }
+	for _, text := range []string{"", "\n \t\n"} {
+		cases = append(cases, analysisCase{name: fmt.Sprintf("empty history %q", text), message: "No history entries present. No regression baseline available.",
+			setup: func(t *testing.T, root string) { mustWrite(t, historyPath(root), text) }})
+	}
+	cases = append(cases,
+		analysisCase{name: "sole summary without raw evidence", history: 1, message: "No regression baseline available", setup: func(t *testing.T, root string) {
+			remove("2026-01-01-1200")(t, root)
+			remove("2026-01-01-1201")(t, root)
+		}},
+		analysisCase{name: "blank separators and older corrupt record", previous: []event{aPass}, current: []event{aFail, extra}, history: 2, wantExit: 1,
+			regressions: []string{namedRegression}, setup: func(t *testing.T, root string) {
+				text := readFile(t, historyPath(root))
+				mustWrite(t, historyPath(root), "{broken\n\n"+strings.ReplaceAll(text, "\n", "\n \t\n"))
+			}},
+	)
+	invalidRecords := []struct{ name, text, context string }{
+		{"truncated JSON", `{"timestamp":`, "invalid JSON"},
+		{"null summary", `null`, "summary must be an object"},
+		{"scalar summary", `42`, "summary must be an object"},
+		{"string summary", `"summary"`, "summary must be an object"},
+		{"list summary", `[]`, "summary must be an object"},
+		{"missing timestamp", `{"modules":{"shared":{"pass":0}}}`, "timestamp"},
+	}
+	for _, modules := range []string{"", `,"modules":null`, `,"modules":[]`, `,"modules":{}`} {
+		invalidRecords = append(invalidRecords, struct{ name, text, context string }{
+			"modules " + modules, `{"timestamp":"2026-01-01-1201"` + modules + `}`, "modules"})
+	}
+	for _, lane := range []string{`null`, `[]`, `1`, `{}`, `{"pass":null}`, `{"pass":true}`, `{"pass":"1"}`, `{"pass":-1}`, `{"pass":1.5}`, `{"pass":1.0}`} {
+		invalidRecords = append(invalidRecords, struct{ name, text, context string }{
+			"lane " + lane, `{"timestamp":"2026-01-01-1201","modules":{"shared":` + lane + `}}`, "lane 'shared'"})
+	}
+	for _, invalid := range invalidRecords {
+		for _, selection := range []string{"sole", "previous", "current"} {
+			label, count := selection, 2
+			if selection == "sole" {
+				label, count = "current", 1
+			}
+			cases = append(cases, analysisCase{name: selection + " invalid " + invalid.name, history: count, wantExit: 1,
+				message: "Comparison unavailable / incomplete: " + label + " " + invalid.context, setup: func(t *testing.T, root string) {
+					lines := strings.Split(strings.TrimSpace(readFile(t, historyPath(root))), "\n")
+					index := len(lines) - 1
+					if selection == "previous" {
+						index = 0
+					}
+					lines[index] = invalid.text
+					if selection == "previous" {
+						lines[index] = strings.ReplaceAll(lines[index], "2026-01-01-1201", "2026-01-01-1200")
+					}
+					// No trailing newline also models an interrupted final append.
+					mustWrite(t, historyPath(root), strings.Join(lines, "\n"))
+				}})
+		}
+	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
@@ -223,6 +277,7 @@ func TestValidationAnalysis(t *testing.T) {
 			if tc.setup != nil {
 				tc.setup(t, root)
 			}
+			before, _ := os.ReadFile(historyPath(root))
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			cmd := exec.CommandContext(ctx, "bash", "scripts/analyze_validation.sh")
@@ -244,14 +299,21 @@ func TestValidationAnalysis(t *testing.T) {
 			if strings.Join(gotRegressions, "\n") != strings.Join(tc.regressions, "\n") {
 				t.Errorf("regressions = %q, want %q; %s", gotRegressions, tc.regressions, out)
 			}
-			if tc.history == 2 && tc.message != "Comparison unavailable" {
+			after, _ := os.ReadFile(historyPath(root))
+			if string(before) != string(after) {
+				t.Error("analyzer mutated history")
+			}
+			if strings.Contains(string(out), "Traceback") {
+				t.Errorf("uncaught traceback: %s", out)
+			}
+			if tc.history == 2 && !strings.Contains(tc.message, "Comparison unavailable") {
 				for _, label := range []string{"Current timestamp:  " + timestamps[1], "Previous timestamp: " + timestamps[0]} {
 					if !strings.Contains(string(out), label) {
 						t.Errorf("missing %q: %s", label, out)
 					}
 				}
 			}
-			if tc.wantExit != 0 && strings.Contains(string(out), "Result: No regressions found") {
+			if tc.wantExit != 0 && (strings.Contains(string(out), "Result: No regressions found") || strings.Contains(string(out), "No regression baseline available")) {
 				t.Errorf("false clean verdict: %s", out)
 			}
 			if !strings.Contains(string(out), tc.message) {
