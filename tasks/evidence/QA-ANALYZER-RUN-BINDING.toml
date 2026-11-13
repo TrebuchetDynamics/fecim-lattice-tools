@@ -1,0 +1,30 @@
+schema = 1
+task = "QA-ANALYZER-RUN-BINDING"
+candidate = "9de1bc85e1f18522eb4a124e7911c6f2a91d6e46"
+integration = "0cc374c673edd8ca0c0439d3c3783ab1a0a58826"
+tree = "1cdd067aba0106de5a241552bacb7bef850b069c"
+contract_hash = "6e08daaaf643511083f9083adb921faf99f3ac6cb7cba78a37cfc273f789e32e"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-ANALYZER-RUN-BINDING"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Before production changes, extend TestValidationAnalysis subprocess fixtures in temporary roots. Record two history entries with equal aggregate pass counts: prior shared/package TestX PASS; current same identity FAIL plus a distinct new PASS. Confirm the real copied analyzer detects it without extra directories. Add a later timestamp-named directory with no history entry and a passing TestX raw log, modeling a started/interrupted next run. Require the same exit 1 and exact failing package/test diagnostic with unchanged reported history timestamps. Record RED on the original analyzer because it falsely exits 0, not because of fixture setup. No real test failures or runtime output edits are needed."
+result = "met"
+evidence = "Before production edits, ran go test ./scripts -run '^TestValidationAnalysis/(same_package|interrupted_next_run)$' -count=1. The existing same-package equal-pass-count pair passed; interrupted_next_run failed because the original copied analyzer exited 0 with Result: No regressions found, missing the exact shared/mathutil TestClamp01 PASS -> FAIL diagnostic. TestClamp01 exercises the contract's TestX identity. After binding, the full focused test passed, including exact diagnostics and unchanged current/previous timestamps. Fixtures only modify temporary roots."
+
+[[acceptance]]
+item = "Use the selected summaries' exact timestamp identities to choose logs, not lexical enumeration, filesystem modification times or a search for a passing baseline. Add an unrelated alphabetically later directory and a fixture whose history append order differs from timestamp sort order; verdict and diagnostics must follow the two history entries. Also test a true no-regression selected pair beside unrelated failing raw logs, proving unrelated directories cannot create a false regression."
+result = "met"
+evidence = "Analyzer joins the last two history summaries' validated timestamps to the existing base directory; directory enumeration was removed. Passing TestValidationAnalysis cases unrelated_later_directory, history_append_order and unrelated_failure assert exact regression diagnostics or a clean exit, plus printed history timestamps."
+
+[[acceptance]]
+item = "Bound selected identities to safe timestamp directory names under the existing output base; do not allow separators, traversal or arbitrary paths from history. For missing/invalid identities, both selected summaries naming the same overwritten minute directory, or a missing selected directory/required lane log, print explicit comparison-unavailable/incomplete context and return nonzero, never Result: No regressions found and never silently substitute another directory. Test these cases using temporary fixtures. Required lanes are those present in either selected history summary using the existing known module-file mapping; do not require absent lanes in legacy shared-only fixtures. This is identity/availability checking only, not a new general raw-stream/schema validation policy."
+result = "met"
+evidence = "Timestamp fullmatch allows only the producer's numeric minute-directory shape; symlink directories and absent directories are rejected. Duplicate identities fail explicitly. Required known lanes are the union of the two summaries; file-read OSError produces Comparison unavailable / incomplete with lane/path context. Passing focused fixtures cover missing and non-string identities, traversal, absolute and arbitrary identities, symlink directories, duplicate minute, missing directory, missing previous/current logs, and lanes present in only either summary. Nonzero cases forbid a clean verdict. Existing shared-only cases still pass; raw-stream parsing policy is unchanged."
+
+[[acceptance]]
+item = "Preserve current module-pass-drop diagnostics, exact Package/Test and legacy empty-package separation, skips, ordinary valid two-run exit 0/1 behavior and missing/one-entry-history no-baseline behavior. Retain all existing TestValidationAnalysis cases. Do not change the producer, minute-resolution naming, history format or existing files on disk; report duplicate timestamps as unavailable rather than claiming to recover overwritten evidence. Record RED/GREEN and focused/full checks. Offline checks do not qualify science, human accessibility, installed tools or a release."
+result = "met"
+evidence = "All 13 original cases retained and passing alongside the new cases; module-count and Package/Test comparison logic preserved. Only the analyzer and its subprocess test changed, with no output repair, producer or history-format edits. RED recorded before implementation; GREEN focused tests and the complete scripts package passed, as did bash syntax and diff checks. Reused the existing module mapping, Python standard library and subprocess fixture helpers; omitted dependencies, generalized schema validation, retries and producer changes. No scientific, accessibility, installed-tool or release qualification claimed; full check: runner gate"
