@@ -3,6 +3,7 @@ package scripts_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,7 +16,7 @@ func TestValidationAnalysis(t *testing.T) {
 	analyzer := readFile(t, filepath.Join(repoRoot(t), "scripts/analyze_validation.sh"))
 	type event struct {
 		Package string `json:"Package,omitempty"`
-		Test    string
+		Test    string `json:"Test,omitempty"`
 		Action  string
 	}
 	const pkgA = "fecim-lattice-tools/shared/mathutil"
@@ -65,7 +66,40 @@ func TestValidationAnalysis(t *testing.T) {
 			mustWrite(t, path, strings.Join(lines, "\n")+"\n")
 		}
 	}
-	cases := []struct {
+	laneStatuses := func(lane string, previous, current any) func(*testing.T, string) {
+		return func(t *testing.T, root string) {
+			path := filepath.Join(root, "output/validation/history.jsonl")
+			lines := strings.Split(strings.TrimSpace(readFile(t, path)), "\n")
+			for i, status := range []any{previous, current} {
+				var summary struct {
+					Timestamp string                    `json:"timestamp"`
+					Modules   map[string]map[string]any `json:"modules"`
+				}
+				if err := json.Unmarshal([]byte(lines[i]), &summary); err != nil {
+					t.Fatal(err)
+				}
+				counts := summary.Modules["shared"]
+				if status != nil {
+					counts["exit_code"] = status
+				}
+				summary.Modules = map[string]map[string]any{lane: counts}
+				runDir := filepath.Join(root, "output/validation", summary.Timestamp)
+				if lane != "shared" {
+					if err := os.Rename(filepath.Join(runDir, "shared_results.json"), filepath.Join(runDir, lane+"_results.json")); err != nil {
+						t.Fatal(err)
+					}
+				}
+				line, err := json.Marshal(summary)
+				if err != nil {
+					t.Fatal(err)
+				}
+				lines[i] = string(line)
+				mustWrite(t, filepath.Join(runDir, "validation_summary.json"), string(line)+"\n")
+			}
+			mustWrite(t, path, strings.Join(lines, "\n")+"\n")
+		}
+	}
+	type analysisCase struct {
 		name        string
 		previous    []event
 		current     []event
@@ -75,7 +109,8 @@ func TestValidationAnalysis(t *testing.T) {
 		message     string
 		timestamps  []string
 		setup       func(*testing.T, string)
-	}{
+	}
+	cases := []analysisCase{
 		{"collision fail then pass", []event{aPass, bPass}, []event{aFail, bPass, extra}, 2, 1, []string{namedRegression}, "", nil, nil},
 		{"collision pass then fail", []event{aPass, bPass}, []event{bPass, aFail, extra}, 2, 1, []string{namedRegression}, "", nil, nil},
 		{"different package between runs", []event{{pkgA, "TestX", "pass"}}, []event{{pkgB, "TestX", "fail"}, extra}, 2, 0, nil, "No regressions found", nil, nil},
@@ -111,6 +146,43 @@ func TestValidationAnalysis(t *testing.T) {
 			}
 		}},
 	}
+	laneRegression := func(lane string, status int) string {
+		return fmt.Sprintf("[LANE EXIT REGRESSION] module=%s: exit_code 0 -> %d", lane, status)
+	}
+	cases = append(cases, analysisCase{
+		name: "shared build failure", previous: []event{aPass, {pkgB, "", "pass"}},
+		current: []event{aPass, {pkgB, "", "fail"}}, history: 2, wantExit: 1,
+		regressions: []string{laneRegression("shared", 1)}, setup: laneStatuses("shared", 0, 1),
+	})
+	for _, lane := range []string{"m1", "m4", "m6", "shared", "validation"} {
+		for _, status := range []int{124, 127} {
+			cases = append(cases, analysisCase{
+				name: fmt.Sprintf("%s exit %d", lane, status), previous: []event{aPass}, current: []event{aPass},
+				history: 2, wantExit: 1, regressions: []string{laneRegression(lane, status)}, setup: laneStatuses(lane, 0, status),
+			})
+		}
+	}
+	for _, statuses := range []struct {
+		name              string
+		previous, current any
+	}{
+		{"success", 0, 0}, {"recovery", 1, 0}, {"unchanged failure", 124, 124},
+		{"legacy previous", nil, 1}, {"legacy current", 0, nil},
+		{"invalid previous string", "0", 1}, {"invalid previous boolean", false, 1},
+		{"invalid current string", 0, "1"}, {"invalid current boolean", 0, true},
+		{"invalid current negative", 0, -1}, {"invalid current range", 0, 256}, {"invalid current fraction", 0, 1.5},
+	} {
+		cases = append(cases, analysisCase{
+			name: statuses.name, previous: []event{aPass}, current: []event{aPass}, history: 2,
+			message: "No regressions found", setup: laneStatuses("shared", statuses.previous, statuses.current),
+		})
+	}
+	cases = append(cases,
+		analysisCase{name: "lane and test regression", previous: []event{aPass}, current: []event{aFail, extra}, history: 2, wantExit: 1,
+			regressions: []string{laneRegression("shared", 1), namedRegression}, setup: laneStatuses("shared", 0, 1)},
+		analysisCase{name: "lane and module regression", previous: []event{aPass, bPass}, current: []event{aPass}, history: 2, wantExit: 1,
+			regressions: []string{"[MODULE REGRESSION] module=shared: pass count 2 -> 1", laneRegression("shared", 1)}, setup: laneStatuses("shared", 0, 1)},
+	)
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
@@ -130,7 +202,9 @@ func TestValidationAnalysis(t *testing.T) {
 						t.Fatal(err)
 					}
 					raw += string(line) + "\n"
-					counts[e.Action]++
+					if e.Test != "" {
+						counts[e.Action]++
+					}
 				}
 				runDir := filepath.Join(root, "output/validation", timestamp)
 				mustWrite(t, filepath.Join(runDir, "shared_results.json"), raw)
