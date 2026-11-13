@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -237,6 +238,47 @@ func TestValidationAnalysis(t *testing.T) {
 				}})
 		}
 	}
+	invalidEvents := []string{`  {"Package":"p","Test":"TestX","Action":"fa`, `[ {`, `null`, `[]`, `42`, `"event"`, `true`}
+	for _, field := range []string{"Action", "Test", "Package"} {
+		for _, value := range []any{nil, []any{}, map[string]any{}, 42, true} {
+			record := map[string]any{"Action": "pass", "Test": "TestX", "Package": "p"}
+			record[field] = value
+			text, err := json.Marshal(record)
+			if err != nil {
+				t.Fatal(err)
+			}
+			invalidEvents = append(invalidEvents, string(text))
+		}
+	}
+	for _, text := range invalidEvents {
+		for i, selection := range []string{"previous", "current"} {
+			timestamp := fmt.Sprintf("2026-01-01-120%d", i)
+			cases = append(cases, analysisCase{
+				name: selection + " invalid raw " + text, previous: []event{aPass}, current: []event{aPass}, history: 2, wantExit: 1,
+				message: "Comparison unavailable / incomplete: " + selection + " lane shared " + filepath.Join("output/validation", timestamp, "shared_results.json") + ":3:",
+				setup: func(t *testing.T, root string) {
+					path := filepath.Join(root, "output/validation", timestamp, "shared_results.json")
+					mustWrite(t, path, readFile(t, path)+"\n"+text)
+				},
+			})
+		}
+	}
+	cases = append(cases, analysisCase{
+		name: "mixed producer stderr and nonterminal events", previous: []event{aPass}, current: []event{aFail, extra}, history: 2, wantExit: 1,
+		regressions: []string{namedRegression}, setup: func(t *testing.T, root string) {
+			for _, timestamp := range []string{"2026-01-01-1200", "2026-01-01-1201"} {
+				path := filepath.Join(root, "output/validation", timestamp, "shared_results.json")
+				text := "\n \t\n# example/package\nfile.go:3: undefined: missing\ntimeout: sending signal TERM to command 'go'\n"
+				for _, action := range []string{"start", "run", "output", "pause", "cont", "bench", "pass", "fail"} {
+					text += fmt.Sprintf("{\"Action\":%q,\"Package\":%q}\n", action, pkgA)
+					if action != "pass" && action != "fail" {
+						text += fmt.Sprintf("{\"Action\":%q,\"Test\":\"TestClamp01\",\"Package\":%q}\n", action, pkgA)
+					}
+				}
+				mustWrite(t, path, text+readFile(t, path)+text)
+			}
+		},
+	})
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
@@ -277,7 +319,23 @@ func TestValidationAnalysis(t *testing.T) {
 			if tc.setup != nil {
 				tc.setup(t, root)
 			}
-			before, _ := os.ReadFile(historyPath(root))
+			snapshot := func() map[string]string {
+				files := map[string]string{}
+				err := filepath.WalkDir(filepath.Join(root, "output/validation"), func(path string, entry os.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+					if entry.Type().IsRegular() {
+						files[path] = readFile(t, path)
+					}
+					return nil
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				return files
+			}
+			before := snapshot()
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			cmd := exec.CommandContext(ctx, "bash", "scripts/analyze_validation.sh")
@@ -299,9 +357,8 @@ func TestValidationAnalysis(t *testing.T) {
 			if strings.Join(gotRegressions, "\n") != strings.Join(tc.regressions, "\n") {
 				t.Errorf("regressions = %q, want %q; %s", gotRegressions, tc.regressions, out)
 			}
-			after, _ := os.ReadFile(historyPath(root))
-			if string(before) != string(after) {
-				t.Error("analyzer mutated history")
+			if !maps.Equal(before, snapshot()) {
+				t.Error("analyzer mutated validation evidence")
 			}
 			if strings.Contains(string(out), "Traceback") {
 				t.Errorf("uncaught traceback: %s", out)

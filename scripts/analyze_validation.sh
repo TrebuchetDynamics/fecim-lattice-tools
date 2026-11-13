@@ -116,17 +116,26 @@ for module in sorted(set(prev_modules.keys()) | set(cur_modules.keys())):
         )
 
 # Rule 1: any test PASS -> FAIL in lanes named by either selected summary.
-def collect_test_statuses(path):
+def collect_test_statuses(path, label, module):
     statuses = {}
     with open(path, "r", encoding="utf-8", errors="replace") as f:
-        for line in f:
+        for line_number, line in enumerate(f, 1):
             line = line.strip()
             if not line:
                 continue
+            context = f"{label} lane {module} {path}:{line_number}:"
             try:
                 obj = json.loads(line)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as error:
+                # Producer stderr is merged into stdout; plain diagnostics are not events.
+                if line.startswith(("{", "[", '"')):
+                    unavailable(f"{context} invalid JSON event: {error}")
                 continue
+            if not isinstance(obj, dict):
+                unavailable(f"{context} event must be an object")
+            for field in ("Action", "Test", "Package"):
+                if field in obj and not isinstance(obj[field], str):
+                    unavailable(f"{context} event {field} must be a string")
             test = obj.get("Test")
             action = obj.get("Action")
             if not test or action not in {"pass", "fail", "skip"}:
@@ -139,8 +148,8 @@ for module, filename in module_files.items():
     if module not in prev_modules and module not in cur_modules:
         continue
     try:
-        prev_status = collect_test_statuses(os.path.join(previous_dir, filename))
-        cur_status = collect_test_statuses(os.path.join(latest_dir, filename))
+        prev_status = collect_test_statuses(os.path.join(previous_dir, filename), "previous", module)
+        cur_status = collect_test_statuses(os.path.join(latest_dir, filename), "current", module)
     except OSError as error:
         unavailable(f"required lane {module} log cannot be read: {error}")
     # Missing or invalid legacy statuses are not evidence of command success.
