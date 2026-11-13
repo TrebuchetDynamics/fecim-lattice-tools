@@ -18,9 +18,12 @@ TEST_TIMEOUT="${VALIDATION_TEST_TIMEOUT:-600s}"
 run_module_tests() {
   local module_path="$1"
   local output_file="$2"
+  local rc
 
   echo "Running: timeout ${TEST_TIMEOUT} go test -short -count=1 -json ./${module_path}/..."
-  if ! timeout "${TEST_TIMEOUT}" go test -short -count=1 -json "./${module_path}/..." > "$output_file" 2>&1; then
+  if timeout "${TEST_TIMEOUT}" go test -short -count=1 -json "./${module_path}/..." > "$output_file" 2>&1; then
+    rc=0
+  else
     rc=$?
     if [[ $rc -eq 124 ]]; then
       echo "Warning: ${module_path} timed out after ${TEST_TIMEOUT} (details in ${output_file})"
@@ -28,6 +31,7 @@ run_module_tests() {
       echo "Warning: tests reported failures for ${module_path} (details in ${output_file})"
     fi
   fi
+  return "$rc"
 }
 
 extract_counts() {
@@ -59,10 +63,15 @@ PY
 }
 
 run_module_tests "module1-hysteresis" "$out_dir/m1_results.json"
+m1_exit=$?
 run_module_tests "module4-circuits" "$out_dir/m4_results.json"
+m4_exit=$?
 run_module_tests "module6-eda" "$out_dir/m6_results.json"
+m6_exit=$?
 run_module_tests "shared" "$out_dir/shared_results.json"
+shared_exit=$?
 run_module_tests "validation" "$out_dir/validation_results.json"
+val_exit=$?
 
 read -r m1_pass m1_fail m1_skip <<< "$(extract_counts "$out_dir/m1_results.json")"
 read -r m4_pass m4_fail m4_skip <<< "$(extract_counts "$out_dir/m4_results.json")"
@@ -75,7 +84,7 @@ total_fail=$((m1_fail + m4_fail + m6_fail + shared_fail + val_fail))
 
 summary_file="$out_dir/validation_summary.json"
 cat > "$summary_file" <<JSON
-{"timestamp":"$timestamp","commit":"$commit","modules":{"m1":{"pass":$m1_pass,"fail":$m1_fail,"skip":$m1_skip},"m4":{"pass":$m4_pass,"fail":$m4_fail,"skip":$m4_skip},"m6":{"pass":$m6_pass,"fail":$m6_fail,"skip":$m6_skip},"shared":{"pass":$shared_pass,"fail":$shared_fail,"skip":$shared_skip},"validation":{"pass":$val_pass,"fail":$val_fail,"skip":$val_skip}},"total_pass":$total_pass,"total_fail":$total_fail}
+{"timestamp":"$timestamp","commit":"$commit","modules":{"m1":{"pass":$m1_pass,"fail":$m1_fail,"skip":$m1_skip,"exit_code":$m1_exit},"m4":{"pass":$m4_pass,"fail":$m4_fail,"skip":$m4_skip,"exit_code":$m4_exit},"m6":{"pass":$m6_pass,"fail":$m6_fail,"skip":$m6_skip,"exit_code":$m6_exit},"shared":{"pass":$shared_pass,"fail":$shared_fail,"skip":$shared_skip,"exit_code":$shared_exit},"validation":{"pass":$val_pass,"fail":$val_fail,"skip":$val_skip,"exit_code":$val_exit}},"total_pass":$total_pass,"total_fail":$total_fail}
 JSON
 
 history_file="$out_base/history.jsonl"
@@ -86,3 +95,8 @@ echo >> "$history_file"
 echo "Validation run complete."
 echo "Output directory: $out_dir"
 echo "Summary: $summary_file"
+
+if (( m1_exit != 0 || m4_exit != 0 || m6_exit != 0 || shared_exit != 0 || val_exit != 0 )); then
+  exit 1
+fi
+exit 0
