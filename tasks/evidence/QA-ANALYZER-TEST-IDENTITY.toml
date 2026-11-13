@@ -1,0 +1,25 @@
+schema = 1
+task = "QA-ANALYZER-TEST-IDENTITY"
+candidate = "e67927de800dc43e3236b7684a95369051ec68f9"
+integration = "f60605166b5f198b719d54201ae8d8f461b09904"
+tree = "cdb5af60f7582a6070420298b05977590cc7f397"
+contract_hash = "88a3553e6a7e5418e60e4e19ef37a7a7f7197a17fb2398a6e91b119c54f2c23b"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-ANALYZER-TEST-IDENTITY"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "RED first: add scripts/validation_analysis_test.go with bounded subprocess tests invoking a copied real analyzer in a temporary root. Write two timestamped run directories and history summaries whose module counts match the actual fixtures. Baseline has shared/mathutil TestClamp01 PASS and shared/testutil TestClamp01 PASS; current has mathutil TestClamp01 FAIL, testutil TestClamp01 PASS and a distinct new passing test so module pass counts remain equal. Test both orderings of the two colliding terminal events. Require exit 1, the exact failing package/test identity and no blame on the passing package. The original analyzer must fail because one ordering exits 0, not due to setup or timeout. Fixtures need no real physics failure, live output directory or external input."
+result = "met"
+evidence = "RED before production edits: go test ./scripts -run '^TestValidationAnalysis' -count=1 failed in 1.678s; collision_fail_then_pass exited 0 instead of 1, while the reverse ordering exited 1 without package attribution. No timeout/setup failure occurred. GREEN final focused check passed (0.285s). The copied real analyzer runs under a 10-second context per subtest in t.TempDir; fixtures use two minute-format timestamp directories, raw shared_results.json and generated summary/history counts. Both collision orderings now exit 1 with exactly the mathutil/TestClamp01 diagnostic and no testutil blame; counts remain two passes per run."
+
+[[acceptance]]
+item = "Prove identities do not cross packages between runs: a prior package A/TestX PASS and current package B/TestX FAIL is not a PASS-to-FAIL of A when A is absent and module passes are held equal by another passing test. Retain true same-package regression detection, independent module pass-count drops, a no-regression case, skip behavior and missing/one-entry-history behavior. For package-less legacy events, retain a distinct empty-package identity without conflating it with any named package; do not invent package attribution. Include an assertion that Package and Test both appear in named-package regression diagnostics."
+result = "met"
+evidence = "All 13 table cases pass: A/TestX to absent-A and B/TestX fail with equal module passes produces no regression; same-package PASS-to-FAIL does; module-only count drop independently exits 1. Cases retain no-regression, pass-to-skip, skip-to-fail, missing history and one-entry baseline behavior. Legacy regression beside a named pass identifies package='' exactly; legacy-to-named and named-to-legacy do not conflate identities. Exact diagnostic comparisons assert both Package and Test and exclude extra blame. go test ./scripts -count=1 passed via autowork-run (10.212s)."
+
+[[acceptance]]
+item = "Minimally use a Package/Test pair for collection/comparison and print unambiguous package/test diagnostics. Do not change stream validation, run-directory selection, minute timestamp generation, count definitions or command-exit handling. Record expected RED, GREEN and final focused/full check receipts; offline fixtures do not qualify any browser, scientific model, installed tool or release."
+result = "met"
+evidence = "Production diff only changes terminal-status dictionary keys to (Package, Test), corresponding lookup/unpacking, and repr-quoted package/test diagnostics; absent Package defaults to the distinct empty string. Stream filtering, run selection, count/history logic, timestamps and exits remain unchanged. Reused real analyzer and existing readFile/repoRoot/mustWrite helpers, with Go standard-library subprocess/JSON support; omitted new dependencies, generic admission/retry logic, wiring and all live/scientific qualification. Focused GREEN, scripts suite, bash syntax and whitespace checks pass; full check: runner gate"
