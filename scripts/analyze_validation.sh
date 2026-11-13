@@ -95,17 +95,18 @@ if latest_dir and previous_dir and latest_dir != previous_dir:
                 action = obj.get("Action")
                 if not test or action not in {"pass", "fail", "skip"}:
                     continue
-                statuses[test] = action
+                statuses[(obj.get("Package", ""), test)] = action
         return statuses
 
     for module, filename in module_files.items():
         prev_status = collect_test_statuses(os.path.join(previous_dir, filename))
         cur_status = collect_test_statuses(os.path.join(latest_dir, filename))
-        for test_name, old_status in prev_status.items():
-            new_status = cur_status.get(test_name)
+        for identity, old_status in prev_status.items():
+            package, test_name = identity
+            new_status = cur_status.get(identity)
             if old_status == "pass" and new_status == "fail":
                 regressions.append(
-                    f"[TEST REGRESSION] module={module} test={test_name}: PASS -> FAIL"
+                    f"[TEST REGRESSION] module={module} package={package!r} test={test_name!r}: PASS -> FAIL"
                 )
 
 print("Validation Regression Analysis")
