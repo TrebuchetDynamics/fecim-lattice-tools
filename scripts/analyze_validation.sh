@@ -123,6 +123,15 @@ for module, filename in module_files.items():
         cur_status = collect_test_statuses(os.path.join(latest_dir, filename))
     except OSError as error:
         unavailable(f"required lane {module} log cannot be read: {error}")
+    # Missing or invalid legacy statuses are not evidence of command success.
+    prev_exit = prev_modules.get(module, {}).get("exit_code")
+    cur_exit = cur_modules.get(module, {}).get("exit_code")
+    if (type(prev_exit) is int and 0 <= prev_exit <= 255
+            and type(cur_exit) is int and 0 <= cur_exit <= 255
+            and prev_exit == 0 and cur_exit != 0):
+        regressions.append(
+            f"[LANE EXIT REGRESSION] module={module}: exit_code {prev_exit} -> {cur_exit}"
+        )
     for identity, old_status in prev_status.items():
         package, test_name = identity
         new_status = cur_status.get(identity)
