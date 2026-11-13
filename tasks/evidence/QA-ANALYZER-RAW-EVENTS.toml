@@ -1,0 +1,25 @@
+schema = 1
+task = "QA-ANALYZER-RAW-EVENTS"
+candidate = "89724c82f1b544531c7da230541186045d671241"
+integration = "8c1ad7a249d0bb77850ae8336893fafd92fa9515"
+tree = "c06272f2bbe8d12eafe276967bd657aa73fbd604"
+contract_hash = "aaa28cce1037ae727f2833cfd3e448152f79dc9740c2cca3d32e56886553ed73"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-ANALYZER-RAW-EVENTS"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Before production changes, add focused failing subprocess cases for truncated JSON-shaped records, decoded non-object JSON (null/list/scalar), and invalid event field types, in both previous and current selected raw logs. They must produce exit 1 with Comparison unavailable / incomplete and lane, selected run, filename and line context, no Traceback, no clean/no-baseline verdict, and no history/raw-file writes. Record actual RED then GREEN commands and exits."
+result = "met"
+evidence = "Before production edits, added table cases and ran go test ./scripts -run '^TestValidationAnalysis$' -count=1: RED exit 1, false-clean verdicts and tracebacks (log: $TMPDIR/raw-events-red.log). After the parser fix the same command was GREEN exit 0. Cases cover truncated objects/lists, decoded null/list/number/string/boolean, and null/list/object/number/boolean Action/Test/Package fields in both selected logs. Assertions require exit 1, contextual selection/lane/run/file/line diagnostic, no traceback or clean/no-baseline verdict, and unchanged snapshots of all validation evidence."
+
+[[acceptance]]
+item = "Valid Go start/run/output/pause/cont/bench/package pass/fail events and valid test pass/fail/skip still work. Preserve missing-Package legacy identities, blank separators, legitimate mixed-in non-JSON stderr diagnostics, missing-history/single-valid-summary no-baseline behavior, package collision isolation, selected-directory binding, lane exit regressions and all current TestValidationAnalysis expectations. Add positive controls for the producer mixed-output format and nonterminal events; do not impose an all-lines-JSON requirement on merged stderr."
+result = "met"
+evidence = "Focused TestValidationAnalysis and complete scripts suite pass. Added mixed-producer-output control includes compiler/timeout stderr, blank lines, package events and test nonterminal actions before and after terminal evidence, and still detects the expected named regression. Existing legacy, collision, skip, no-baseline, binding and lane-exit cases remain unchanged and pass."
+
+[[acceptance]]
+item = "Only scripts/analyze_validation.sh and scripts/validation_analysis_test.go change during implementation; existing focused and full native checks pass. No producer/schema/history/task/goal/policy/runtime edits, weakened checks or qualification claim."
+result = "met"
+evidence = "Commit changes only scripts/analyze_validation.sh and scripts/validation_analysis_test.go. Focused and complete scripts tests, shell syntax and diff checks pass; no producer, schema, evidence, policy or runtime changes or qualification claims. Reused existing unavailable() diagnostic, JSON parser, selected-lane loop, identities and subprocess table; omitted dependencies, parser framework, lifecycle/count reconciliation and producer changes. full check: runner gate"

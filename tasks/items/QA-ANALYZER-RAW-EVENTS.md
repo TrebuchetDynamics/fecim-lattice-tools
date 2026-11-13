@@ -3,7 +3,7 @@ schema = 1
 id = "QA-ANALYZER-RAW-EVENTS"
 title = "Reject malformed raw validation events without false-clean verdicts"
 short = "Fail closed on corrupt raw events"
-status = "open"
+status = "done"
 goal = "OFFLINE-QA"
 section = "Next"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Repair only the analyzer raw-event parser and its subprocess regression
 acceptance = ["Before production changes, add focused failing subprocess cases for truncated JSON-shaped records, decoded non-object JSON (null/list/scalar), and invalid event field types, in both previous and current selected raw logs. They must produce exit 1 with Comparison unavailable / incomplete and lane, selected run, filename and line context, no Traceback, no clean/no-baseline verdict, and no history/raw-file writes. Record actual RED then GREEN commands and exits.", "Valid Go start/run/output/pause/cont/bench/package pass/fail events and valid test pass/fail/skip still work. Preserve missing-Package legacy identities, blank separators, legitimate mixed-in non-JSON stderr diagnostics, missing-history/single-valid-summary no-baseline behavior, package collision isolation, selected-directory binding, lane exit regressions and all current TestValidationAnalysis expectations. Add positive controls for the producer mixed-output format and nonterminal events; do not impose an all-lines-JSON requirement on merged stderr.", "Only scripts/analyze_validation.sh and scripts/validation_analysis_test.go change during implementation; existing focused and full native checks pass. No producer/schema/history/task/goal/policy/runtime edits, weakened checks or qualification claim."]
 checks = ["go test ./scripts -run '^TestValidationAnalysis$' -count=1", "go test ./scripts -count=1", "bash -n scripts/analyze_validation.sh", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Offline implementation only. No network, Live operations, listeners, release/deployment/push, service/runtime state, generated assets, instruction/task/goal changes, golden/tolerance changes or Fyne launch-default switch. Preserve HYS-ORCA, T-013-a31914c8, WEB-ORCA and WEB-TOOLS owner-only evidence/authority gates and both HYS/WEB final planning stops.", "No run_full_validation.sh, agent-test-loop.sh, held EDA/export/research/staged proposals, dirty Hysteresis files or other-session work. Current analyzer prerequisite tasks are coordinator-verified done and their worktrees clean; runner snapshot has no active workers. Recheck live ownership before implementation and preserve serialization if a new claim appears. No broad parser framework, retry/lifecycle validation, summary-to-raw count reconciliation, producer behavior change or new discovery/planning successor."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/QA-ANALYZER-RAW-EVENTS.toml"
 +++
 - Sources: scripts/analyze_validation.sh#collect_test_statuses; scripts/validation_analysis_test.go#TestValidationAnalysis; scripts/run_full_validation.sh#run_module_tests; README.md#validation-and-development
 - Discovery evidence: Temporary-root subprocess probes reproduced truncated-event exit 0 with No regressions found, null AttributeError and list-valued Package TypeError. No production or test files changed; worker must establish automated RED before implementation. Current TestValidationAnalysis passes, demonstrating the missing coverage.
