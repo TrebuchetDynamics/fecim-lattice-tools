@@ -1,0 +1,25 @@
+schema = 1
+task = "QA-ANALYZER-LANE-EXIT"
+candidate = "75d53534eaa257cb2f83a7b8512c8dd54c225e48"
+integration = "8c4285d2ecc232ebae201a50a038c8d6afd374ed"
+tree = "ece1b00adadf0612d086f9e61e86a0e81bcfe5be"
+contract_hash = "5df0685e03bf086a901b023cfdbda9bf0c754f0dd50d1da254828ef94952dbbb"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-ANALYZER-LANE-EXIT"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Before production edits, extend TestValidationAnalysis with temporary-root subprocess fixtures of the real copied analyzer and selected timestamp-bound history/logs. Prior shared lane records exit_code=0, one stable passing test plus a different package terminal pass with no Test. Current keeps the same stable pass but that other package emits only a package failure (build failure), recording exit_code=1. Counts stay pass=1/fail=0 so pass-count and test-identity rules cannot mask this defect. Require exit 1, a diagnostic naming shared and 0 -> 1, and no No regressions found. Record automated RED caused by the original false exit 0, not setup."
+result = "met"
+evidence = "Before production edits, go test ./scripts -run '^TestValidationAnalysis$/shared_build_failure$' -count=1 failed because analyzer returned 0, emitted No regressions found and omitted shared exit_code 0 -> 1. Fixture has one retained Test pass plus a different package-only pass/fail, with pass=1/fail=0 in both selected histories. GREEN includes this case and exact diagnostics/no-false-clean assertions."
+
+[[acceptance]]
+item = "Compare explicit valid recorded command statuses for every known lane, not aggregate test fail counts. Add cases for 0 -> 124 timeout after retained passing events and 0 -> 127 command/setup error without Test failures; include each of m1, m4, m6, shared and validation in focused fixtures. Require nonzero analyzer verdict and the correct lane/status diagnostic. Do not fabricate test failures or modify the producer/count semantics. A simultaneous existing test or module-count regression must remain visible."
+result = "met"
+evidence = "All five known lanes have 0 -> 124 and 0 -> 127 fixtures with retained passing events and no Test failures. Exact lane/status diagnostics and exit 1 passed. Combined lane/test and lane/module cases passed with both diagnostics retained. Production reuses selected-history known-lane iteration, validates integer command status 0..255, and never consults aggregate failures or changes producer semantics."
+
+[[acceptance]]
+item = "Prove 0 -> 0, nonzero -> 0 recovery and unchanged nonzero statuses do not create a new lane-exit regression by themselves; this analyzer is differential, not a claim that a failing current run passed. Preserve legacy behavior when either selected lane lacks exit_code: do not infer missing status as success or rewrite old history. Retain all existing TestValidationAnalysis cases, no-baseline behavior, orphan-directory exclusion, required-log availability checks, exact Package/Test attribution and module pass-drop rules. No raw-stream admission redesign, package-terminal validation or timestamp change. Record GREEN and final checks."
+result = "met"
+evidence = "GREEN focused command and complete scripts suite passed. Added success, recovery, unchanged failure, missing previous/current status and invalid status fixtures; all existing cases retained, including no baseline, orphan exclusion, missing logs, identity attribution and pass drops. Only two permitted files changed. No history writes, admission policy or timestamp changes. full check: runner gate"
