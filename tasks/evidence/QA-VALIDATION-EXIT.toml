@@ -1,0 +1,25 @@
+schema = 1
+task = "QA-VALIDATION-EXIT"
+candidate = "48bf631a005e32a4e32bb340ae25122243b17568"
+integration = "7a6ebdb00a21646e4cb027669c8a1ab1b389fbda"
+tree = "656696872f8427c7a06177d6a8abc68630b8cbae"
+contract_hash = "8876350a40b7909622a0cbf88c259195dc58586bd0ca94a1244bae11b408c572"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-VALIDATION-EXIT"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Given a temporary copy of the actual runner under a fixture repository with PATH-controlled timeout/go commands, when one lane returns 124 after emitting a passing test event, then the runner exits 1, identifies that lane and configured timeout accurately, records exit_code=124 for it, and retains its raw output. Test each of the five lane positions with all other commands succeeding; assert every lane is still invoked. Record the expected automated RED before production changes."
+result = "met"
+evidence = "TestFullValidationExit timeout_m1/m4/m6/shared/validation exercise each lane with status 124 and passing events; all five invocations, exact selectors, warning lane and 37s timeout, raw stdout/stderr, status fields and appended history are asserted. RED ran against unchanged production before the shell edit and failed as expected; GREEN passes. Commit message records RED/GREEN."
+
+[[acceptance]]
+item = "Given a lane returning nonzero for a test failure, a build failure with only package-level failure output, or a command/setup error with no JSON tests, when the runner completes collection, then it exits 1 regardless of the test-event fail counts and records the actual nonzero exit_code in that module summary and appended history. Other modules retain their own statuses and existing pass/fail/skip counts. Do not fabricate failed scientific tests to encode command errors."
+result = "met"
+evidence = "TestFullValidationExit test_failure/build_failure/setup_error pass with lane statuses 1/1/127, overall status 1, and exact per-module counts/statuses. Build/setup failures retain zero scientific failure counts. Raw logs and append-only history matching summary are asserted; all other commands finish successfully."
+
+[[acceptance]]
+item = "Given all five lane commands exiting 0 with valid fixture pass/fail/skip event counts, when the runner runs, then it exits 0 and preserves existing timestamp/commit/module/count fields, output filenames, raw logs and summary/history layout, adding exit_code=0 per module. Exercise mixed pass/skip counts and verify summary JSON and history agree. No live tools, real long-running science or arbitrary sleeps in contract tests; use temporary fixture roots and bounded subprocess contexts. Keep existing suite selectors, -short, -count=1 and timeout configuration intact."
+result = "met"
+evidence = "TestFullValidationExit success passes with five zero statuses, mixed pass/skip and a fixture fail event to verify command-status verdict independence. It checks parsed timestamp/commit/module/count fields, output directory and raw filenames, raw stdout/stderr and exact history append. All cases use t.TempDir and a 10-second subprocess context, PATH fixtures and no sleeps. Command assertions preserve all five selectors and -short -count=1 -json; production default 600s and VALIDATION_TEST_TIMEOUT override remain unchanged."

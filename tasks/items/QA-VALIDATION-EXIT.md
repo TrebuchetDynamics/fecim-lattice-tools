@@ -3,7 +3,7 @@ schema = 1
 id = "QA-VALIDATION-EXIT"
 title = "Propagate failed and timed-out validation lanes into the full-run verdict"
 short = "Keep full validation command failures visible"
-status = "open"
+status = "done"
 goal = "OFFLINE-QA"
 section = "Next"
 rank = 1000
@@ -16,6 +16,8 @@ scope = "Repair only scripts/run_full_validation.sh and a new subprocess contrac
 acceptance = ["Given a temporary copy of the actual runner under a fixture repository with PATH-controlled timeout/go commands, when one lane returns 124 after emitting a passing test event, then the runner exits 1, identifies that lane and configured timeout accurately, records exit_code=124 for it, and retains its raw output. Test each of the five lane positions with all other commands succeeding; assert every lane is still invoked. Record the expected automated RED before production changes.", "Given a lane returning nonzero for a test failure, a build failure with only package-level failure output, or a command/setup error with no JSON tests, when the runner completes collection, then it exits 1 regardless of the test-event fail counts and records the actual nonzero exit_code in that module summary and appended history. Other modules retain their own statuses and existing pass/fail/skip counts. Do not fabricate failed scientific tests to encode command errors.", "Given all five lane commands exiting 0 with valid fixture pass/fail/skip event counts, when the runner runs, then it exits 0 and preserves existing timestamp/commit/module/count fields, output filenames, raw logs and summary/history layout, adding exit_code=0 per module. Exercise mixed pass/skip counts and verify summary JSON and history agree. No live tools, real long-running science or arbitrary sleeps in contract tests; use temporary fixture roots and bounded subprocess contexts. Keep existing suite selectors, -short, -count=1 and timeout configuration intact."]
 checks = ["go test ./scripts -run '^TestFullValidationExit' -count=1", "go test ./scripts -count=1", "bash -n scripts/run_full_validation.sh", "git diff --check", "env CGO_ENABLED=1 xvfb-run -a go test ./... -timeout=10m"]
 exclusions = ["Only the two named files. No changes to analyze_validation.sh, agent-test-loop.sh, gotest_pkgsum, CI/Make wiring, instructions, existing task/goal records, artifacts/goldens, model/physics/defaults, thresholds, dependencies or toolchains. No count-definition changes, broader JSON stream admission policy, history migration, timestamp collision repair, output transaction/rollback refactor or fabricated test failures. Preserve Go core/CLI/default-built Fyne and all checks.", "Ordinary offline building only; temporary subprocess/filesystem fixtures need no external input or Live grant. No deployment/publication/push, runtime/service edits, tool/model/dataset/PDK acquisition or installed EDA execution, real Orca substitution, Fyne deletion/default switch or qualification claim. Preserve owner-only HYS-ORCA, WEB-ORCA, WEB-TOOLS and T-013-a31914c8 and final HYS/WEB planning stops. Recheck live file/worktree claims before implementation; never release another owner or touch claimed/dirty files."]
+closure = "coordinator_verified"
+closure_evidence = "tasks/evidence/QA-VALIDATION-EXIT.toml"
 +++
 - Sources: scripts/AGENTS.md#testing-requirements; scripts/run_full_validation.sh; scripts/analyze_validation.sh; README.md#validation-and-development
 
