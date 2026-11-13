@@ -20,21 +20,17 @@ fi
 mapfile -t summary_lines < <(grep -v '^\s*$' "$HISTORY_FILE")
 summary_count="${#summary_lines[@]}"
 
-if [[ "$summary_count" -lt 2 ]]; then
+if [[ "$summary_count" -eq 0 ]]; then
   echo "Validation Analysis"
   echo "==================="
-  echo "Only one history entry present. No regression baseline available."
+  echo "No history entries present. No regression baseline available."
   exit 0
 fi
 
 latest_summary="${summary_lines[$((summary_count-1))]}"
-previous_summary="${summary_lines[$((summary_count-2))]}"
-
-if [[ -z "$latest_summary" || -z "$previous_summary" ]]; then
-  echo "Validation Analysis"
-  echo "==================="
-  echo "Only one history entry present. No regression baseline available."
-  exit 0
+previous_summary=""
+if [[ "$summary_count" -ge 2 ]]; then
+  previous_summary="${summary_lines[$((summary_count-2))]}"
 fi
 
 python3 - "$latest_summary" "$previous_summary" "$BASE_DIR" <<'PY'
@@ -43,8 +39,6 @@ import os
 import re
 import sys
 
-latest_summary_json = json.loads(sys.argv[1])
-previous_summary_json = json.loads(sys.argv[2])
 base_dir = sys.argv[3]
 
 module_files = {
@@ -55,23 +49,49 @@ module_files = {
     "validation": "validation_results.json",
 }
 
-print("Validation Regression Analysis")
-print("==============================")
-print(f"Current timestamp:  {latest_summary_json.get('timestamp', 'unknown')}")
-print(f"Previous timestamp: {previous_summary_json.get('timestamp', 'unknown')}")
-print("")
-
-
 def unavailable(context):
     print(f"Result: Comparison unavailable / incomplete: {context}")
     sys.exit(1)
 
 
-def selected_dir(summary, label):
+def parse_summary(text, label):
+    try:
+        summary = json.loads(text)
+    except json.JSONDecodeError as error:
+        unavailable(f"{label} invalid JSON: {error}")
+    if not isinstance(summary, dict):
+        unavailable(f"{label} summary must be an object")
     timestamp = summary.get("timestamp")
     if not isinstance(timestamp, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}", timestamp):
         unavailable(f"{label} timestamp is missing or invalid: {timestamp!r}")
-    path = os.path.join(base_dir, timestamp)
+    modules = summary.get("modules")
+    if not isinstance(modules, dict) or not modules:
+        unavailable(f"{label} modules must be a nonempty mapping")
+    for lane, counts in modules.items():
+        if not isinstance(counts, dict):
+            unavailable(f"{label} lane {lane!r} must be a mapping")
+        if type(counts.get("pass")) is not int or counts["pass"] < 0:
+            unavailable(f"{label} lane {lane!r} pass must be an explicitly present nonnegative integer")
+    return summary
+
+
+latest_summary_json = parse_summary(sys.argv[1], "current")
+previous_summary_json = parse_summary(sys.argv[2], "previous") if sys.argv[2] else None
+if previous_summary_json is None:
+    print("Validation Analysis")
+    print("===================")
+    print("Only one history entry present. No regression baseline available.")
+    sys.exit(0)
+
+print("Validation Regression Analysis")
+print("==============================")
+print(f"Current timestamp:  {latest_summary_json['timestamp']}")
+print(f"Previous timestamp: {previous_summary_json['timestamp']}")
+print("")
+
+
+def selected_dir(summary, label):
+    path = os.path.join(base_dir, summary["timestamp"])
     if os.path.islink(path) or not os.path.isdir(path):
         unavailable(f"{label} selected run directory is missing or unsafe: {path}")
     return path
@@ -85,11 +105,11 @@ if latest_dir == previous_dir:
 regressions = []
 
 # Rule 2: any module with fewer passes (history summary comparison)
-prev_modules = previous_summary_json.get("modules", {})
-cur_modules = latest_summary_json.get("modules", {})
+prev_modules = previous_summary_json["modules"]
+cur_modules = latest_summary_json["modules"]
 for module in sorted(set(prev_modules.keys()) | set(cur_modules.keys())):
-    prev_pass = int(prev_modules.get(module, {}).get("pass", 0))
-    cur_pass = int(cur_modules.get(module, {}).get("pass", 0))
+    prev_pass = prev_modules.get(module, {}).get("pass", 0)
+    cur_pass = cur_modules.get(module, {}).get("pass", 0)
     if cur_pass < prev_pass:
         regressions.append(
             f"[MODULE REGRESSION] module={module}: pass count {prev_pass} -> {cur_pass}"
