@@ -1,0 +1,25 @@
+schema = 1
+task = "QA-ANALYZER-HISTORY-INPUT"
+candidate = "8c372eb522d4ef45ff91cca2fbc03239f8d09426"
+integration = "ec969428697ffe8e58528b01c6d2ece66506ef45"
+tree = "4d96ae8e6cd20613c23fc928133be4befe4a4ec7"
+contract_hash = "03cc2828065855935e0bc7f8d576aa1d81620cfcdfb07eb6b2e5adc8d13de331"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-ANALYZER-HISTORY-INPUT"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Before production edits, extend TestValidationAnalysis using temporary roots and a copy of the real analyzer. A single nonblank truncated JSON line and a single JSON null/scalar/list must return nonzero with Comparison unavailable/incomplete and record context, never No regression baseline available. A pair of valid timestamped objects with missing or empty modules must likewise fail, never Result: No regressions found. Record automated RED against current false exit 0; fixture setup failures are not RED."
+result = "met"
+evidence = "Extended the existing temporary-root, copied-real-analyzer test before production edits. RED command: go test ./scripts -run '^TestValidationAnalysis' -count=1. It failed on sole truncated/null/scalar/list records returning exit 0 and no-baseline, pair module/pass false-clean results, and selected JSON tracebacks; no fixture setup failures. RED output retained at $TMPDIR/history-red.log. The same focused command is GREEN on the final commit, with contextual diagnostics and false-verdict assertions."
+
+[[acceptance]]
+item = "Validate only selected summary records (last two nonblank, or the sole record) as objects with valid existing-format timestamp and a nonempty modules mapping. Each lane value must be a mapping with an explicitly present nonnegative integer pass count (not bool, string or fractional numeric coercion). Reject missing/null/list modules, invalid lane values and invalid pass counts with controlled contextual nonzero diagnostics. Malformed JSON in either selected record, including a truncated final append, must not be skipped in favor of older records, produce an uncaught traceback, or mutate history. Do not require exit_code for legacy summaries or redefine its completed comparison contract."
+result = "met"
+evidence = "parse_summary validates selected objects, existing timestamp pattern, nonempty module mappings, lane mappings, and exact Python int nonnegative pass values before any baseline/comparison success. Existing unavailable diagnostic supplies current/previous and lane context. Tests exercise malformed sole/previous/current records, truncated appends without trailing newline, null/scalar/list summaries, missing/null/list/empty modules, invalid lanes and missing/null/bool/string/negative/fractional pass counts. All cases assert no traceback or history mutation. Existing legacy and explicit lane-exit cases pass unchanged; exit_code admission was not modified."
+
+[[acceptance]]
+item = "Missing history, empty/blank-only history and a valid sole summary retain successful no-baseline behavior with accurate wording; a valid single record does not require a prior run or raw logs. Blank separators and histories with more than two records preserve append-order selection, without retroactively rejecting unselected older records. Existing selected-directory/log safety, exact Package/Test identities, module pass-drop and explicit valid lane-exit rules stay green. Include malformed selected previous/current, valid single and empty controls, unchanged valid pair and actual regression cases; assert absence of false-clean/no-baseline verdicts for invalid selected input. Record GREEN and final checks."
+result = "met"
+evidence = "Focused GREEN and final go test ./scripts -count=1 cover missing history, empty and whitespace-only wording, valid sole summary after both raw run directories are removed, blank-separated selected records following older corrupt history, append-order selection, unchanged valid pair, module/test/lane regressions, selected directory/log safety, and exact identities. Invalid-input cases forbid both clean and no-baseline verdicts. Final shell syntax and whitespace checks pass. Reused existing subprocess harness, timestamp pattern and unavailable helper; omitted producer changes, migration, dependencies and raw-log/lane-exit redesign. full check: runner gate"
