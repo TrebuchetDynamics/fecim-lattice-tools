@@ -37,23 +37,15 @@ if [[ -z "$latest_summary" || -z "$previous_summary" ]]; then
   exit 0
 fi
 
-latest_dir=""
-previous_dir=""
-mapfile -t run_dirs < <(find "$BASE_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
-if [[ ${#run_dirs[@]} -ge 2 ]]; then
-  latest_dir="${run_dirs[-1]}"
-  previous_dir="${run_dirs[-2]}"
-fi
-
-python3 - "$latest_summary" "$previous_summary" "$latest_dir" "$previous_dir" <<'PY'
+python3 - "$latest_summary" "$previous_summary" "$BASE_DIR" <<'PY'
 import json
 import os
+import re
 import sys
 
 latest_summary_json = json.loads(sys.argv[1])
 previous_summary_json = json.loads(sys.argv[2])
-latest_dir = sys.argv[3]
-previous_dir = sys.argv[4]
+base_dir = sys.argv[3]
 
 module_files = {
     "m1": "m1_results.json",
@@ -62,6 +54,33 @@ module_files = {
     "shared": "shared_results.json",
     "validation": "validation_results.json",
 }
+
+print("Validation Regression Analysis")
+print("==============================")
+print(f"Current timestamp:  {latest_summary_json.get('timestamp', 'unknown')}")
+print(f"Previous timestamp: {previous_summary_json.get('timestamp', 'unknown')}")
+print("")
+
+
+def unavailable(context):
+    print(f"Result: Comparison unavailable / incomplete: {context}")
+    sys.exit(1)
+
+
+def selected_dir(summary, label):
+    timestamp = summary.get("timestamp")
+    if not isinstance(timestamp, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}", timestamp):
+        unavailable(f"{label} timestamp is missing or invalid: {timestamp!r}")
+    path = os.path.join(base_dir, timestamp)
+    if os.path.islink(path) or not os.path.isdir(path):
+        unavailable(f"{label} selected run directory is missing or unsafe: {path}")
+    return path
+
+
+latest_dir = selected_dir(latest_summary_json, "current")
+previous_dir = selected_dir(previous_summary_json, "previous")
+if latest_dir == previous_dir:
+    unavailable("selected timestamps name the same directory; overwritten evidence cannot be compared")
 
 regressions = []
 
@@ -76,44 +95,41 @@ for module in sorted(set(prev_modules.keys()) | set(cur_modules.keys())):
             f"[MODULE REGRESSION] module={module}: pass count {prev_pass} -> {cur_pass}"
         )
 
-# Rule 1: any test PASS -> FAIL (only when two distinct run dirs are available)
-if latest_dir and previous_dir and latest_dir != previous_dir:
-    def collect_test_statuses(path):
-        statuses = {}
-        if not os.path.isfile(path):
-            return statuses
-        with open(path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    obj = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                test = obj.get("Test")
-                action = obj.get("Action")
-                if not test or action not in {"pass", "fail", "skip"}:
-                    continue
-                statuses[(obj.get("Package", ""), test)] = action
-        return statuses
+# Rule 1: any test PASS -> FAIL in lanes named by either selected summary.
+def collect_test_statuses(path):
+    statuses = {}
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            test = obj.get("Test")
+            action = obj.get("Action")
+            if not test or action not in {"pass", "fail", "skip"}:
+                continue
+            statuses[(obj.get("Package", ""), test)] = action
+    return statuses
 
-    for module, filename in module_files.items():
+
+for module, filename in module_files.items():
+    if module not in prev_modules and module not in cur_modules:
+        continue
+    try:
         prev_status = collect_test_statuses(os.path.join(previous_dir, filename))
         cur_status = collect_test_statuses(os.path.join(latest_dir, filename))
-        for identity, old_status in prev_status.items():
-            package, test_name = identity
-            new_status = cur_status.get(identity)
-            if old_status == "pass" and new_status == "fail":
-                regressions.append(
-                    f"[TEST REGRESSION] module={module} package={package!r} test={test_name!r}: PASS -> FAIL"
-                )
-
-print("Validation Regression Analysis")
-print("==============================")
-print(f"Current timestamp:  {latest_summary_json.get('timestamp', 'unknown')}")
-print(f"Previous timestamp: {previous_summary_json.get('timestamp', 'unknown')}")
-print("")
+    except OSError as error:
+        unavailable(f"required lane {module} log cannot be read: {error}")
+    for identity, old_status in prev_status.items():
+        package, test_name = identity
+        new_status = cur_status.get(identity)
+        if old_status == "pass" and new_status == "fail":
+            regressions.append(
+                f"[TEST REGRESSION] module={module} package={package!r} test={test_name!r}: PASS -> FAIL"
+            )
 
 if regressions:
     print("Result: REGRESSIONS DETECTED")
