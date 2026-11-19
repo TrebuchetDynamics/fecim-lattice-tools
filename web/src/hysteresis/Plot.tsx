@@ -1,48 +1,41 @@
 import type { Core } from "./types";
-// Only coordinate normalization for a supplementary drawing; no scientific
-// interpolation, metrics or filtering. All underlying rows are in Go pages.
+
+// Presentation geometry only. Go supplies the bounded history samples and SI
+// units; no interpolation, derived metric or replacement science is computed.
 export function Plot({ core }: { core: Core }) {
   const points = core.Plot || [];
-  if (!points.length) return <p>No plot samples. Run or advance the loop.</p>;
-  const es = points.map((p) => p.E),
-    ps = points.map((p) => p.P);
-  const minE = Math.min(...es),
-    maxE = Math.max(...es),
-    minP = Math.min(...ps),
-    maxP = Math.max(...ps);
-  const coords = points
-    .map((p) =>
-      [
-        20 + ((p.E - minE) / (maxE - minE || 1)) * 560,
-        280 - ((p.P - minP) / (maxP - minP || 1)) * 260,
-      ].join(","),
-    )
-    .join(" ");
+  const es = points.map((p) => p.E), ps = points.map((p) => p.P);
+  const minE = Math.min(0, ...es), maxE = Math.max(0, ...es);
+  const minP = Math.min(0, ...ps), maxP = Math.max(0, ...ps);
+  const x = (e: number) => 76 + ((e - minE) / (maxE - minE || 1)) * 600;
+  const y = (p: number) => 324 - ((p - minP) / (maxP - minP || 1)) * 292;
+  const coords = points.map((p) => `${x(p.E)},${y(p.P)}`).join(" ");
   return (
-    <figure>
+    <figure className="loop-figure">
       <svg
-        viewBox="0 0 600 300"
+        className="loop-plot"
+        viewBox="0 0 720 390"
         role="img"
         aria-labelledby="plot-title plot-desc"
       >
-        <title id="plot-title">
-          Supplementary polarization–field trajectory
-        </title>
+        <title id="plot-title">Supplementary polarization–field trajectory</title>
         <desc id="plot-desc">
-          Bounded Go plot samples, in history order. Read every retained value
-          in the paged loop table. This plot has no unique controls.
+          Bounded Go plot samples in history order. Electric field horizontally,
+          polarization vertically, in canonical SI units. Read every retained
+          value in the paged loop table. This plot has no unique controls.
         </desc>
-        <polyline
-          points={coords}
-          fill="none"
-          stroke="#175e4b"
-          strokeWidth="2"
-        />
+        <rect x="76" y="32" width="600" height="292" fill="none" stroke="#c6cec9" />
+        <path d={`M76 ${y(0)}H676 M${x(0)} 32V324`} stroke="#a3afa9" strokeDasharray="4 4" fill="none" />
+        {points.length > 0 && (
+          <polyline points={coords} fill="none" stroke="#175e4b" strokeWidth="2.5" strokeLinejoin="round" />
+        )}
+        <text x="376" y="370" textAnchor="middle" className="loop-axis-label">Electric field ({core.E.Unit})</text>
+        <text transform="translate(24 178) rotate(-90)" textAnchor="middle" className="loop-axis-label">Polarization ({core.P.Unit})</text>
       </svg>
       <figcaption>
-        E horizontally, P vertically; canonical Go coordinates. Full history is
-        available in the table, including points omitted from this bounded
-        drawing.
+        {points.length
+          ? "Live Go trajectory · canonical SI coordinates. Full retained history is available in the loop table, including samples omitted from this bounded plot."
+          : "Ready to plot. Press Advance batch or Run to generate Go simulation samples."}
       </figcaption>
     </figure>
   );

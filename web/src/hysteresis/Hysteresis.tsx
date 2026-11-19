@@ -107,6 +107,48 @@ export default function Hysteresis() {
       </div>
       {ready && (
         <>
+          <section className="loop-preview" aria-labelledby="loop-preview-title">
+            <h2 id="loop-preview-title">Polarization–field loop</h2>
+            <Plot core={core} />
+          <div className="actions">
+            <button
+              className="primary"
+              aria-disabled={locked || stale}
+              onClick={() => {
+                if (!locked && !stale) engine.current!.run(budget);
+              }}
+            >
+              Run
+            </button>
+            <button
+              aria-disabled={!!data.active && data.active !== "core"}
+              aria-describedby="pause-reason"
+              onClick={() => void engine.current!.pause()}
+            >
+              Pause
+            </button>
+            <button
+              aria-disabled={locked || stale}
+              onClick={() => {
+                if (!locked && !stale) void engine.current!.step(budget);
+              }}
+            >
+              Advance batch
+            </button>
+            <button onClick={() => void engine.current!.cancel()}>
+              Cancel
+            </button>
+            <button onClick={() => void engine.current!.reset()}>Reset</button>
+            <button onClick={() => resultsHeading.current?.focus()}>
+              Read results
+            </button>
+          </div>
+          <p id="pause-reason" className="hint">
+            Pause applies to the loop. Programming and diagnostics support
+            Cancel instead; Reset cancels an active job before clearing loop
+            history.
+          </p>
+          </section>
           <form
             noValidate
             onSubmit={(event) => {
@@ -277,44 +319,6 @@ export default function Hysteresis() {
               Set field
             </button>
           </fieldset>
-          <div className="actions">
-            <button
-              className="primary"
-              aria-disabled={locked || stale}
-              onClick={() => {
-                if (!locked && !stale) engine.current!.run(budget);
-              }}
-            >
-              Run
-            </button>
-            <button
-              aria-disabled={!!data.active && data.active !== "core"}
-              aria-describedby="pause-reason"
-              onClick={() => void engine.current!.pause()}
-            >
-              Pause
-            </button>
-            <button
-              aria-disabled={locked || stale}
-              onClick={() => {
-                if (!locked && !stale) void engine.current!.step(budget);
-              }}
-            >
-              Advance batch
-            </button>
-            <button onClick={() => void engine.current!.cancel()}>
-              Cancel
-            </button>
-            <button onClick={() => void engine.current!.reset()}>Reset</button>
-            <button onClick={() => resultsHeading.current?.focus()}>
-              Read results
-            </button>
-          </div>
-          <p id="pause-reason" className="hint">
-            Pause applies to the loop. Programming and diagnostics support
-            Cancel instead; Reset cancels an active job before clearing loop
-            history.
-          </p>
           <div className="metric-strip">
             <p>
               State
@@ -438,10 +442,6 @@ export default function Hysteresis() {
                 new calculations.
               </p>
               <GoData value={data.corePage} />
-            </details>
-            <details>
-              <summary>Supplementary loop plot</summary>
-              <Plot core={core} />
             </details>
           </section>
           <ProgramPanel

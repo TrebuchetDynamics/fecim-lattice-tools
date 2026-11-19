@@ -407,9 +407,20 @@ export class Engine {
     while (this.alive && token === this.loop && this.data.active === kind) {
       await this.enqueue(async () => {
         if (token !== this.loop) return;
-        if (kind === "core")
-          this.publish({ core: await this.send<Core>("core.advance", budget) });
-        else if (kind === "program") {
+        if (kind === "core") {
+          try {
+            this.publish({ core: await this.send<Core>("core.advance", budget) });
+          } catch (error) {
+            if (error instanceof GoInputError && token === this.loop) {
+              // A Go work/domain rejection is not a Worker crash. Stop the
+              // authoritative loop and expose its retained rows before the
+              // queue reports failure; never leave an empty stale opening page.
+              this.publish({ core: await this.send<Core>("core.apply", { Kind: "pause" }) });
+              await this.corePage(0);
+            }
+            throw error;
+          }
+        } else if (kind === "program") {
           const program = await this.send<Program>("program.advance", budget);
           this.publish({ program, core: program.Core });
         } else

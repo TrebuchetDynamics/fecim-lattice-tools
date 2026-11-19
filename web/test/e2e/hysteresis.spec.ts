@@ -23,6 +23,38 @@ async function advance(page) {
   await expect(page.locator("#core-table tbody tr").first()).toBeVisible();
 }
 
+test("loop plot is visible without opening a disclosure and draws real Go samples", async ({ page }) => {
+  await openLab(page);
+  const plot = page.getByRole("img", { name: "Supplementary polarization–field trajectory" });
+  await expect(plot).toBeVisible();
+  await expect(plot).toContainText("Electric field (V/m)");
+  await expect(plot).toContainText("Polarization (C/m²)");
+  const bounds = await plot.boundingBox();
+  expect(bounds!.height).toBeGreaterThanOrEqual(240);
+  await advance(page);
+  await expect(plot.locator("polyline")).toBeVisible();
+  expect((await plot.locator("polyline").getAttribute("points"))!.split(" ").length).toBeGreaterThan(1);
+  await expect(page.getByTestId("core-state")).toHaveText("paused");
+});
+
+test("loop work limit pauses Go and refreshes retained table and plot before Reset", async ({ page }) => {
+  await openLab(page);
+  await page.getByLabel("Steps per batch", { exact: true }).fill("256");
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("solver step limit reached", { timeout: 60_000 });
+  await expect(page.getByTestId("core-state")).toHaveText("paused");
+  await expect(page.locator("#core-table tbody tr").first()).toBeVisible();
+  await expect(page.getByText("Table is stale while computation advances; pause to read the current page.")).toHaveCount(0);
+  const plot = page.getByRole("img", { name: "Supplementary polarization–field trajectory" });
+  await expect(plot).toBeVisible();
+  await expect(plot.locator("polyline")).toBeVisible();
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByTestId("retained-count")).toHaveText("0");
+  await advance(page);
+  await expect(plot.locator("polyline")).toBeVisible();
+});
+
 test("core Go history, revisions, paging, focus and accessible narrow layout", async ({
   page,
 }) => {
