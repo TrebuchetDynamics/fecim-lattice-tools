@@ -51,7 +51,9 @@ test.afterAll(async () => {
 
 test("real crossbar controls, keyboard cell/vector tables, profiles, atomic errors and explicit files", async ({
   page,
-}) => {
+}, info) => {
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
   const requests: { url: string; method: string }[] = [];
   page.on("request", (r) =>
     requests.push({ url: r.url(), method: r.method() }),
@@ -74,30 +76,118 @@ test("real crossbar controls, keyboard cell/vector tables, profiles, atomic erro
   await expect(
     page.getByRole("heading", { name: "Crossbar", exact: true }),
   ).toBeFocused();
-  await expect(page.getByLabel("Model profile", { exact: true })).toBeEnabled();
-  await page.getByLabel("Rows", { exact: true }).fill("2");
-  await page.getByLabel("Columns", { exact: true }).fill("3");
-  await page
+  const inputs = page.getByRole("region", { name: "Array inputs", exact: true });
+  const output = page.getByRole("region", { name: "MVM output", exact: true });
+  await expect(inputs.getByLabel("Model profile", { exact: true })).toBeEnabled();
+  await inputs.getByLabel("Rows", { exact: true }).fill("2");
+  await inputs.getByLabel("Columns", { exact: true }).fill("3");
+  await inputs
     .getByLabel("Input vector (JSON volts)", { exact: true })
     .fill("[0.5,1,0.25]");
-  await page
+  await inputs
     .getByRole("button", { name: "Apply configuration", exact: true })
     .click();
   await expect(page.locator("#crossbar-matrix tbody tr")).toHaveCount(6);
-  await page.getByLabel("Cell row", { exact: true }).fill("1");
-  await page.getByLabel("Cell column", { exact: true }).fill("2");
-  await page.getByRole("button", { name: "Select cell", exact: true }).focus();
+  const state = inputs.getByLabel("Cell state", { exact: true });
+  await expect(state).toHaveAccessibleDescription(
+    /Selected cell: row 0, column 0/,
+  );
+  const row = inputs.getByLabel("Cell row", { exact: true });
+  const column = inputs.getByLabel("Cell column", { exact: true });
+  await row.press("ControlOrMeta+A");
+  await page.keyboard.type("1");
+  await page.keyboard.press("Tab");
+  await expect(column).toBeFocused();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("2");
+  await page.keyboard.press("Tab");
+  await expect(
+    inputs.getByRole("button", { name: "Select cell", exact: true }),
+  ).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.locator("#crossbar-selection tbody")).toContainText(
-    "1 count",
+  const selection = inputs.locator("#crossbar-selection tbody");
+  await expect(selection).toContainText("1 count");
+  await expect(
+    inputs.getByText("Selected cell: row 1, column 2", { exact: true }),
+  ).toBeVisible();
+  await expect(state).toHaveAccessibleDescription(
+    /Selected cell: row 1, column 2/,
   );
-  await page.getByLabel("Cell state", { exact: true }).fill("0.8");
+  const previousState = await selection.textContent();
+  // An unapplied address must not change the target shown by the editor.
+  await column.press("ControlOrMeta+A");
+  await page.keyboard.type("0");
+  const program = inputs.getByRole("button", {
+    name: "Program selected cell",
+    exact: true,
+  });
+  const enterState = async (value: string) => {
+    await state.press("ControlOrMeta+A");
+    await page.keyboard.type(value);
+    await page.keyboard.press("Tab");
+    await expect(program).toBeFocused();
+    await page.keyboard.press("Enter");
+  };
+  await enterState("1.2");
+  await expect(page.getByRole("alert")).toBeFocused();
+  await expect(page.getByRole("alert")).toContainText(
+    local
+      ? "Module command rejected; check action, input and revision"
+      : "cell state must be finite in [0,1]",
+  );
+  await expect(selection).toHaveText(previousState!);
   await page
-    .getByRole("button", { name: "Program selected cell", exact: true })
-    .click();
-  await expect(page.locator("#crossbar-selection tbody")).toContainText(
-    "0.7931034482758621",
+    .getByRole("button", { name: "Dismiss error", exact: true })
+    .press("Enter");
+  await enterState("0.8");
+  await expect(selection).toContainText("0.7931034482758621");
+  await expect(state).toHaveAccessibleDescription(
+    /Selected cell: row 1, column 2/,
   );
+
+  const run = output.getByRole("button", { name: "Run MVM", exact: true });
+  await run.press("Enter");
+  await expect(page.getByTestId("crossbar-status")).toContainText("finished");
+  const result = output.locator("#crossbar-output");
+  await expect(result.locator("caption")).toContainText(/result revision \d+; ratio/);
+  await expect(result.locator("tbody tr")).toHaveCount(2);
+  await expect(result.locator("tbody")).toContainText("ratio");
+  if (info.project.name === "mobile-small-chromium") {
+    const grid = inputs.getByRole("region", {
+      name: "Programmed matrix",
+      exact: true,
+    });
+    await grid.focus();
+    await expect(grid).toBeFocused();
+    expect(await grid.evaluate((el) => el.scrollWidth)).toBeGreaterThan(
+      await grid.evaluate((el) => el.clientWidth),
+    );
+    await page.keyboard.press("ArrowRight");
+    await expect
+      .poll(() => grid.evaluate((el) => el.scrollLeft))
+      .toBeGreaterThan(0);
+    expect(
+      await page.evaluate(() => ({
+        width: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+      })),
+    ).toEqual({ width: 360, scrollWidth: 360 });
+    for (const control of [run, result]) {
+      const box = await control.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(360);
+    }
+    await page.screenshot({
+      path: info.outputPath("crossbar-360.png"),
+      fullPage: true,
+    });
+  } else if (info.project.name === "desktop-chromium") {
+    await page.screenshot({
+      path: info.outputPath("crossbar-desktop.png"),
+      fullPage: true,
+    });
+  }
   for (const profile of ["basic", "enhanced", "parasitic", "fecap"]) {
     await page
       .getByLabel("Model profile", { exact: true })
@@ -234,6 +324,7 @@ test("real crossbar controls, keyboard cell/vector tables, profiles, atomic erro
       ),
     ).toEqual([]);
   }
+  expect(browserErrors).toEqual([]);
 });
 
 test("lost local start response retains scientific ownership until authoritative recovery", async ({
