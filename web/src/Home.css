@@ -1,0 +1,61 @@
+.home-intro h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
+.home-overview {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+  margin-block-end: 2rem;
+}
+@media (min-width: 760px) {
+  .home-overview {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+}
+.home-panel {
+  padding: clamp(0.875rem, 2vw, 1.5rem);
+  border: 1px solid var(--line);
+  border-block-start: 3px solid var(--accent);
+  background: #fffef8;
+}
+.home-panel h2 {
+  font-size: 1.65rem;
+}
+.home-panel p {
+  max-width: 68ch;
+}
+.home-panel .button {
+  min-width: 120px;
+}
+.home-panel .honesty,
+.home-lab-group p {
+  margin-block-end: 0;
+}
+.home-overview .home-lab-groups {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-block-start: 1.25rem;
+}
+.home-lab-group h3 {
+  margin-block-end: 0.35rem;
+}
+.home-lab-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.home-lab-group .module-card {
+  border-block-start: 1px solid var(--line);
+  padding: 0 0 0.55rem;
+}
+.home-lab-group a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: bold;
+}
+.home-capability {
+  margin-block-start: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
