@@ -99,7 +99,12 @@ export default function Screen() {
       if (action === "defaults") setDraft(field(next, "config"));
       setStatus(next.status);
     } catch (e) {
-      setError((e as Error).message);
+      const message = (e as Error).message;
+      setError(
+        action === "preview"
+          ? `Could not preview ${input.artifact}: ${message} — Reconnect authoritative state before retrying.`
+          : message,
+      );
     } finally {
       setBusy(false);
     }
@@ -168,7 +173,9 @@ export default function Screen() {
     setError("");
     if (!file) return;
     if (file.size > 8 * 1024 * 1024) {
-      setError("Read-only import exceeds 8 MiB.");
+      setError(
+        "Read-only import exceeds 8 MiB. Choose a file no larger than 8 MiB.",
+      );
       return;
     }
     try {

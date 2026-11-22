@@ -116,7 +116,7 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
       buffer: Buffer.alloc(8 * 1024 * 1024 + 1),
     });
     await expect(page.getByRole("alert")).toHaveText(
-      "Read-only import exceeds 8 MiB.",
+      "Read-only import exceeds 8 MiB. Choose a file no larger than 8 MiB.",
     );
     await expect(page.getByRole("alert")).toBeFocused();
     await expect(imports.getByTestId("eda-import")).toHaveCount(0);
@@ -206,10 +206,19 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
   });
   await inspect("design.v").press("Enter");
   await expect(page.getByRole("alert")).toBeFocused();
+  await expect(page.getByRole("alert")).toHaveText(
+    /^Could not preview design\.v: .+ Reconnect authoritative state before retrying\.$/,
+  );
   await expect(inspect("design.spice")).toHaveAttribute("aria-pressed", "true");
   await expect(selection.getByText(/^design\.spice bytes 0\.\./)).toBeVisible();
   await expect(displayedPreview).toContainText("* Array: 64 cells");
 
+  const reconnect = generation.getByRole("button", {
+    name: "Reconnect authoritative state",
+    exact: true,
+  });
+  await reconnect.press("Enter");
+  await expect(inspect("design.v")).toBeEnabled();
   await inspect("design.v").press("Enter");
   await expect(page.getByRole("alert")).toHaveCount(0);
   await expect(inspect("design.v")).toHaveAttribute("aria-pressed", "true");
@@ -229,10 +238,6 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
   );
   await selection.screenshot({
     path: testInfo.outputPath("local-selection.png"),
-  });
-  const reconnect = page.getByRole("button", {
-    name: "Reconnect authoritative state",
-    exact: true,
   });
   const defaults = page.getByRole("button", {
     name: "Load Go defaults",
