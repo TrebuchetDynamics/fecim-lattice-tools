@@ -126,6 +126,9 @@ export default function Screen() {
     lastAnnounce = useRef(0);
   const active = !!data && ["running", "cancelling"].includes(data.job.state),
     busy = loading || pending || active || unknown || !data;
+  const selection = data?.snapshot.tables?.find((t) => t.id === "selection");
+  const undoDisabled =
+    busy || !data?.snapshot.actions?.find((a) => a.id === "undo")?.available;
   const value = (id: string) =>
     drafts[id] ?? data?.snapshot.fields?.find((f) => f.id === id)?.input ?? "";
   const choices: Record<string, string[]> = JSON.parse(
@@ -297,11 +300,6 @@ export default function Screen() {
           : "Authenticated same-origin Go computation; explicit exports require an opened, rooted project."}{" "}
         No GPU/WebGPU execution. Real Orca qualification is NOT RUN.
       </p>
-      <p className="circuits-status" data-testid="circuits-status">
-        {loading
-          ? "Loading Go circuits…"
-          : data?.snapshot.status || "Circuits unavailable"}
-      </p>
       <span
         className="sr-only"
         role="status"
@@ -435,110 +433,160 @@ export default function Screen() {
           <button type="submit">Apply configuration</button>
         </fieldset>
       </form>
-      <fieldset disabled={busy}>
-        <legend>02 / Select and operate</legend>
-        <div className="circuits-fields">
-          <label>
-            Cell row
-            <input
-              value={row ?? value("selected_row")}
-              onChange={(e) => setRow(e.target.value)}
-            />
-          </label>
-          <label>
-            Cell column
-            <input
-              value={col ?? value("selected_col")}
-              onChange={(e) => setCol(e.target.value)}
-            />
-          </label>
-          <label>
-            Write target level
-            <input
-              value={target ?? value("write_target")}
-              onChange={(e) => setTarget(e.target.value)}
-            />
-          </label>
-        </div>
-        <div className="actions">
-          <button
-            onClick={() =>
-              void act("select", {
-                row: row ?? value("selected_row"),
-                col: col ?? value("selected_col"),
-              })
-            }
-          >
-            Select cell
-          </button>
-          <button
-            className="circuit-write"
-            onClick={() =>
-              void act("write", { target: target ?? value("write_target") })
-            }
-          >
-            WRITE selected cell
-          </button>
-          <button onClick={() => void act("read")}>READ selected cell</button>
-          <button onClick={() => void act("compute")}>COMPUTE vector</button>
+      <section aria-labelledby="circuit-operations">
+        <h2 id="circuit-operations">Cell operations</h2>
+        <section aria-labelledby="circuit-selected-cell">
+          <h3 id="circuit-selected-cell">Selected cell</h3>
+          {selection && <Table table={selection} />}
+          <fieldset disabled={busy}>
+            <legend>Cell address</legend>
+            <p>Enter a zero-based address, then select the cell to apply it.</p>
+            <div className="circuits-fields">
+              <label>
+                Cell row
+                <input
+                  value={row ?? value("selected_row")}
+                  onChange={(e) => setRow(e.target.value)}
+                />
+              </label>
+              <label>
+                Cell column
+                <input
+                  value={col ?? value("selected_col")}
+                  onChange={(e) => setCol(e.target.value)}
+                />
+              </label>
+            </div>
+            <button
+              onClick={() =>
+                void act("select", {
+                  row: row ?? value("selected_row"),
+                  col: col ?? value("selected_col"),
+                })
+              }
+            >
+              Select cell
+            </button>
+          </fieldset>
+        </section>
+        <div className="circuits-operation-groups">
+          <fieldset>
+            <legend>WRITE</legend>
+            <label>
+              Write target level
+              <input
+                disabled={busy}
+                value={target ?? value("write_target")}
+                onChange={(e) => setTarget(e.target.value)}
+              />
+            </label>
+            <button
+              className="circuit-write"
+              aria-disabled={busy}
+              onClick={() => {
+                if (!busy)
+                  void act("write", { target: target ?? value("write_target") });
+              }}
+            >
+              WRITE selected cell
+            </button>
+          </fieldset>
+          <fieldset>
+            <legend>READ</legend>
+            <p>Sense the selected cell without programming it.</p>
+            <button
+              aria-disabled={busy}
+              onClick={() => {
+                if (!busy) void act("read");
+              }}
+            >
+              READ selected cell
+            </button>
+          </fieldset>
+          <fieldset>
+            <legend>COMPUTE</legend>
+            <p>Multiply the applied input vector by the array.</p>
+            <button
+              aria-disabled={busy}
+              onClick={() => {
+                if (!busy) void act("compute");
+              }}
+            >
+              COMPUTE vector
+            </button>
+          </fieldset>
         </div>
         <p>
           0T1R programming affects a whole column. 1T1R selects one row; 2T1R
           additionally supports read and write masks. A pulse limit is not
           verified convergence.
         </p>
+        <section aria-labelledby="circuit-last-result">
+          <h3 id="circuit-last-result">Last operation result</h3>
+          <p className="circuits-status" data-testid="circuits-status">
+            {loading
+              ? "Loading Go circuits…"
+              : data?.snapshot.status || "Circuits unavailable"}
+          </p>
+        </section>
         <div className="actions">
           <button
-            disabled={
-              !data?.snapshot.actions?.find((a) => a.id === "undo")?.available
-            }
-            onClick={() => void act("undo")}
+            aria-disabled={undoDisabled}
+            onClick={() => {
+              if (!undoDisabled) void act("undo");
+            }}
           >
             Undo device change
           </button>
-          <button onClick={() => void act("randomize")}>Randomize array</button>
-          <button onClick={() => void act("reset")}>Reset array</button>
+          <button disabled={busy} onClick={() => void act("randomize")}>
+            Randomize array
+          </button>
+          <button disabled={busy} onClick={() => void act("reset")}>
+            Reset array
+          </button>
         </div>
-      </fieldset>
+      </section>
       <section aria-labelledby="circuit-results">
         <h2 id="circuit-results">03 / State and evidence</h2>
-        {data?.snapshot.tables?.map((t) => (
-          <div key={t.id}>
-            <Table table={t} />
-            {["cells", "cell_results"].includes(t.id) && (
-              <div className="actions">
-                <button
-                  disabled={busy || t.page <= 1}
-                  onClick={() =>
-                    void act("view", {
-                      scope: t.id === "cells" ? "cells" : "result",
-                      page: String(t.page - 1),
-                    })
-                  }
-                >
-                  Previous{" "}
-                  {t.id === "cells"
-                    ? "persistent cells"
-                    : "retained cell results"}
-                </button>
-                <button
-                  disabled={busy || t.page >= t.total}
-                  onClick={() =>
-                    void act("view", {
-                      scope: t.id === "cells" ? "cells" : "result",
-                      page: String(t.page + 1),
-                    })
-                  }
-                >
-                  Next{" "}
-                  {t.id === "cells"
-                    ? "persistent cells"
-                    : "retained cell results"}
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+        {data?.snapshot.tables
+          ?.filter((t) => t.id !== "selection")
+          .map((t) => (
+            <div key={t.id}>
+              <Table table={t} />
+              {["cells", "cell_results"].includes(t.id) && (
+                <div className="actions">
+                  <button
+                    disabled={busy || t.page <= 1}
+                    onClick={() =>
+                      void act("view", {
+                        scope: t.id === "cells" ? "cells" : "result",
+                        page: String(t.page - 1),
+                      })
+                    }
+                  >
+                    Previous{" "}
+                    {t.id === "cells"
+                      ? "persistent cells"
+                      : "retained cell results"}
+                  </button>
+                  <button
+                    disabled={busy || t.page >= t.total}
+                    onClick={() =>
+                      void act("view", {
+                        scope: t.id === "cells" ? "cells" : "result",
+                        page: String(t.page + 1),
+                      })
+                    }
+                  >
+                    Next{" "}
+                    {t.id === "cells"
+                      ? "persistent cells"
+                      : "retained cell results"}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         {data?.snapshot.plots?.map((plot) => (
           <Plot key={plot.id} plot={plot} />
         ))}
