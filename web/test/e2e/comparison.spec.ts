@@ -47,6 +47,8 @@ test("real comparison scenarios, source evidence, sensitivity and local versione
   page,
 }, info) => {
   page.setDefaultTimeout(15000);
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
   const project = "comparison-" + info.project.name;
   if (local) {
     await page.goto(launch);
@@ -98,6 +100,44 @@ test("real comparison scenarios, source evidence, sensitivity and local versione
   await expect(
     page.getByLabel("Inference rate", { exact: true }),
   ).toBeEnabled();
+  const scenario = page.getByLabel("Scenario", { exact: true });
+  const summary = page.locator("#comparison-summary");
+  const metric = summary.getByRole("row", { name: /Energy reduction/ });
+  const detail = page.getByRole("region", { name: "Metric detail" });
+  const metricHeading = detail.getByRole("heading", { name: "Metric detail" });
+  const gpuAssumption = detail
+    .locator("#comparison-sources")
+    .getByRole("row", { name: /gpu_energy_pj_per_mac/ });
+  expect(
+    await scenario.evaluate((control) =>
+      Boolean(
+        control.compareDocumentPosition(document.getElementById("comparison-summary")!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ),
+  ).toBe(true);
+  const rank = page.getByRole("button", { name: "Rank sensitivity", exact: true });
+  const inspect = metric.getByRole("button", { name: "Inspect Energy reduction" });
+  await rank.focus();
+  await page.keyboard.press("Tab");
+  // Firefox may include a horizontally scrolling table wrapper in the tab order.
+  if (!(await inspect.evaluate((button) => document.activeElement === button)))
+    await page.keyboard.press("Tab");
+  await expect(inspect).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(metricHeading).toBeFocused();
+  await expect(detail).toContainText("Energy reduction");
+  await expect(detail).toContainText("99 %");
+  await expect(detail.getByText("99 percent", { exact: true })).toHaveCount(1);
+  await expect(detail).toContainText("Unit: %");
+  await expect(detail).toContainText("Evidence: simulation/assumption");
+  await detail.getByText("Scenario assumptions", { exact: true }).click();
+  await expect(gpuAssumption).toContainText("100 pJ/MAC");
+  await rank.click();
+  await expect(detail.locator("#comparison-sensitivity caption")).toContainText(
+    "energy_reduction_pct",
+  );
+
   await page.getByLabel("Workload", { exact: true }).selectOption("MNIST");
   await page
     .getByLabel("Scenario", { exact: true })
@@ -106,17 +146,29 @@ test("real comparison scenarios, source evidence, sensitivity and local versione
   await page
     .getByLabel("Sensitivity output", { exact: true })
     .selectOption("energy_reduction_pct");
+  await expect(detail).toContainText("Applied scenario: baseline");
+  await expect(metric).toContainText("99 %");
   await page.getByRole("button", { name: "Calculate", exact: true }).click();
   await expect(page.locator("#comparison-energy tbody tr")).toHaveCount(3);
+  await expect(detail).toContainText("Applied scenario: conservative");
+  await expect(metric).toContainText(/98\.333\d+ %/);
+  await expect(detail).toContainText(/98\.333\d+ %/);
+  await expect(gpuAssumption).toContainText("120 pJ/MAC");
+  await expect(detail.locator("#comparison-sensitivity")).toHaveCount(0);
+  await detail.getByText("Scenario assumptions", { exact: true }).click();
+  await page.locator(".comparison-matrix").screenshot({
+    path: info.outputPath("comparison-matrix.png"),
+  });
   await expect(
     page.getByLabel("Sensitivity output", { exact: true }),
   ).toHaveValue("energy_reduction_pct");
   await page
     .getByRole("button", { name: "Rank sensitivity", exact: true })
     .click();
-  await expect(page.locator("#comparison-sensitivity caption")).toContainText(
+  await expect(detail.locator("#comparison-sensitivity caption")).toContainText(
     "energy_reduction_pct",
   );
+  await detail.screenshot({ path: info.outputPath("metric-detail.png") });
   await expect(
     page.locator("#comparison-sensitivity tbody tr").first(),
   ).toContainText("gpu_energy_pj_per_mac");
@@ -160,12 +212,17 @@ test("real comparison scenarios, source evidence, sensitivity and local versione
   await page
     .getByLabel("Sensitivity output", { exact: true })
     .selectOption("co2_reduction_pct");
+  await expect(detail).toContainText("Showing the previous output");
   await page
     .getByRole("button", { name: "Rank sensitivity", exact: true })
     .click();
-  await expect(page.locator("#comparison-sensitivity caption")).toContainText(
+  await expect(detail.locator("#comparison-sensitivity caption")).toContainText(
     "Not available",
   );
+  await expect(detail).toContainText("CO2 reduction");
+  await expect(detail.getByText("Not available", { exact: true })).toBeVisible();
+  await expect(detail).toContainText("Evidence: unavailable — not calibrated");
+  await expect(detail).toContainText("No physical energy-duration input");
   await page
     .getByRole("button", { name: "Toggle presentation", exact: true })
     .click();
@@ -176,6 +233,15 @@ test("real comparison scenarios, source evidence, sensitivity and local versione
   await page.getByLabel("Inference rate", { exact: true }).fill("NaN");
   await page.getByRole("button", { name: "Calculate", exact: true }).click();
   await expect(page.getByRole("alert")).toBeFocused();
+  await expect(page.getByRole("alert")).toContainText(
+    local
+      ? "Comparison local request rejected. Check authentication, fields, project and revision."
+      : "require finite positive bounded inputs",
+  );
+  await expect(detail).toContainText("Applied scenario: conservative");
+  await expect(detail.locator("#comparison-sensitivity caption")).toContainText(
+    "Not available",
+  );
   await expect(page.getByLabel("Inference rate", { exact: true })).toHaveValue(
     "NaN",
   );
@@ -189,6 +255,13 @@ test("real comparison scenarios, source evidence, sensitivity and local versione
   await expect(page.locator("#comparison-evidence")).toContainText(
     "not a statistical interval",
   );
+  await page.getByLabel("Inference rate", { exact: true }).fill("2");
+  await page.getByRole("button", { name: "Calculate", exact: true }).click();
+  await expect(page.getByTestId("comparison-status")).toContainText(
+    "Calculated scenario",
+  );
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(detail).toContainText("Applied scenario: conservative");
   await page.getByRole("button", { name: "Export JSON", exact: true }).click();
   if (local) {
     // The route's export picker discovers already-opened opaque project IDs; no path input.
@@ -217,6 +290,7 @@ test("real comparison scenarios, source evidence, sensitivity and local versione
   await expect(page.getByLabel("Inference rate", { exact: true })).toHaveValue(
     "10000",
   );
+  expect(browserErrors).toEqual([]);
 });
 
 test("comparison hosted actions stay private and enforce one active science owner", async ({
