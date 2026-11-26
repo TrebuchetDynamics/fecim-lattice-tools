@@ -35,7 +35,10 @@ export function App() {
   // Focus once, after the matching lazy route has mounted; later data updates
   // cannot steal focus. Hidden retained module headings are never candidates.
   let done=false;
-  const focus=()=>{if(done)return;const fragment=location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;const h=fragment || Array.from(main.current?.querySelectorAll<HTMLElement>("h1")||[]).find(h=>!h.closest("[hidden]")&&h.getClientRects().length>0);if(h){h.tabIndex=-1;h.focus();done=true;}};
+  const focus=()=>{if(done)return;
+   let target="";
+   try{target=decodeURIComponent(location.hash.slice(1));}catch(error){if(!(error instanceof URIError))throw error;}
+   const fragment=target ? document.getElementById(target) : null;const h=fragment || Array.from(main.current?.querySelectorAll<HTMLElement>("h1")||[]).find(h=>!h.closest("[hidden]")&&h.getClientRects().length>0);if(h){h.tabIndex=-1;h.focus();done=true;}};
   const observer=new MutationObserver(focus);if(main.current)observer.observe(main.current,{childList:true,subtree:true});focus();
   return()=>observer.disconnect();
  },[path,canMount,navigation]);
