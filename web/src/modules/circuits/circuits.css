@@ -105,3 +105,22 @@
   max-height: 12rem;
   fill: var(--circuit-ink);
 }
+.circuits-lab .circuits-operation-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
+}
+.circuits-lab .circuits-operation-groups fieldset {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+.circuits-lab .circuits-operation-groups button {
+  align-self: start;
+  margin-block-start: auto;
+}
+/* These controls stay in the keyboard sequence while Go handles the action. */
+.circuits-lab button[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
