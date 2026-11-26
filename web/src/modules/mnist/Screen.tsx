@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Schema } from "../../api/types";
 import { Value } from "../../research/Shared";
 import { claimScience, releaseScience } from "../../worker/ownership";
@@ -353,8 +353,18 @@ export default function Screen() {
         setError("Result import could not be read.");
     }
   }
+  const result = field(snapshot, "result");
+  const provenance = useMemo(
+    () =>
+      JSON.parse(result || "null") as {
+        model_sha256: string;
+        dataset_sha256?: string;
+        source: string;
+      } | null,
+    [result],
+  );
   function exportResult() {
-    const blob = new Blob([field(snapshot, "result")], {
+    const blob = new Blob([result], {
         type: "application/json",
       }),
       url = URL.createObjectURL(blob),
@@ -364,9 +374,36 @@ export default function Screen() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  const weights = snapshot?.tables?.find((t) => t.id === "weights");
+  const tables = snapshot?.tables ?? [];
+  const weights = tables.find((t) => t.id === "weights");
+  const prediction = tables.find((t) => t.id === "prediction");
+  const inferenceDetails = tables.filter((t) =>
+    ["probabilities", "layers"].includes(t.id),
+  );
+  const infer = snapshot?.actions?.find((a) => a.id === "infer");
   const can = (id: string) =>
     !!snapshot?.actions?.find((a) => a.id === id)?.available;
+  const resultIdentity = provenance && (
+    <dl className="mnist-identity">
+      <dt>Result input source: </dt>
+      <dd>{provenance.source}</dd>
+      <dt>Result model SHA-256: </dt>
+      <dd>{provenance.model_sha256}</dd>
+      {provenance.dataset_sha256 && (
+        <>
+          <dt>Result corpus SHA-256: </dt>
+          <dd>{provenance.dataset_sha256}</dd>
+        </>
+      )}
+    </dl>
+  );
+  const evidence = (
+    <ul data-testid="mnist-evidence">
+      {snapshot?.evidence?.map((e, i) => (
+        <li key={i}>{e}</li>
+      ))}
+    </ul>
+  );
   return (
     <section ref={scope} className="section mnist-workbench">
       <div className="mnist-kicker">MODULE 03 / PAIRED CPU INFERENCE</div>
@@ -375,12 +412,6 @@ export default function Screen() {
         Educational simulation, not a hardware claim. Go owns preprocessing,
         inference, quantization and evidence. No model or dataset is downloaded
         automatically.
-      </p>
-      <h2>Model, input, evidence</h2>
-      <p>
-        Compare full precision with CIM probabilities and hidden activations. A
-        drawing has no accuracy. Labelled evaluation records exact file
-        fingerprints, actual subset, seed, configuration and confusion counts.
       </p>
       {error && (
         <p ref={alert} role="alert" tabIndex={-1}>
@@ -392,54 +423,46 @@ export default function Screen() {
       </p>
       {!local ? (
         <>
-          <p>
-            Inference, dataset evaluation, weights and sweeps require the local
-            application: build the local browser profile, then run{" "}
-            <code>fecim-lattice-tools serve --root DIRECTORY</code> and open its
-            terminal launch link. This hosted page does not contact the server
-            or upload model, input or result bytes. Ordinary static asset
-            requests still occur.
-          </p>
-          <label>
-            Import result for read-only inspection
-            <input
-              type="file"
-              onChange={(e) => void readImport(e.target.files?.[0])}
-            />
-          </label>
-          <p>Imported/unverified — not a locally verified evaluation</p>
-          <pre data-testid="mnist-import">
-            {imported ||
-              "No imported result. Reload discards it; no hosted inference or export."}
-          </pre>
+          <section aria-labelledby="mnist-learn-heading">
+            <h2 id="mnist-learn-heading">Learn and import</h2>
+            <p>
+              <strong>Hosted profile</strong> — read-only result inspection.
+            </p>
+            <p>
+              Inference, dataset evaluation, weights and sweeps require the
+              local application: build the local browser profile, then run{" "}
+              <code>fecim-lattice-tools serve --root DIRECTORY</code> and open
+              its terminal launch link. This hosted page does not contact the
+              server or upload model, input or result bytes. Ordinary static
+              asset requests still occur.
+            </p>
+            <label>
+              Import result for read-only inspection
+              <input
+                type="file"
+                onChange={(e) => void readImport(e.target.files?.[0])}
+              />
+            </label>
+          </section>
+          <section
+            className="mnist-prediction"
+            aria-labelledby="mnist-prediction-heading"
+          >
+            <h2 id="mnist-prediction-heading">Prediction</h2>
+            <p>Imported/unverified — not a locally verified evaluation</p>
+            <pre data-testid="mnist-import">
+              {imported ||
+                "No imported result. Reload discards it; no hosted inference or export."}
+            </pre>
+          </section>
         </>
       ) : (
         <>
-          <p data-testid="mnist-status">{status}</p>
-          {adapter && !adapter.reloadRecovery && (
-            <p>
-              Local session identity storage is unavailable. Do not reload an
-              active job; keep this page open to cancel or inspect it.
-            </p>
-          )}
-          <button
-            disabled={pending || !adapter}
-            onClick={() => void reconnect()}
-          >
-            Reconnect authoritative state
-          </button>
-          <button
-            disabled={
-              pending || !adapter || !(job?.id || field(snapshot, "job_id"))
-            }
-            onClick={() => void reconnect(true)}
-          >
-            Cancel MNIST job
-          </button>
-          <div className="mnist-grid">
-            <div>
+          <details>
+            <summary>Model, data and configuration</summary>
+            <div className="mnist-grid">
               <fieldset disabled={locked}>
-                <legend>01 / Explicit rooted files</legend>
+                <legend>Explicit rooted files</legend>
                 <label>
                   Granted root
                   <select
@@ -485,7 +508,7 @@ export default function Screen() {
                 </button>
               </fieldset>
               <fieldset disabled={locked}>
-                <legend>02 / Configuration</legend>
+                <legend>Configuration</legend>
                 {Object.entries(configFields).map(([key, label]) => (
                   <label key={key}>
                     {label}
@@ -551,9 +574,12 @@ export default function Screen() {
                 ))}
               </fieldset>
             </div>
-            <div>
+          </details>
+          <div className="mnist-grid">
+            <section aria-labelledby="mnist-input-heading">
+              <h2 id="mnist-input-heading">Input</h2>
               <fieldset disabled={locked}>
-                <legend>03 / Input — choose one source</legend>
+                <legend>Choose one input source</legend>
                 <canvas
                   ref={canvas}
                   width={280}
@@ -660,93 +686,168 @@ export default function Screen() {
                   Drawing normalization runs once in Go. Dataset and
                   programmatic pixels bypass drawing normalization.
                 </p>
+              </fieldset>
+              <h3>Current selection</h3>
+              <dl className="mnist-identity" data-testid="mnist-identity">
+                {snapshot?.fields
+                  ?.filter((f) =>
+                    [
+                      "hidden",
+                      "model_sha256",
+                      "dataset_sha256",
+                      "corpus_count",
+                      "source",
+                      "result_fresh",
+                    ].includes(f.id),
+                  )
+                  .map((f) => (
+                    <div key={f.id}>
+                      <dt>{f.label}: </dt>
+                      <dd>{f.input}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </section>
+            <div>
+              <section aria-labelledby="mnist-run-heading">
+                <h2 id="mnist-run-heading">Run inference</h2>
+                <p>
+                  <strong>Local profile</strong> — paired CPU inference on the
+                  submitted input.
+                </p>
                 <button
-                  disabled={!can("infer")}
+                  disabled={locked || !infer?.available}
                   onClick={() => void run("infer")}
                 >
                   Run paired inference
                 </button>
-              </fieldset>
-              <fieldset disabled={locked}>
-                <legend>04 / Labelled evaluation and sweeps</legend>
-                <label>
-                  Subset start
-                  <input
-                    value={start}
-                    onChange={(e) => setStart(e.target.value)}
-                  />
-                </label>
-                <label>
-                  Selected images
-                  <input
-                    value={count}
-                    onChange={(e) => setCount(e.target.value)}
-                  />
-                </label>
+                {!locked && !infer?.available && infer?.reason && (
+                  <p>
+                    {infer.reason}. Load a model under “Model, data and
+                    configuration”, then choose an input.
+                  </p>
+                )}
+                <p data-testid="mnist-status">{status}</p>
+                {adapter && !adapter.reloadRecovery && (
+                  <p>
+                    Local session identity storage is unavailable. Do not reload
+                    an active job; keep this page open to cancel or inspect it.
+                  </p>
+                )}
                 <button
-                  disabled={!can("evaluate")}
-                  onClick={() => void run("evaluate")}
+                  disabled={pending || !adapter}
+                  onClick={() => void reconnect()}
                 >
-                  Evaluate labelled subset
+                  Reconnect authoritative state
                 </button>
-                <label>
-                  Sweep parameter
-                  <select
-                    value={kind}
-                    onChange={(e) => setKind(e.target.value)}
-                  >
-                    <option value="levels">Uniform levels</option>
-                    <option value="adc">ADC bits</option>
-                    <option value="noise">Noise coefficient</option>
-                  </select>
-                </label>
-                <label>
-                  Sweep cases (JSON)
-                  <input
-                    value={values}
-                    onChange={(e) => setValues(e.target.value)}
-                  />
-                </label>
                 <button
-                  disabled={!can("sweep")}
-                  onClick={() => void run("sweep")}
+                  disabled={
+                    pending ||
+                    !adapter ||
+                    !(job?.id || field(snapshot, "job_id"))
+                  }
+                  onClick={() => void reconnect(true)}
                 >
-                  Run selected sweep
+                  Cancel MNIST job
                 </button>
+              </section>
+              <section
+                className="mnist-prediction"
+                aria-labelledby="mnist-prediction-heading"
+              >
+                <h2 id="mnist-prediction-heading">Prediction</h2>
                 <p>
-                  Evaluation: at most 10000 images. Sweeps: explicitly choose at
-                  most 500 images and 64 cases. Jobs have a 15-minute
-                  cancellation deadline. No silent sample reduction.
+                  Single-input predictions and confidence are not dataset
+                  accuracy or a measured device result.
                 </p>
-              </fieldset>
+                {prediction ? (
+                  <>
+                    <Table table={prediction} />
+                    {resultIdentity}
+                    {evidence}
+                    <details>
+                      <summary>
+                        Probabilities, logits and hidden activations
+                      </summary>
+                      {inferenceDetails.map((t) => (
+                        <Table key={t.id} table={t} />
+                      ))}
+                    </details>
+                  </>
+                ) : (
+                  <p>
+                    No prediction yet. Run paired inference on a submitted
+                    input.
+                  </p>
+                )}
+              </section>
             </div>
           </div>
-          <h2>Identity and retained results</h2>
-          <dl data-testid="mnist-identity">
-            {snapshot?.fields
-              ?.filter((f) =>
-                [
-                  "hidden",
-                  "model_sha256",
-                  "dataset_sha256",
-                  "corpus_count",
-                  "source",
-                  "result_fresh",
-                ].includes(f.id),
-              )
-              .map((f) => (
-                <div key={f.id}>
-                  <dt>
-                    {f.label}: {f.input}
-                  </dt>
-                </div>
-              ))}
-          </dl>
-          <ul data-testid="mnist-evidence">
-            {snapshot?.evidence?.map((e, i) => (
-              <li key={i}>{e}</li>
-            ))}
-          </ul>
+          <section aria-labelledby="mnist-evaluation-heading">
+            <h2 id="mnist-evaluation-heading">
+              Labelled evaluation and sweeps
+            </h2>
+            <p>
+              Labelled evaluation records exact file fingerprints, actual
+              subset, seed, configuration and confusion counts.
+            </p>
+            <fieldset disabled={locked}>
+              <legend>Subset and sweep settings</legend>
+              <label>
+                Subset start
+                <input
+                  value={start}
+                  onChange={(e) => setStart(e.target.value)}
+                />
+              </label>
+              <label>
+                Selected images
+                <input
+                  value={count}
+                  onChange={(e) => setCount(e.target.value)}
+                />
+              </label>
+              <button
+                disabled={!can("evaluate")}
+                onClick={() => void run("evaluate")}
+              >
+                Evaluate labelled subset
+              </button>
+              <label>
+                Sweep parameter
+                <select value={kind} onChange={(e) => setKind(e.target.value)}>
+                  <option value="levels">Uniform levels</option>
+                  <option value="adc">ADC bits</option>
+                  <option value="noise">Noise coefficient</option>
+                </select>
+              </label>
+              <label>
+                Sweep cases (JSON)
+                <input
+                  value={values}
+                  onChange={(e) => setValues(e.target.value)}
+                />
+              </label>
+              <button
+                disabled={!can("sweep")}
+                onClick={() => void run("sweep")}
+              >
+                Run selected sweep
+              </button>
+              <p>
+                Evaluation: at most 10000 images. Sweeps: explicitly choose at
+                most 500 images and 64 cases. Jobs have a 15-minute cancellation
+                deadline. No silent sample reduction.
+              </p>
+            </fieldset>
+          </section>
+          <h2>Inspection and retained results</h2>
+          {!prediction && (
+            <>
+              {resultIdentity}
+              {evidence}
+            </>
+          )}
           <fieldset disabled={locked || !weights}>
             <legend>Weight inspection</legend>
             <label>
@@ -790,20 +891,20 @@ export default function Screen() {
               Inspect confusion case
             </button>
           </fieldset>
-          {snapshot?.tables?.map((t) => (
-            <Table key={t.id} table={t} />
-          ))}
+          {tables
+            .filter((t) => t !== prediction && !inferenceDetails.includes(t))
+            .map((t) => (
+              <Table key={t.id} table={t} />
+            ))}
           <button
-            disabled={!snapshot || field(snapshot, "result") === "null"}
+            disabled={!result || result === "null"}
             onClick={exportResult}
           >
             Export complete result JSON
           </button>
           <details>
             <summary>Complete Go result JSON and provenance</summary>
-            <pre data-testid="mnist-result">
-              {field(snapshot, "result") || "No result"}
-            </pre>
+            <pre data-testid="mnist-result">{result || "No result"}</pre>
           </details>
         </>
       )}
