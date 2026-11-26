@@ -293,6 +293,11 @@ func TestExportSelectedRunRootConfinement(t *testing.T) {
 		if runtime.GOOS != "linux" {
 			t.Skip("file-size fault is qualified on Linux")
 		}
+		if testing.CoverMode() != "" {
+			// The fault child inherits ulimit -f 0, so a coverage build cannot
+			// write its coverage data at exit. Plain test runs (make ci) cover this.
+			t.Skip("file-size fault child cannot write coverage data")
+		}
 		bundle, id := testRun(t)
 		exports := filepath.Join(bundle.Root, "exports")
 		must(t, os.Mkdir(exports, 0o755))
