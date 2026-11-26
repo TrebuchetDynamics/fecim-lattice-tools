@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { spawn, execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -29,7 +29,7 @@ test.afterAll(async () => {
   }
   if (root) rmSync(root, { recursive: true, force: true });
 });
-async function projects(page: import("@playwright/test").Page) {
+async function enter(page: Page) {
   if (local) {
     if (cookies.length) { await page.context().addCookies(cookies); await page.goto(`http://127.0.0.1:${port}/hysteresis`); }
     else await page.goto(launch);
@@ -37,17 +37,67 @@ async function projects(page: import("@playwright/test").Page) {
     cookies = await page.context().cookies();
   }
   else await page.goto("/");
+}
+async function projects(page: Page) {
+  await enter(page);
   await page.getByRole("link", { name: "Projects", exact: true }).first().click();
   await expect(page.getByRole("heading", { name: "Projects", exact: true })).toBeFocused();
+  await openStudy(page);
+  await page.getByRole("link", { name: "Configuration", exact: true }).click();
+}
+async function openStudy(page: Page) {
   if (local) {
     currentProject = `research-${++projectNumber}`;
     await page.getByLabel("Project name", { exact: true }).fill(currentProject);
     await page.getByRole("button", { name: "Create project", exact: true }).click();
   } else await page.getByRole("button", { name: "Open small example", exact: true }).click();
-  await page.getByRole("link", { name: "Configuration", exact: true }).click();
 }
-test("four-view real Go study, fields, validation, stable selection and comparison", async ({ page }) => {
-  await projects(page);
+const steps = ["Projects", "Configuration", "Experiment", "Results"];
+async function expectStep(page: Page, step: number) {
+  const navigation = page.getByRole("navigation", { name: "Study steps" });
+  await expect(navigation.getByRole("listitem")).toHaveText(steps);
+  await expect(navigation.locator('[aria-current="step"]')).toHaveText(steps[step - 1]);
+  await expect(page.getByText(`Step ${step} of 4: ${steps[step - 1]}`, { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`/${steps[step - 1].toLowerCase()}$`));
+  const heading = page.getByRole("main").getByRole("heading", { level: 1 });
+  await expect(heading).toHaveText(steps[step - 1]);
+  await expect(heading).toBeFocused();
+}
+test("four-view real Go study, fields, validation, stable selection and comparison", async ({ page }, info) => {
+  const browserErrors: string[] = [];
+  let starts = 0;
+  page.on("pageerror", error => browserErrors.push(error.message));
+  page.on("request", request => {
+    if (request.method() === "POST" && /^\/api\/v1\/projects\/[^/]+\/experiments$/.test(new URL(request.url()).pathname)) starts++;
+  });
+  await enter(page);
+  const main = page.getByRole("main");
+  const repair = main.getByRole("link", { name: "Go to Projects", exact: true });
+  for (const step of [2, 3, 4]) {
+    await page.goto(new URL(`/${steps[step - 1].toLowerCase()}`, page.url()).href);
+    await expectStep(page, step);
+    await expect(main.getByText("No study is open.", { exact: true })).toBeVisible();
+    await expect(main.getByRole("link")).toHaveCount(1);
+    await expect(repair).toHaveAttribute("href", "/projects");
+    await expect(main.getByRole("button", { name: "Run study", exact: true })).toHaveCount(0);
+  }
+  await page.screenshot({ path: info.outputPath("no-study.png"), fullPage: true });
+  await repair.focus();
+  await repair.press("Enter");
+  await expectStep(page, 1);
+  await openStudy(page);
+  const continueToConfig = main.getByRole("link", { name: "Continue to Configuration", exact: true });
+  await expect(continueToConfig).toBeVisible();
+  await expect(main.getByText("HZO Device-Array-Circuit Study")).toHaveCount(1);
+  const studySteps = main.getByRole("navigation", { name: "Study steps" });
+  await studySteps.getByRole("link", { name: "Results", exact: true }).click();
+  await main.getByRole("link", { name: "Go to Experiment", exact: true }).click();
+  await expectStep(page, 3);
+  await expect(page.getByTestId("experiment-state")).toHaveText("No execution started");
+  await studySteps.getByRole("link", { name: "Projects", exact: true }).click();
+  await expectStep(page, 1);
+  await continueToConfig.click();
+  await expectStep(page, 2);
   const rows = page.getByLabel("Array rows", { exact: true });
   await expect(rows).toBeVisible();
   if (local) {
@@ -64,10 +114,13 @@ test("four-view real Go study, fields, validation, stable selection and comparis
   }
   await page.getByRole("button", { name: "Validate configuration", exact: true }).click();
   await expect(page.getByTestId("validation")).toContainText("valid");
-  await page.getByRole("link", { name: "Experiment", exact: true }).click();
+  await main.getByRole("link", { name: "Continue to Experiment", exact: true }).click();
+  await expectStep(page, 3);
   await page.getByRole("button", { name: "Run study", exact: true }).click();
   await expect(page.getByTestId("experiment-state")).toContainText(/Execution succeeded|finished/, { timeout: 60_000 });
-  await page.getByRole("link", { name: "Results", exact: true }).click();
+  const finished = await page.getByTestId("experiment-state").textContent();
+  await main.getByRole("link", { name: "View study results", exact: true }).click();
+  await expectStep(page, 4);
   await expect(page.locator("#runs tbody tr")).toHaveCount(8);
   await expect(page.getByRole("figure", {name:"Result plot"})).toBeVisible();
   await expect(page.locator("#results-plot svg")).toHaveAttribute("viewBox", "0 0 1000 600");
@@ -75,7 +128,19 @@ test("four-view real Go study, fields, validation, stable selection and comparis
   await expect(page.locator("#results-plot [tabindex], #results-plot button, #results-plot a")).toHaveCount(0);
   await page.locator("#runs input[type=checkbox]").nth(0).check();
   await page.locator("#runs input[type=checkbox]").nth(1).check();
-  const ids = await page.locator("#selected-runs li").allTextContents();
+  const ids = await page.locator("#selected-runs code").allTextContents();
+  await page.goBack();
+  await expectStep(page, 3);
+  await expect(page.getByTestId("experiment-state")).toHaveText(finished!);
+  await page.goBack();
+  await expectStep(page, 2);
+  await page.goForward();
+  await expectStep(page, 3);
+  await page.goForward();
+  await expectStep(page, 4);
+  await expect(page.locator("#runs tbody tr")).toHaveCount(8);
+  await expect(page.locator("#selected-runs code")).toHaveText(ids);
+  if (local) expect(starts).toBe(1);
   await expect(page.locator('#results-plot circle[data-selected="true"]')).toHaveCount(2);
   await page.locator("#runs tbody th button").first().click();
   await expect(page.getByRole("heading", {name:"Run details and provenance",exact:true})).toBeVisible();
@@ -83,11 +148,18 @@ test("four-view real Go study, fields, validation, stable selection and comparis
   await page.getByLabel("Sort runs", { exact: true }).selectOption("energy_pj");
   await page.getByRole("button", { name: "Apply query", exact: true }).click();
   await expect(page.locator("#runs caption")).toBeFocused();
-  await expect(page.locator("#selected-runs li")).toHaveText(ids);
+  await expect(page.locator("#selected-runs code")).toHaveText(ids);
   await page.getByRole("button", { name: "Compare metrics", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Compare metrics", exact: true })).toBeFocused();
   await expect(page.locator("#comparison tbody tr")).toHaveCount(4);
   await expect(page.locator("#comparison")).toContainText("picojoules");
+  const resultsHeadings = await main.getByRole("heading", { level: 2 }).allTextContents();
+  expect(resultsHeadings.slice(0, 3)).toEqual(["Selected runs", "Compare metrics", "Run results"]);
+  await page.screenshot({ path: info.outputPath("study-results.png"), fullPage: true });
+  const browse = main.getByRole("link", { name: "Browse runs", exact: true });
+  await browse.focus();
+  await browse.press("Enter");
+  await expect(main.getByRole("heading", { name: "Run results", exact: true })).toBeFocused();
   if (local) {
     await page.getByRole("button", { name: "Verify stored runs", exact: true }).click();
     await expect(page.getByTestId("result-action")).toContainText("Verified");
@@ -110,6 +182,7 @@ test("four-view real Go study, fields, validation, stable selection and comparis
     await page.getByRole("button",{name:"Open project",exact:true}).click();
     await expect(page.getByTestId("research-status")).toContainText("Project opened");
   }
+  expect(browserErrors).toEqual([]);
 });
 test("cancel is authoritative, navigation keeps the owner and previous results", async ({ page }) => {
   await projects(page);
@@ -202,7 +275,7 @@ test("pending native saves preserve newer drafts and cannot restore a closed pro
     if(changeProject){await page.getByRole("link",{name:"Projects",exact:true}).first().click();await page.getByRole("button",{name:"Close project",exact:true}).click();}
     else await rows.fill("20");
     const delivered=page.waitForResponse(r=>r.request().method()==="PUT");release();await delivered;
-    if(changeProject){await page.getByRole("link",{name:"Configuration",exact:true}).click();await expect(rows).toHaveCount(0);}
+    if(changeProject){await page.goBack();await expect(page.getByRole("heading",{name:"Configuration",exact:true})).toBeFocused();await expect(rows).toHaveCount(0);}
     else await expect(rows).toHaveValue("20");
     await page.unroute("**/configuration");
   }
