@@ -1,7 +1,7 @@
 ### Build Instructions
 
 **Prerequisites:**
-- Go 1.26.10+ (patched minimum in [`go.mod`](go.mod); https://go.dev/dl/)
+- Go 1.26.11+ (patched minimum in [`go.mod`](go.mod); https://go.dev/dl/)
 - Git
 - Node 24.19.0 and npm 11.17.0 only when building the optional React assets
 
@@ -32,7 +32,7 @@ mkdir -p "$HOME/fecim-projects"
 ./fecim-lattice-tools serve --root "$HOME/fecim-projects"
 ```
 
-Open the short-lived terminal launch link. `make build-browser` installs locked frontend dependencies, regenerates contracts, builds both profiles and builds the matching embedded binary. Browser assets require the exact Go version in `go.mod` (currently 1.26.10), including its runtime shim. Users of the built binary need no Node installation. Plain Go builds retain the CLI/Fyne surfaces but `serve` refuses missing browser assets.
+Open the short-lived terminal launch link. `make build-browser` installs locked frontend dependencies, regenerates contracts, builds both profiles and builds the matching embedded binary. Browser assets require the exact Go version in `go.mod` (currently 1.26.11), including its runtime shim. Users of the built binary need no Node installation. Plain Go builds retain the CLI/Fyne surfaces but `serve` refuses missing browser assets.
 
 The current `build:native` packaging script explicitly selects CGO=1 and needs the desktop build dependencies. The Go command supports CGO=0 headless subcommand builds, but those plain builds have no matched browser packaging. Default desktop startup fails explicitly without CGO. Legacy Fyne remains the default and retains its regression gates.
 

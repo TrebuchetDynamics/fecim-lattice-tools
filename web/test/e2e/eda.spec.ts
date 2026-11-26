@@ -9,11 +9,11 @@ let root = "",
   child: ReturnType<typeof spawn> | undefined;
 test.beforeAll(async () => {
   if (!local) return;
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "eda-native-"));
   const binary = join(root, "fecim");
   execFileSync("node", ["src/local/build-native.mjs", binary], {
-    timeout: 120_000,
+    timeout: 360_000,
   });
   const bin = join(root, "private-tools");
   mkdirSync(bin);

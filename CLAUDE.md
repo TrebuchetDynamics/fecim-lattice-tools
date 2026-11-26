@@ -37,7 +37,7 @@ CGO_ENABLED=1 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fec
 # Or: ./launch.sh
 ```
 
-Optional browser candidate: `make build-browser`, then `./fecim-lattice-tools serve --root DIRECTORY` for an existing grant directory. Builds pin Go 1.26.10 from `go.mod`, Node 24.19.0 and npm 11.17.0. A plain Go build does not embed generated browser assets. `CGO_ENABLED=0` supports headless CLI/serve builds, but default desktop startup fails explicitly without CGO. Node is build-only. See [web/README.md](web/README.md) for contract generation, module conventions and isolation checks.
+Optional browser candidate: `make build-browser`, then `./fecim-lattice-tools serve --root DIRECTORY` for an existing grant directory. Builds pin Go 1.26.11 from `go.mod`, Node 24.19.0 and npm 11.17.0. A plain Go build does not embed generated browser assets. `CGO_ENABLED=0` supports headless CLI/serve builds, but default desktop startup fails explicitly without CGO. Node is build-only. See [web/README.md](web/README.md) for contract generation, module conventions and isolation checks.
 
 ## Key Rules
 

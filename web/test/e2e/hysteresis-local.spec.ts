@@ -23,12 +23,12 @@ async function launchLink(previous = "") {
     .at(-1)!;
 }
 test.beforeAll(async () => {
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "hys-local-"));
   const binary = join(root, "fecim-local");
   execFileSync("node", ["src/local/build-native.mjs", binary], {
     stdio: "pipe",
-    timeout: 120_000,
+    timeout: 360_000,
   });
   child = spawn(binary, ["serve", "--root", root, "--port", String(port)], {
     stdio: ["pipe", "pipe", "pipe"],
