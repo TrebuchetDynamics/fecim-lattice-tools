@@ -39,14 +39,15 @@ test("all hosted workflow families, imports, local actions and faults remain iso
       (navigator.clipboard as any).writeText = forbid("clipboard");
   });
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "lattice-scale",
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Research workbench",
   );
   expect(requests.some((request) => request.url.includes("/engine/"))).toBe(
     false,
   );
   await page
-    .getByRole("link", { name: "Open Hysteresis lab", exact: true })
+    .getByRole("navigation", { name: "Primary navigation" })
+    .getByRole("link", { name: "Hysteresis lab", exact: true })
     .click();
   await expect(page.getByLabel("Material", { exact: true })).toBeEnabled();
   await page

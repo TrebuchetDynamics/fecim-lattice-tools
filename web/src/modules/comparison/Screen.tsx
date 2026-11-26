@@ -9,7 +9,20 @@ const optionTables: Record<string, string> = {
   mode: "modes",
   output: "outputs",
 };
-function ResultsTable({ table }: { table: Schema<"TablePage"> }) {
+// The Go summary labels and sensitivity option IDs describe the same outputs.
+const metricOutputs: Record<string, string> = {
+  "Energy reduction": "energy_reduction_pct",
+  "Latency reduction": "latency_reduction_pct",
+  "TCO reduction": "tco_reduction_pct",
+  "CO2 reduction": "co2_reduction_pct",
+};
+function ResultsTable({
+  table,
+  inspect,
+}: {
+  table: Schema<"TablePage">;
+  inspect?: (output: string) => void;
+}) {
   return (
     <div className="table-scroll">
       <table id={"comparison-" + table.id}>
@@ -30,6 +43,18 @@ function ResultsTable({ table }: { table: Schema<"TablePage"> }) {
                 j === 0 ? (
                   <th scope="row" key={j}>
                     <Value value={cell.presentation} />
+                    {inspect && metricOutputs[cell.presentation.Display] && (
+                      <button
+                        type="button"
+                        aria-controls="comparison-metric-detail"
+                        aria-label={"Inspect " + cell.presentation.Speakable}
+                        onClick={() =>
+                          inspect(metricOutputs[cell.presentation.Display])
+                        }
+                      >
+                        Inspect
+                      </button>
+                    )}
                   </th>
                 ) : (
                   <td key={j}>
@@ -48,6 +73,7 @@ function ResultsTable({ table }: { table: Schema<"TablePage"> }) {
 export default function Screen() {
   useSyncExternalStore(owner.subscribe, owner.getSnapshot);
   const ref = useRef<HTMLElement>(null),
+    detailHeading = useRef<HTMLHeadingElement>(null),
     focusToken = useRef(0);
   useEffect(() => {
     void owner.connect();
@@ -68,7 +94,24 @@ export default function Screen() {
       owner.changed();
     }
   };
+  const inspect = (output: string) => {
+    const token = ++focusToken.current;
+    owner.draft("output", output);
+    requestAnimationFrame(() => {
+      if (token === focusToken.current) detailHeading.current?.focus();
+    });
+  };
   const s = owner.snapshot;
+  const summary = s?.tables?.find((t) => t.id === "summary");
+  const sources = s?.tables?.find((t) => t.id === "sources");
+  const sensitivity = s?.tables?.find((t) => t.id === "sensitivity");
+  const scenario = s?.fields?.find((f) => f.id === "profile");
+  const rankedOutput = s?.fields?.find((f) => f.id === "output")?.input;
+  const selectedOutput = owner.drafts.output ?? rankedOutput;
+  const selectedMetric = summary?.rows?.find(
+    (row) =>
+      row?.[0] && metricOutputs[row[0].presentation.Display] === selectedOutput,
+  );
   const exportUnavailable =
     __FECIM_PROFILE__ === "local" &&
     !s?.actions?.some((a) => a.id === "export" && a.available);
@@ -80,6 +123,11 @@ export default function Screen() {
         <p>
           Inspect the assumptions before the advantage. Scenario estimates and
           architecture demonstrations are separate Go protocols.
+        </p>
+        <p>
+          {__FECIM_PROFILE__ === "local"
+            ? "Authenticated local app · Export to an opened project."
+            : "Hosted browser · Calculate in memory; exports require the local app."}
         </p>
       </header>
       {owner.error && (
@@ -147,9 +195,9 @@ export default function Screen() {
               })}
             </fieldset>
             <p className="honesty">
-              Workload, rate, scenario and review-mode edits apply on Calculate.
-              Sensitivity output applies on Rank sensitivity. Until then, tables
-              and exports retain the last successful Go result.
+              Calculate applies workload, rate, scenario and review-mode edits.
+              Until then, results and exports use the last applied scenario.
+              Rank sensitivity runs separately for the selected output.
             </p>
             <div className="actions">
               {s.actions
@@ -158,6 +206,7 @@ export default function Screen() {
                   <button
                     key={a.id}
                     type={a.id === "calculate" ? "submit" : "button"}
+                    className={a.id === "calculate" ? "primary" : undefined}
                     disabled={owner.busy || !a.available}
                     onClick={
                       a.id === "calculate" ? undefined : () => void act(a.id)
@@ -168,21 +217,67 @@ export default function Screen() {
                 ))}
             </div>
           </form>
-          <div className="comparison-results">
+          <section
+            className="comparison-results"
+            aria-labelledby="comparison-results-title"
+          >
+            <h2 id="comparison-results-title">Scenario results</h2>
+            <div className="comparison-matrix">
+              {summary && <ResultsTable table={summary} inspect={inspect} />}
+              <section
+                className="comparison-metric-detail"
+                id="comparison-metric-detail"
+                aria-labelledby="comparison-metric-title"
+              >
+                <h3 id="comparison-metric-title" ref={detailHeading} tabIndex={-1}>
+                  Metric detail
+                </h3>
+                {scenario && (
+                  <p>Applied scenario: <Value value={scenario.presentation} /></p>
+                )}
+                {selectedMetric?.[0] && selectedMetric[1] && (
+                  <>
+                    <h4><Value value={selectedMetric[0].presentation} /></h4>
+                    <p><Value value={selectedMetric[1].presentation} /></p>
+                    <p>Unit: {selectedMetric[1].unit}</p>
+                    <p>Evidence: {selectedMetric[1].evidence}</p>
+                  </>
+                )}
+                {sources && (
+                  <details>
+                    <summary>Scenario assumptions</summary>
+                    <ResultsTable table={sources} />
+                  </details>
+                )}
+                <details id="comparison-evidence">
+                  <summary>Source evidence and limitations</summary>
+                  {s.evidence?.map((e, i) => (
+                    <p className="comparison-evidence" key={i}>
+                      {e}
+                    </p>
+                  ))}
+                </details>
+                <h4>Sensitivity</h4>
+                {!sensitivity ? (
+                  <p>Use Rank sensitivity to see the selected output for this scenario.</p>
+                ) : (
+                  <>
+                    {selectedOutput !== rankedOutput && (
+                      <p>
+                        Showing the previous output. Use Rank sensitivity to update it.
+                      </p>
+                    )}
+                    <ResultsTable table={sensitivity} />
+                  </>
+                )}
+              </section>
+            </div>
             {s.tables
-              ?.filter((t) => !Object.values(optionTables).includes(t.id))
+              ?.filter((t) => ["energy", "architectures", "diff"].includes(t.id))
               .map((t) => (
                 <ResultsTable key={t.id} table={t} />
               ))}
-          </div>
-          <details id="comparison-evidence">
-            <summary>Source evidence and limitations</summary>
-            {s.evidence?.map((e, i) => (
-              <p className="comparison-evidence" key={i}>
-                {e}
-              </p>
-            ))}
-          </details>
+          </section>
           <section aria-labelledby="comparison-export-title">
             <h2 id="comparison-export-title">Local versioned exports</h2>
             <p>
