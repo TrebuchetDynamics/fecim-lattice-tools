@@ -68,7 +68,7 @@ export function Home() {
                 <ul>
                   {modules.map(([id, name, description]) => (
                     <li className="module-card" key={id}>
-                      <a href={`/modules/${id}`}>{name}</a>
+                      <a href={`/modules/${id}`}>Explore {name}</a>
                       <p>{description}</p>
                       {(id === "mnist" || id === "eda") && (
                         <p className="home-capability">

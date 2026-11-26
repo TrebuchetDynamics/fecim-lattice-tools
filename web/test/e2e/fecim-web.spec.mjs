@@ -84,7 +84,7 @@ test("home workbench links open every destination by keyboard", async ({ page })
     await expect(link).toBeFocused();
     await expectLocatorInsideViewport(page, link, href);
     const metrics = await viewportMetrics(page);
-    expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.innerWidth);
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(page.viewportSize().width);
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(new RegExp(`${href}$`));
     await expect(heading).toBeVisible();
