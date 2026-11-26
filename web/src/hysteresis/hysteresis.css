@@ -1,0 +1,34 @@
+.loop-workspace > section {
+  margin-block: 1.5rem;
+}
+.loop-advanced {
+  padding-block: 0.5rem;
+  margin-block: 0 0.5rem;
+}
+.loop-evidence {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+@media (min-width: 68rem) {
+  .loop-evidence {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+.loop-figure {
+  margin: 0;
+}
+.loop-plot {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+}
+.loop-axis-label {
+  fill: #263d34;
+  font: 19px system-ui, sans-serif;
+}
+.loop-figure figcaption {
+  margin-block: 0.6rem 1.25rem;
+  color: #52645c;
+}

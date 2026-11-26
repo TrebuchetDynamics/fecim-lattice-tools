@@ -23,6 +23,112 @@ async function advance(page) {
   await expect(page.locator("#core-table tbody tr").first()).toBeVisible();
 }
 
+async function expectMatchingLoopRevision(result) {
+  const table = result.locator("#core-table");
+  await expect(table.locator("tbody tr").first()).toBeVisible();
+  const caption = await table.locator("caption").textContent();
+  const revision = caption?.match(/Core revision \d+/)?.[0];
+  expect(revision).toBeTruthy();
+  await expect(result.locator("figcaption")).toHaveText(new RegExp(`${revision}\\.$`));
+}
+
+test("narrow loop workspace runs, pauses and resets adjacent Go evidence", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await openLab(page);
+  const setup = page.getByRole("region", { name: "Setup", exact: true });
+  const controls = page.getByRole("region", { name: "Run controls", exact: true });
+  const result = page.getByRole("region", { name: "Loop result", exact: true });
+  await expect(setup.getByLabel("Material", { exact: true })).toBeVisible();
+  const summary = setup.getByText("Advanced settings", { exact: true });
+  await expect(setup.getByLabel("Playback scale (ratio)")).toBeHidden();
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(setup.getByLabel("Playback scale (ratio)")).toBeVisible();
+  await setup.getByLabel("Playback scale (ratio)").fill("0.001");
+  await apply(page);
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  const [setupBox, controlsBox, resultBox] = await Promise.all(
+    [setup, controls, result].map((region) => region.boundingBox()),
+  );
+  expect(setupBox!.y + setupBox!.height).toBeLessThanOrEqual(controlsBox!.y);
+  expect(controlsBox!.y + controlsBox!.height).toBeLessThanOrEqual(resultBox!.y);
+
+  const plot = result.getByRole("img", { name: "Supplementary polarization–field trajectory" });
+  await expect(plot).toBeVisible();
+  await expect(result.getByText(/No loop samples/)).toBeVisible();
+  await controls.getByLabel("Steps per batch", { exact: true }).fill("8");
+  await controls.getByRole("button", { name: "Run", exact: true }).press("Enter");
+  await expect(result.getByTestId("retained-count")).toHaveText("8");
+  await controls.getByRole("button", { name: "Pause", exact: true }).press("Enter");
+  await expect(result.getByTestId("core-state")).toHaveText("paused");
+  await expect(plot.locator("polyline")).toBeVisible();
+  expect((await plot.locator("polyline").getAttribute("points"))!.split(" ")).toHaveLength(8);
+  await expect(result.locator("#core-table tbody tr")).toHaveCount(8);
+  await expectMatchingLoopRevision(result);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await controls.getByRole("button", { name: "Read results" }).press("Enter");
+  await expect(result.getByRole("heading", { name: "Loop result" })).toBeFocused();
+  await controls.getByRole("button", { name: "Reset", exact: true }).press("Enter");
+  await expect(result.getByText(/No loop samples/)).toBeVisible();
+  await expect(result.getByTestId("retained-count")).toHaveText("0");
+  await expect(plot.locator("polyline, circle")).toHaveCount(0);
+  await expect(result.locator("#core-table tbody tr")).toHaveCount(0);
+  await controls.getByLabel("Steps per batch", { exact: true }).fill("1");
+  await advance(page);
+  await expect(result.locator("#core-table tbody tr")).toHaveCount(1);
+  await expect(plot.locator("circle")).toBeVisible();
+  await controls.getByRole("button", { name: "Run", exact: true }).press("Enter");
+  await expect(result.getByTestId("retained-count")).toHaveText("2");
+  await controls.getByRole("button", { name: "Reset", exact: true }).press("Enter");
+  await expect(result.getByText(/No loop samples/)).toBeVisible();
+  await expect(result.getByTestId("core-state")).toHaveText("paused");
+  await expect(result.locator("#core-table tbody tr")).toHaveCount(0);
+});
+
+test("loop plot is visible without opening a disclosure and draws real Go samples", async ({ page }) => {
+  await openLab(page);
+  const plot = page.getByRole("img", { name: "Supplementary polarization–field trajectory" });
+  await expect(plot).toBeVisible();
+  await expect(plot).toContainText("Electric field (V/m)");
+  await expect(plot).toContainText("Polarization (C/m²)");
+  const bounds = await plot.boundingBox();
+  expect(bounds!.height).toBeGreaterThanOrEqual(240);
+  await advance(page);
+  await expect(plot.locator("polyline")).toBeVisible();
+  expect((await plot.locator("polyline").getAttribute("points"))!.split(" ").length).toBeGreaterThan(1);
+  await expect(page.getByTestId("core-state")).toHaveText("paused");
+});
+
+test("loop work limit pauses Go and refreshes retained table and plot before Reset", async ({ page }) => {
+  await openLab(page);
+  await page.getByLabel("Steps per batch", { exact: true }).fill("256");
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("solver step limit reached", { timeout: 60_000 });
+  await expect(page.getByTestId("core-state")).toHaveText("paused");
+  await expect(page.locator("#core-table tbody tr").first()).toBeVisible();
+  await expect(page.getByText("Table is stale while computation advances; pause to read the current page.")).toHaveCount(0);
+  const plot = page.getByRole("img", { name: "Supplementary polarization–field trajectory" });
+  await expect(plot).toBeVisible();
+  await expect(plot.locator("polyline")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("reset before continuing");
+  const previousRevision = Number(await page.getByTestId("revision").textContent());
+  await page.getByRole("button", { name: "Advance batch", exact: true }).click();
+  await expect.poll(async () => Number(await page.getByTestId("revision").textContent())).toBeGreaterThan(previousRevision);
+  await expect(page.getByRole("alert")).toContainText("solver step limit reached");
+  await expect(page.getByTestId("core-state")).toHaveText("paused");
+  const result = page.getByRole("region", { name: "Loop result", exact: true });
+  await expectMatchingLoopRevision(result);
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByTestId("retained-count")).toHaveText("0");
+  await expect(result.getByText(/No loop samples/)).toBeVisible();
+  await expect(plot.locator("polyline")).toHaveCount(0);
+  await expect(result.locator("#core-table tbody tr")).toHaveCount(0);
+  await advance(page);
+  await expect(plot.locator("polyline")).toBeVisible();
+});
+
 test("core Go history, revisions, paging, focus and accessible narrow layout", async ({
   page,
 }) => {
@@ -66,6 +172,7 @@ test("core Go history, revisions, paging, focus and accessible narrow layout", a
   await page.getByLabel("Material", { exact: true }).selectOption({ index: 0 });
   await apply(page);
   await advance(page);
+  await page.getByText("Advanced settings", { exact: true }).click();
   await page
     .getByLabel("Playback scale (ratio)", { exact: true })
     .fill("0.001");
@@ -102,7 +209,7 @@ test("core Go history, revisions, paging, focus and accessible narrow layout", a
   await expect(page.locator("#core-table tbody tr")).toHaveCount(0);
   await page.getByRole("button", { name: "Read results", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Loop results", exact: true }),
+    page.getByRole("heading", { name: "Loop result", exact: true }),
   ).toBeFocused();
   await page.setViewportSize({ width: 360, height: 740 });
   await page.evaluate(() => {
@@ -141,6 +248,7 @@ test("program modes, calibration invalidation and independent Go diagnostics", a
   await expect(page.getByTestId("calibration-status")).toHaveText("fresh", {
     timeout: 30_000,
   });
+  await page.getByText("Advanced settings", { exact: true }).click();
   await page.getByLabel("Levels (levels)", { exact: true }).fill("4");
   await apply(page);
   await expect(page.getByTestId("calibration-status")).toHaveText("stale");

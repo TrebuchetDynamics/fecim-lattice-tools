@@ -198,11 +198,27 @@ export class Engine {
       throw new Error("Incomplete Go reply");
     return reply.result;
   }
-  private async corePage(offset: number) {
+  private async corePage(offset: number, patch?: Partial<Results>) {
     const corePage = await this.send<Page<CoreRow>>("core.page", {
       Offset: offset,
     });
-    this.publish({ corePage });
+    this.publish({ ...patch, corePage });
+  }
+  private async pauseCore(status?: string) {
+    const core = await this.send<Core>("core.apply", { Kind: "pause" });
+    await this.corePage(0, { core, ...(status ? { status } : {}) });
+  }
+  private async advanceCore(budget: Budget, token?: number) {
+    try {
+      this.publish({ core: await this.send<Core>("core.advance", budget) });
+    } catch (error) {
+      if (error instanceof GoInputError && (token === undefined || token === this.loop)) {
+        // A Go work/domain rejection is not a Worker crash. Pause Go and
+        // publish the retained plot and rows together before reporting failure.
+        await this.pauseCore();
+      }
+      throw error;
+    }
   }
   private async refresh() {
     const core = await this.send<Core>("core.snapshot");
@@ -240,12 +256,8 @@ export class Engine {
         core: await this.send<Core>("core.apply", { Kind: "run" }),
         error: undefined,
       });
-      this.publish({ core: await this.send<Core>("core.advance", budget) });
-      this.publish({
-        core: await this.send<Core>("core.apply", { Kind: "pause" }),
-        status: "Batch completed; paused",
-      });
-      await this.corePage(0);
+      await this.advanceCore(budget);
+      await this.pauseCore("Batch completed; paused");
     });
   }
   run(budget: Budget) {
@@ -270,13 +282,7 @@ export class Engine {
       return Promise.resolve();
     }
     this.stop();
-    return this.enqueue(async () => {
-      this.publish({
-        core: await this.send<Core>("core.apply", { Kind: "pause" }),
-        status: "Paused",
-      });
-      await this.corePage(0);
-    });
+    return this.enqueue(() => this.pauseCore("Paused"));
   }
   cancel() {
     this.stop();
@@ -306,20 +312,21 @@ export class Engine {
           analysisPage: undefined,
         });
       }
+      // Go's core reset clears history but does not stop a running loop.
+      // A programmer that owns the drive handles its own release on reset.
+      if (this.data.core?.State === "running" && !this.data.program?.OwnsDrive)
+        await this.send<Core>("core.apply", { Kind: "pause" });
+      const patch: Partial<Results> = { status: "Reset; loop history cleared", error: undefined };
       if (
         this.data.program &&
         this.data.program.Status !== "legacy_protocol_unavailable"
       ) {
-        const program = await this.send<Program>("program.apply", {
-          Kind: "reset",
-        });
-        this.publish({ program, core: program.Core });
-      } else
-        this.publish({
-          core: await this.send<Core>("core.apply", { Kind: "reset" }),
-        });
-      this.publish({ status: "Reset; loop history cleared", error: undefined });
-      await this.corePage(0);
+        patch.program = await this.send<Program>("program.apply", { Kind: "reset" });
+        patch.core = patch.program.Core;
+      } else {
+        patch.core = await this.send<Core>("core.apply", { Kind: "reset" });
+      }
+      await this.corePage(0, patch);
     });
   }
   programNew(config: unknown) {
@@ -407,9 +414,9 @@ export class Engine {
     while (this.alive && token === this.loop && this.data.active === kind) {
       await this.enqueue(async () => {
         if (token !== this.loop) return;
-        if (kind === "core")
-          this.publish({ core: await this.send<Core>("core.advance", budget) });
-        else if (kind === "program") {
+        if (kind === "core") {
+          await this.advanceCore(budget!, token);
+        } else if (kind === "program") {
           const program = await this.send<Program>("program.advance", budget);
           this.publish({ program, core: program.Core });
         } else
