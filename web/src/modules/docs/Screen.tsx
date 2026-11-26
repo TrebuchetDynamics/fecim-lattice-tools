@@ -53,7 +53,9 @@ export default function Screen() {
       location.hash.startsWith("#doc-") ? route().anchor || "" : undefined,
     ),
     mounted = useRef(true);
-  const reader = useRef<HTMLDivElement>(null);
+  const reader = useRef<HTMLElement>(null);
+  const resultsHeading = useRef<HTMLHeadingElement>(null);
+  const resultOrigin = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     mounted.current = true;
     loadManifest()
@@ -209,6 +211,7 @@ export default function Screen() {
         page: String(number),
       });
       accept(out);
+      resultOrigin.current = null;
       setPage(out.page);
       setAnnouncement(
         `${out.page.total} matches. Page ${out.page.page}; ${out.page.results.length} shown.`,
@@ -308,6 +311,13 @@ export default function Screen() {
         <p className="eyebrow">LEARN / REFERENCE</p>
         <h1>Documentation</h1>
         <p>Read the models. Check the assumptions. Follow the evidence.</p>
+        <p>
+          {__FECIM_PROFILE__ === "hosted"
+            ? "Hosted · Published documentation"
+            : localReady
+              ? "Local · Document grants connected"
+              : "Local · Connect to read granted documents"}
+        </p>
         <p data-testid="corpus-count">
           {output?.document_count ?? catalog?.document_count ?? "…"} indexed
           documents · {output?.decoded_bytes ?? catalog?.decoded_bytes ?? "…"}{" "}
@@ -320,150 +330,168 @@ export default function Screen() {
         audit and source conditions. Reading never runs checks or stops an
         experiment. Orca qualification is not run.
       </p>
-      <form
-        className="docs-search"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void search();
-        }}
-      >
-        <label>
-          Search documentation
-          <input
-            maxLength={256}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="A term, author or DOI"
-          />
-        </label>
-        <label>
-          Category
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            <option value="">All categories</option>
-            {categories.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </label>
-        <button disabled={busy} type="submit">
-          Search
-        </button>
-      </form>
       <p role="status" aria-live="polite">
         {announcement}
       </p>
       {error && <p role="alert">{error}</p>}
-      {page && (
-        <section aria-label="Search results" className="docs-results">
-          <h2>Search results</h2>
-          <p>
-            {page.query
-              ? `Query “${page.query}”`
-              : "Empty query: enter a term to search"}{" "}
-            · {page.total} matches
-          </p>
-          <ol start={(page.page - 1) * page.page_size + 1}>
-            {page.results.map((hit) => (
-              <li key={hit.DocPath}>
+      <div className="docs-layout">
+        <section className="docs-browse" aria-labelledby="docs-browse-heading">
+          <h2 id="docs-browse-heading">Browse and search</h2>
+          <form
+            className="docs-search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void search();
+            }}
+          >
+            <label>
+              Search documentation
+              <input
+                maxLength={256}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="A term, author or DOI"
+              />
+            </label>
+            <label>
+              Category
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">All categories</option>
+                {categories.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <button disabled={busy} type="submit">
+              Search
+            </button>
+          </form>
+          {page && (
+            <section
+              aria-labelledby="docs-results-heading"
+              className="docs-results"
+            >
+              <h3 id="docs-results-heading" ref={resultsHeading} tabIndex={-1}>
+                Search results
+              </h3>
+              <p>
+                {page.query
+                  ? `Query “${page.query}”`
+                  : "Empty query: enter a term to search"}{" "}
+                · {page.total} matches
+              </p>
+              <ol start={(page.page - 1) * page.page_size + 1}>
+                {page.results.map((hit) => (
+                  <li key={hit.DocPath}>
+                    <button
+                      aria-current={
+                        hit.DocPath === selected ? "page" : undefined
+                      }
+                      onClick={(event) => {
+                        resultOrigin.current = event.currentTarget;
+                        open(hit.DocPath);
+                      }}
+                      aria-label={"Read " + hit.Title}
+                    >
+                      {hit.Title}
+                    </button>
+                    <span> {hit.Category}</span>
+                    <p>{hit.Snippet}</p>
+                  </li>
+                ))}
+              </ol>
+              <div className="docs-actions">
                 <button
-                  onClick={() => open(hit.DocPath)}
-                  aria-label={"Read " + hit.Title}
+                  disabled={busy || page.page <= 1}
+                  onClick={() => void search(page.page - 1)}
                 >
-                  {hit.Title}
+                  Previous results
                 </button>
-                <span> {hit.Category}</span>
-                <p>{hit.Snippet}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="docs-actions">
-            <button
-              disabled={busy || page.page <= 1}
-              onClick={() => void search(page.page - 1)}
-            >
-              Previous results
-            </button>
-            <span>Page {page.page}</span>
-            <button
-              disabled={busy || page.page * page.page_size >= page.total}
-              onClick={() => void search(page.page + 1)}
-            >
-              Next results
-            </button>
+                <span>Page {page.page}</span>
+                <button
+                  disabled={busy || page.page * page.page_size >= page.total}
+                  onClick={() => void search(page.page + 1)}
+                >
+                  Next results
+                </button>
+              </div>
+            </section>
+          )}
+          <div className="docs-library">
+            <nav aria-label="Documentation library">
+              <h3>Library</h3>
+              <div className="docs-quick">
+                {[
+                  ["curriculum", "Learning path"],
+                  ["glossary", "Glossary"],
+                  ["citations", "Citations"],
+                  ["validation", "Validation and evidence"],
+                ].map(([id, label]) => (
+                  <button disabled={busy} key={id} onClick={() => open(id)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {categories.map((c) => (
+                <details key={c}>
+                  <summary>{c}</summary>
+                  <ul>
+                    {entries
+                      .filter((e) => e.category === c)
+                      .map((e) => (
+                        <li key={e.id}>
+                          <button
+                            disabled={busy}
+                            aria-label={"Library: " + e.title}
+                            aria-current={e.id === selected ? "page" : undefined}
+                            onClick={() => open(e.id)}
+                          >
+                            {e.title}
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </details>
+              ))}
+            </nav>
+            <details>
+              <summary>Favorites ({history.favorites.length})</summary>
+              <ul>
+                {history.favorites.map((id) => (
+                  <li key={id}>
+                    <button onClick={() => open(id)}>
+                      {entries.find((e) => e.id === id)?.title || id}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+            <details>
+              <summary>Recent ({history.recent.length})</summary>
+              <ul>
+                {history.recent.map((id) => (
+                  <li key={id}>
+                    <button onClick={() => open(id)}>
+                      {entries.find((e) => e.id === id)?.title || id}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+            <p>
+              Favorites and recent pages are ephemeral unless local history is
+              explicitly enabled and saved.
+            </p>
           </div>
         </section>
-      )}
-      <div className="docs-layout">
-        <aside className="docs-library">
-          <nav aria-label="Documentation library">
-            <h2>Library</h2>
-            <div className="docs-quick">
-              {[
-                ["curriculum", "Learning path"],
-                ["glossary", "Glossary"],
-                ["citations", "Citations"],
-                ["validation", "Validation and evidence"],
-              ].map(([id, label]) => (
-                <button disabled={busy} key={id} onClick={() => open(id)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            {categories.map((c) => (
-              <details open key={c}>
-                <summary>{c}</summary>
-                <ul>
-                  {entries
-                    .filter((e) => e.category === c)
-                    .map((e) => (
-                      <li key={e.id}>
-                        <button
-                          disabled={busy}
-                          aria-label={"Library: " + e.title}
-                          aria-current={e.id === selected ? "page" : undefined}
-                          onClick={() => open(e.id)}
-                        >
-                          {e.title}
-                        </button>
-                      </li>
-                    ))}
-                </ul>
-              </details>
-            ))}
-          </nav>
-          <details>
-            <summary>Favorites ({history.favorites.length})</summary>
-            <ul>
-              {history.favorites.map((id) => (
-                <li key={id}>
-                  <button onClick={() => open(id)}>
-                    {entries.find((e) => e.id === id)?.title || id}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </details>
-          <details>
-            <summary>Recent ({history.recent.length})</summary>
-            <ul>
-              {history.recent.map((id) => (
-                <li key={id}>
-                  <button onClick={() => open(id)}>
-                    {entries.find((e) => e.id === id)?.title || id}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </details>
-          <p>
-            Favorites and recent pages are ephemeral unless local history is
-            explicitly enabled and saved.
-          </p>
-        </aside>
-        <div className="docs-content" ref={reader}>
+        <section
+          className="docs-content"
+          aria-label={doc ? `Read: ${doc.title}` : "Read"}
+          ref={reader}
+        >
           {doc && (
             <>
               <nav aria-label="Document breadcrumb">
@@ -586,6 +614,20 @@ export default function Screen() {
                   )}
                 </section>
               )}
+              {!!page?.results.length && (
+                <button
+                  className="docs-back"
+                  onClick={() => {
+                    const origin = resultOrigin.current;
+                    const target = origin?.isConnected
+                      ? origin
+                      : resultsHeading.current;
+                    target?.focus();
+                  }}
+                >
+                  Back to search results
+                </button>
+              )}
               <Reader doc={doc} onOpen={open} />
             </>
           )}
@@ -596,7 +638,7 @@ export default function Screen() {
                 : "Loading document…"}
             </p>
           )}
-        </div>
+        </section>
       </div>
       {__FECIM_PROFILE__ === "local" && (
         <details className="docs-local">
