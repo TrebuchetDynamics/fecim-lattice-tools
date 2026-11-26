@@ -1,17 +1,17 @@
 module fecim-lattice-tools
 
-go 1.26.10
+go 1.26.11
 
 require (
 	fyne.io/fyne/v2 v2.8.2
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/danielgtaylor/huma/v2 v2.40.0
+	github.com/danielgtaylor/huma/v2 v2.41.0
 	github.com/go-gl/glfw/v3.4/glfw v0.1.0-pre.2
 	github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8
-	github.com/yuin/goldmark v1.8.2
-	golang.org/x/sys v0.49.0
+	github.com/yuin/goldmark v1.8.7
+	golang.org/x/sys v0.50.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -57,8 +57,8 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/image v0.45.0 // indirect
-	golang.org/x/net v0.61.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/net v0.63.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 )

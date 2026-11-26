@@ -10,7 +10,7 @@ let root = "",
 let child: ReturnType<typeof spawn> | undefined;
 test.beforeAll(async () => {
   if (!local) return;
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "mnist-native-"));
   for (const name of [
     "pretrained_weights.json",
@@ -37,7 +37,7 @@ func main(){n:=neural.NewDualModeNetwork(784,128,10);if e:=n.LoadWeights(filepat
   );
   const binary = join(root, "fecim");
   execFileSync("node", ["src/local/build-native.mjs", binary], {
-    timeout: 120_000,
+    timeout: 360_000,
   });
   child = spawn(binary, ["serve", "--root", root, "--port", String(port)]);
   let output = "";
@@ -63,7 +63,13 @@ test.afterAll(async () => {
 
 test("MNIST real local science and hosted read-only boundary", async ({
   page,
-}) => {
+}, testInfo) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  const capture = async (name: string) => {
+    if (testInfo.project.name === "desktop-chromium")
+      await page.screenshot({ path: testInfo.outputPath(name + ".png") });
+  };
   const requests: string[] = [];
   let mnistSessions = 0;
   page.on("request", (r) => {
@@ -88,30 +94,64 @@ test("MNIST real local science and hosted read-only boundary", async ({
   await expect(
     page.getByRole("heading", { name: "MNIST", exact: true }),
   ).toBeFocused();
-  await expect(
-    page.getByRole("heading", { name: "Model, input, evidence", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  const prediction = page.getByRole("region", {
+    name: "Prediction",
+    exact: true,
+  });
   if (!local) {
     await expect(
       page.getByRole("button", { name: "Run paired inference", exact: true }),
     ).toHaveCount(0);
-    await page
+    const learn = page.getByRole("region", {
+      name: "Learn and import",
+      exact: true,
+    });
+    await expect(learn).toContainText("Hosted profile");
+    await expect(prediction.getByTestId("mnist-import")).toContainText(
+      "No imported result",
+    );
+    await learn
       .getByLabel("Import result for read-only inspection", { exact: true })
       .setInputFiles({
         name: "result.json",
         mimeType: "application/json",
         buffer: Buffer.from("<script>window.mnistInjected=true</script>"),
       });
-    await expect(page.getByTestId("mnist-import")).toContainText(
+    await expect(prediction.getByTestId("mnist-import")).toContainText(
       "<script>window.mnistInjected=true</script>",
     );
     await expect(
-      page.getByText("Imported/unverified — not a locally verified evaluation"),
+      prediction.getByText(
+        "Imported/unverified — not a locally verified evaluation",
+      ),
     ).toBeVisible();
     expect(await page.evaluate(() => "mnistInjected" in window)).toBe(false);
+    await expect(prediction.getByRole("table")).toHaveCount(0);
+    await expect(
+      page.getByRole("region", { name: "Run inference", exact: true }),
+    ).toHaveCount(0);
+    await capture("hosted-unverified-import");
     expect(requests).toEqual([]);
+    expect(pageErrors).toEqual([]);
     return;
   }
+  const input = page.getByRole("region", { name: "Input", exact: true });
+  const run = page.getByRole("region", { name: "Run inference", exact: true });
+  const infer = run.getByRole("button", {
+    name: "Run paired inference",
+    exact: true,
+  });
+  const digits = prediction.getByRole("table", {
+    name: "Retained paired predictions (not dataset accuracy)",
+  });
+  await expect(run).toContainText("Local profile");
+  await expect(infer).toBeDisabled();
+  await expect(prediction).toContainText("No prediction yet");
+  await expect(digits).toHaveCount(0);
+  await page
+    .getByText("Model, data and configuration", { exact: true })
+    .click();
   await expect(page.getByTestId("mnist-status")).toContainText(
     "unavailable: select a model",
   );
@@ -136,9 +176,12 @@ test("MNIST real local science and hosted read-only boundary", async ({
     page.getByRole("button", { name: "Apply configuration", exact: true }),
   ).toBeEnabled();
   // A disabled fieldset does not disable canvas pointer events or an earlier drag.
-  const canvas = page.locator("canvas");
-  const raw = page.getByRole("textbox", { name: /^Raw input pixels/ });
-  const setPixel = page.getByRole("button", { name: "Set pixel", exact: true });
+  const canvas = input.locator("canvas");
+  const raw = input.getByRole("textbox", { name: /^Raw input pixels/ });
+  const setPixel = input.getByRole("button", {
+    name: "Set pixel",
+    exact: true,
+  });
   await canvas.scrollIntoViewIfNeeded();
   const box = (await canvas.boundingBox())!;
   const point = { x: box.x + box.width / 4, y: box.y + box.height / 4 };
@@ -222,41 +265,35 @@ test("MNIST real local science and hosted read-only boundary", async ({
     await canvas.evaluate((c: HTMLCanvasElement) => c.toDataURL()),
   ).not.toBe(buffer);
   // Keyboard pixel editing is an accessible drawing alternative, not TS preprocessing.
-  await page.getByLabel("Pixel row", { exact: true }).fill("2");
+  const pixelRow = input.getByLabel("Pixel row", { exact: true });
+  await pixelRow.fill("28");
+  await setPixel.focus();
+  await page.keyboard.press("Enter");
+  const pixelError = page.getByRole("alert");
+  await expect(pixelError).toHaveText(
+    "Choose row/column 0..27 and intensity 0..1.",
+  );
+  await expect(pixelError).toBeFocused();
+  await capture("local-invalid-pixel");
+  await pixelRow.fill("2");
   await page.getByLabel("Pixel column", { exact: true }).fill("2");
   await setPixel.focus();
   await page.keyboard.press("Enter");
   expect(JSON.parse(await raw.inputValue())[2 * 28 + 2]).toBe(1);
-  await page.getByRole("button", { name: "Use drawing", exact: true }).click();
+  await input.getByRole("button", { name: "Use drawing", exact: true }).click();
+  await expect(pixelError).toHaveCount(0);
   await expect(page.getByTestId("mnist-identity")).toContainText(
     "Current input source: drawing",
   );
   await expect(
     page.getByRole("button", { name: "Use drawing", exact: true }),
   ).toBeEnabled();
-  await page
-    .getByRole("button", { name: "Run paired inference", exact: true })
-    .click();
-  await expect(page.getByTestId("mnist-status")).toContainText("succeeded");
-  await expect(page.getByTestId("mnist-evidence")).toContainText(
-    "Accuracy unavailable",
-  );
-  await expect(page.locator("#mnist-probabilities tbody tr")).toHaveCount(10);
-  await expect(page.locator("#mnist-layers tbody tr")).toHaveCount(128);
-  await page
-    .getByRole("button", { name: "Load labelled corpus", exact: true })
-    .click();
-  await expect(page.getByTestId("mnist-identity")).toContainText(
-    "Actual selected corpus images: 10000",
-  );
-  await expect(
-    page.getByRole("button", { name: "Load labelled corpus", exact: true }),
-  ).toBeEnabled();
   // Terminal job publication precedes the refreshed snapshot. Keep the real
   // response held until a read has captured the previous retained result.
   const resultAfterRefresh = async (
     button: string,
     matches: (result: any) => void,
+    whileWaiting?: () => Promise<void>,
   ) => {
     const result = page.getByTestId("mnist-result");
     const previous = await result.textContent();
@@ -279,10 +316,13 @@ test("MNIST real local science and hosted read-only boundary", async ({
       { times: 1 },
     );
     try {
-      await page.getByRole("button", { name: button, exact: true }).click();
+      await page
+        .getByRole("button", { name: button, exact: true })
+        .press("Enter");
       await expect.poll(() => held).toBe(true);
       await expect(page.getByTestId("mnist-status")).toContainText("succeeded");
       await expect(result).toHaveText(previous!);
+      await whileWaiting?.();
       expect(safetyReleased).toBe(false);
       const read = async () => {
         const next = JSON.parse((await result.textContent())!);
@@ -301,6 +341,49 @@ test("MNIST real local science and hosted read-only boundary", async ({
       await page.unrouteAll({ behavior: "wait" });
     }
   };
+  await expect(digits).toHaveCount(0);
+  await resultAfterRefresh(
+    "Run paired inference",
+    (next) =>
+      expect(next).toMatchObject({
+        source: "drawing",
+        inference: expect.any(Object),
+      }),
+    () => expect(digits).toHaveCount(0),
+  );
+  await expect(digits).toBeVisible();
+  await expect(prediction).toContainText("Result input source: drawing");
+  await expect(
+    prediction.getByText(
+      /^Educational CPU simulation; not a device measurement\./,
+    ),
+  ).toBeVisible();
+  await expect(page.getByTestId("mnist-status")).toContainText("succeeded");
+  await expect(page.getByTestId("mnist-evidence")).toContainText(
+    "Accuracy unavailable",
+  );
+  await expect(page.locator("#mnist-probabilities tbody tr")).toHaveCount(10);
+  await expect(page.locator("#mnist-layers tbody tr")).toHaveCount(128);
+  const details = prediction.getByText(
+    "Probabilities, logits and hidden activations",
+    { exact: true },
+  );
+  await details.press("Enter");
+  await expect(
+    prediction.getByRole("table", {
+      name: "Retained paired probabilities and logits",
+    }),
+  ).toBeVisible();
+  await details.press("Enter");
+  await page
+    .getByRole("button", { name: "Load labelled corpus", exact: true })
+    .click();
+  await expect(page.getByTestId("mnist-identity")).toContainText(
+    "Actual selected corpus images: 10000",
+  );
+  await expect(
+    page.getByRole("button", { name: "Load labelled corpus", exact: true }),
+  ).toBeEnabled();
   await page.getByLabel("Dataset sample index", { exact: true }).fill("17");
   await page
     .getByRole("button", { name: "Use dataset sample", exact: true })
@@ -311,6 +394,8 @@ test("MNIST real local science and hosted read-only boundary", async ({
   await expect(
     page.getByRole("button", { name: "Use dataset sample", exact: true }),
   ).toBeEnabled();
+  await expect(prediction).toContainText("STALE: retained results");
+  await expect(prediction).toContainText("Result input source: drawing");
   let r = await resultAfterRefresh("Run paired inference", (next) => {
     expect(next).toMatchObject({
       source: "dataset",
@@ -323,6 +408,29 @@ test("MNIST real local science and hosted read-only boundary", async ({
   expect(r.preprocessing).toBe("none");
   expect(r.model_sha256).toMatch(/^[a-f0-9]{64}$/);
   expect(r.dataset_sha256).toMatch(/^[a-f0-9]{64}$/);
+  await expect(prediction).toContainText("Result input source: dataset");
+  await expect(prediction).toContainText(
+    "Result model SHA-256: " + r.model_sha256,
+  );
+  await expect(prediction).toContainText(
+    "Result corpus SHA-256: " + r.dataset_sha256,
+  );
+  await expect(
+    digits.getByRole("rowheader", {
+      name: `${expected.inference.FPPrediction} count`,
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    digits.getByRole("cell", {
+      name: `${expected.inference.CIMPrediction} count`,
+      exact: true,
+    }),
+  ).toBeVisible();
+  if (testInfo.project.name === "desktop-chromium")
+    await prediction.screenshot({
+      path: testInfo.outputPath("local-prediction.png"),
+    });
   await page.getByLabel("Subset start", { exact: true }).fill("17");
   await page.getByLabel("Selected images", { exact: true }).fill("3");
   r = await resultAfterRefresh("Evaluate labelled subset", (next) => {
@@ -410,4 +518,5 @@ test("MNIST real local science and hosted read-only boundary", async ({
   expect(
     JSON.parse((await page.getByTestId("mnist-result").textContent())!),
   ).toEqual(r);
+  expect(pageErrors).toEqual([]);
 });

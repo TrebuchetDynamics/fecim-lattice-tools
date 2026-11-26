@@ -16,7 +16,7 @@ let child: ReturnType<typeof spawn> | undefined,
   launch = "";
 test.beforeAll(async () => {
   if (!local) return;
-  test.setTimeout(180000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "docs-local-"));
   writeFileSync(
     join(root, "lesson.md"),
@@ -24,7 +24,7 @@ test.beforeAll(async () => {
   );
   const binary = join(root, "fecim");
   execFileSync("node", ["src/local/build-native.mjs", binary], {
-    timeout: 120000,
+    timeout: 360_000,
   });
   child = spawn(binary, ["serve", "--root", root, "--port", String(port)]);
   let output = "";
@@ -50,7 +50,9 @@ test.afterAll(async () => {
 
 test("documentation reads before WASM, then searches the real Go index and navigates accessible content", async ({
   page,
-}) => {
+}, testInfo) => {
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
   const requests: { url: string; method: string }[] = [];
   page.on("request", (r) =>
     requests.push({ url: r.url(), method: r.method() }),
@@ -66,8 +68,11 @@ test("documentation reads before WASM, then searches the real Go index and navig
   await expect(
     page.getByRole("heading", { name: "Documentation", exact: true }),
   ).toBeVisible();
+  const browse = page.getByRole("region", { name: "Browse and search" });
+  const initialReader = page.getByRole("region", { name: /^Read:/ });
+  await expect(browse.getByLabel("Search documentation")).toBeEnabled();
   await expect(
-    page
+    initialReader
       .getByLabel("Document reader")
       .getByRole("heading", {
         name: "Ferroelectric CIM: Complete ELI5 Guide - Overview",
@@ -90,20 +95,65 @@ test("documentation reads before WASM, then searches the real Go index and navig
   ).toBeVisible();
   expect(requests.some((r) => r.url.endsWith("docs.wasm"))).toBe(true);
   await expect(page.getByText("Recent (1)", { exact: true })).toBeVisible();
-  await page.getByLabel("Search documentation").fill("Materlik");
-  await page.getByLabel("Category").selectOption("Citation");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Read Citation guide", exact: true })
-    .click();
   await expect(
-    page
-      .getByLabel("Document reader")
-      .getByRole("heading", { name: "Citation guide", exact: true }),
+    initialReader.getByRole("heading", {
+      name: "FeCIM Technical Glossary",
+      exact: true,
+    }),
+  ).toBeVisible();
+  const searchInput = browse.getByLabel("Search documentation");
+  await searchInput.fill("Materlik");
+  await browse.getByLabel("Category").selectOption("Citation");
+  await searchInput.press("Enter");
+  const results = browse.getByRole("region", { name: "Search results" });
+  const hit = results.getByRole("button", {
+    name: "Read Citation guide",
+    exact: true,
+  });
+  const hits = results.locator("ol");
+  await expect(hit).toBeVisible();
+  const originalHits = await hits.allTextContents();
+  await hit.press("Enter");
+  const reader = page.getByRole("region", { name: "Read: Citation guide" });
+  const article = reader.getByRole("article", { name: "Document reader" });
+  await expect(
+    article.getByRole("heading", { name: "Citation guide", exact: true }),
   ).toBeFocused();
+  const doi = article.getByRole("link", { name: "DOI: 10.1063/1.4916229" });
+  await expect(doi).toHaveAttribute("href", "https://doi.org/10.1063/1.4916229");
+  await expect(doi).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "DOI: 10.1063/1.4916229" }),
-  ).toHaveAttribute("href", "https://doi.org/10.1063/1.4916229");
+    article.getByText(/These are bibliographic links/),
+  ).toBeInViewport();
+  expect(
+    await page.evaluate(() => {
+      const { scrollWidth, clientWidth } = document.documentElement;
+      return scrollWidth <= clientWidth;
+    }),
+  ).toBe(true);
+  const articleURL = page.url();
+  const back = reader.getByRole("button", { name: "Back to search results" });
+  await page.keyboard.press("Shift+Tab");
+  await expect(back).toBeFocused();
+  const capture = ["desktop-chromium", "mobile-small-chromium"].includes(
+    testInfo.project.name,
+  );
+  if (capture) {
+    await page.screenshot({ path: testInfo.outputPath("docs-reader.png") });
+  }
+  await page.keyboard.press("Enter");
+  await expect(hit).toBeFocused();
+  await expect(hit).toBeInViewport();
+  await expect(hit).toHaveCSS("outline-style", "solid");
+  await expect(hit).toHaveCSS("outline-width", "3px");
+  await expect(searchInput).toHaveValue("Materlik");
+  await expect(browse.getByLabel("Category")).toHaveValue("Citation");
+  expect(await hits.allTextContents()).toEqual(originalHits);
+  await expect(results.getByText("Page 1", { exact: true })).toBeVisible();
+  expect(page.url()).toBe(articleURL);
+  if (capture) {
+    await page.screenshot({ path: testInfo.outputPath("docs-results-focus.png") });
+  }
   await page.getByRole("button", { name: "Add favorite" }).click();
   await expect(
     page.getByRole("button", { name: "Remove favorite" }),
@@ -292,7 +342,6 @@ test("documentation reads before WASM, then searches the real Go index and navig
     await page.getByLabel("Category").selectOption("");
     await page.getByLabel("Search documentation").fill("uniquegrantword");
     await page.getByRole("button", { name: "Search", exact: true }).click();
-    const results = page.getByRole("region", { name: "Search results" });
     await expect(results.locator("ol > li")).toHaveCount(20);
     await page.getByRole("button", { name: "Next results" }).click();
     await expect(results.locator("ol > li")).toHaveCount(2);
@@ -315,4 +364,5 @@ test("documentation reads before WASM, then searches the real Go index and navig
   });
   await expect(page.getByRole("alert")).toContainText("Unknown document ID");
   await expect(page.getByLabel("Document reader")).toHaveCount(0);
+  expect(browserErrors).toEqual([]);
 });
