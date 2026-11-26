@@ -1,38 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
-import { spawn, execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { useResearchServer } from "./research-server";
 
 const local = process.env.FECIM_WEB_PROFILE === "local";
-let child: ReturnType<typeof spawn> | undefined;
-let root = "", launch = "", projectNumber = 0;
+const server = useResearchServer();
+let projectNumber = 0;
 let currentProject = "";
 let cookies: Awaited<ReturnType<import("@playwright/test").BrowserContext["cookies"]>> = [];
-const port = Number(process.env.AUTOWORK_PORT_BASE || 20200) + 12;
-test.beforeAll(async () => {
-  if (!local) return;
-  test.setTimeout(420_000);
-  root = mkdtempSync(join(process.env.TMPDIR!, "research-local-"));
-  const binary = join(root, "fecim");
-  execFileSync("node", ["src/local/build-native.mjs", binary], { timeout: 360_000 });
-  child = spawn(binary, ["serve", "--root", root, "--port", String(port)]);
-  let output = "";
-  child.stdout!.on("data", data => { output += data; });
-  child.stderr!.on("data", data => { output += data; });
-  await expect.poll(() => output.match(/http:\/\/127\.0\.0\.1:\d+\/#bootstrap=[a-f0-9]+/)?.[0], { timeout: 30_000 }).toBeTruthy();
-  launch = output.match(/http:\/\/127\.0\.0\.1:\d+\/#bootstrap=[a-f0-9]+/)![0];
-});
-test.afterAll(async () => {
-  if (child && child.exitCode === null) {
-    const exited = new Promise(resolve => child!.once("exit", resolve));
-    child.kill("SIGTERM"); await exited;
-  }
-  if (root) rmSync(root, { recursive: true, force: true });
-});
 async function enter(page: Page) {
   if (local) {
-    if (cookies.length) { await page.context().addCookies(cookies); await page.goto(`http://127.0.0.1:${port}/hysteresis`); }
-    else await page.goto(launch);
+    if (cookies.length) { await page.context().addCookies(cookies); await page.goto(`http://127.0.0.1:${server.port}/hysteresis`); }
+    else await page.goto(server.launch);
     await expect(page.getByLabel("Material", { exact: true })).toBeEnabled();
     cookies = await page.context().cookies();
   }
@@ -228,7 +207,7 @@ test("selection survives pages and refuses a fifth without moving focus or losin
 test("native stale field save retains edits and explicitly reviews current disk text", async ({page}) => {
   test.skip(!local,"native filesystem conflict");
   await projects(page);
-  const file=join(root,currentProject,"design.yaml");
+  const file=join(server.root,currentProject,"design.yaml");
   const before=readFileSync(file,"utf8");
   await page.getByLabel("Array rows",{exact:true}).fill("16");
   writeFileSync(file,before.replace("rows: 32","rows: 24"));

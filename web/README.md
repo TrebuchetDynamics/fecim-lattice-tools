@@ -4,7 +4,7 @@ One React + TypeScript + Vite application owns `/`, `/hysteresis`, `/projects`, 
 
 ## Build and develop
 
-Build/test pins: Node **24.19.0**, npm **11.17.0**, and the **exact Go version in `../go.mod`** (currently 1.26.10). Dependencies are locked. Go's toolchain manager must already have that version or be able to provision it at build time.
+Build/test pins: Node **24.19.0**, npm **11.17.0**, and the **exact Go version in `../go.mod`**. Dependencies are locked. Go's toolchain manager must already have that version or be able to provision it at build time.
 
 ```bash
 cd web
@@ -35,6 +35,21 @@ The emitted `engine/manifest.json` binds frontend content, protocol/model/build/
 Hosted studies stay in memory. Select YAML/input bytes or a `documents` JSON map of base64 bytes, or open the small eight-point example. Go enforces 8 MiB total bundle bytes, 1 MiB per YAML file, at most 256 points and 32×32 arrays before expansion. The small fixture uses 16/32-row arrays; the original example with 64-row cases is native-only. No hosted edit, report/export/download, persistent reuse, scientific upload, browser storage or filesystem API is added. See the [research guide](../docs/guides/research-design-workbench.md#browser-research-workflow-candidate) for limits, conflict review, result semantics and recovery.
 
 Research ownership survives SPA navigation, fragments and Back/Forward. Go supplies stable pages/revisions, table captions, numeric display/speech/evidence and full-filtered-scope plot coordinates. Selection mirrors immutable IDs; the supplementary plot has no unique actions or point Tab stops. A retired response cannot overwrite newer field drafts or steal focus in another view. A Worker transport fault is unknown ephemeral execution, not a successful or cancelled scientific outcome. Explicit discard permits a fresh import/example; previous results remain readable until then.
+
+### Study-to-lab journey check
+
+[The integrated Playwright journey](test/e2e/rebuild-journey.spec.ts) opens the small hosted example or creates a study in a temporary granted root through the authenticated embedded local server. It runs the study, selects a result by its immutable ID, and uses the Modules links and browser Back to visit all seven labs. Each lab's active heading receives focus; on each return, the same study and checked result ID are still in Results. If Results says “No study is open.”, follow **Go to Projects** and open or create a study first.
+
+Hosted MNIST and EDA expose read-only inspection, not native execution controls; the test also rejects off-origin and native API requests. Local MNIST exposes inference controls but requires a model. Local EDA exposes generation and sees the selected run ID for export. The journey does not run inference, generate artifacts, or validate installed tools.
+
+After building both profiles and provisioning the browsers below, run from `web/`:
+
+```bash
+FECIM_WEB_SUITE=shared npm run test:e2e -- test/e2e/rebuild-journey.spec.ts
+FECIM_WEB_PROFILE=local FECIM_WEB_SUITE=shared npm run test:e2e -- test/e2e/rebuild-journey.spec.ts
+```
+
+Use a short, private `TMPDIR` (Chromium creates Unix sockets there) and reserve a separate `AUTOWORK_PORT_BASE` through `+16` range for each simultaneous lane. Failures identify the profile and route; both profiles must execute the journey, with no skips. The local journey uses the same rooted server fixture as `workbench.spec.ts` at port base `+12`, not the static local preview. For integration verification, also run both shared suites without the spec filter and the separate `hysteresis-local.spec.ts` lane with `FECIM_WEB_SUITE` unset. The independent native/Node/Firefox parity and real Orca/installed-tool gates are unchanged.
 
 ## Shared module transport and extension conventions
 
