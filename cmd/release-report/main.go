@@ -148,7 +148,8 @@ func runReleaseReport(args []string, stderr io.Writer) int {
 			r.MaterialID = matID
 			r.ByModel = map[string]bool{}
 		}
-		r.ByModel[model] = s.AllPass
+		previous, observed := r.ByModel[model]
+		r.ByModel[model] = s.AllPass && (!observed || previous)
 		r.ObservedFiles = append(r.ObservedFiles, p)
 		if s.Suite != "" {
 			r.ObservedSuites = append(r.ObservedSuites, s.Suite)

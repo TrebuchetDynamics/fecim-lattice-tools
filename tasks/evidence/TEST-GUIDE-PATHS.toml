@@ -1,0 +1,9 @@
+schema = 1
+task = "TEST-GUIDE-PATHS"
+candidate = "8def8643dd9f757a90ab299e6831d00c0770f5f6"
+integration = "741fc343ee631a37c98fc0079dc6d1ab00152e59"
+tree = "42a2f642183a32171f91452547c6fbd7d83c1985"
+contract_hash = "3b031a165752ba33647305890d409e7a6c0b34c2b67a11473496cae23ed8ef14"
+checks = ["<path>", "<path>", "--verify", "<path>", "TEST-GUIDE-PATHS"]
+result = "pass"
+review = "passed"

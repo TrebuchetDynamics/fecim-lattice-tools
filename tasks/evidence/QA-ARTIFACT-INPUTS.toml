@@ -1,0 +1,9 @@
+schema = 1
+task = "QA-ARTIFACT-INPUTS"
+candidate = "d258e00c80097c89722ffd900dd8ac0404adbe1d"
+integration = "b28cedf2f806c0840b5f5c209613af53f6d89bfd"
+tree = "0739ef53ef34f382e43cd94153993349b989ffa1"
+contract_hash = "048537913363313e7be912c2eefd2fc5726700bbfecf28ecd0751cdabea0e145"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-ARTIFACT-INPUTS"]
+result = "pass"
+review = "passed"

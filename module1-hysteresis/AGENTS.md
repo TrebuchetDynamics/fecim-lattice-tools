@@ -56,9 +56,9 @@ Key test files:
 
 ### Common Patterns
 
-- Material presets: `shared/physics/hzo_materials.go` (DefaultHZO, FeCIMMaterial, HZOStandard32, etc.)
+- Material presets: `shared/physics/material_presets.go` (DefaultHZO, FeCIMMaterial, HZOStandard32, etc.)
 - State machine: `StateApply` → `StateWait` → `StateVerify` → loop or `StateSuccess`
-- Binary search convergence: `pkg/algo/bsearch.go` with bracket widening on overshoot
+- Binary search convergence: `pkg/controller/writer.go` with bracket widening on overshoot
 - Bounds reset logic: When absField < 0.01*Ec, reset to full [0, MaxField] for fresh bisection
 - Overshoot handling: OvershootLimit (30) triggers StateSuccess, not StateFailure
 
@@ -85,7 +85,7 @@ Key test files:
 
 ## Configuration
 
-Material parameters are defined in `shared/physics/hzo_materials.go`:
+Material parameters are defined in `shared/physics/material_presets.go`:
 - `DefaultHZO()` - Typical Si-doped HfO2 (Hf0.5Zr0.5O2)
 - `FeCIMMaterial()` - FeCIM specifications
 - `HZOStandard32()` - literature-reported 32-state HZO preset

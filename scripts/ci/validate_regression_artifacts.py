@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -63,7 +64,9 @@ class ValidationError(Exception):
 def load_json(path: Path):
     try:
         with path.open("r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        require_finite(data, str(path))
+        return data
     except FileNotFoundError as e:
         raise ValidationError(f"missing file: {path}") from e
     except json.JSONDecodeError as e:
@@ -81,10 +84,29 @@ def resolve_run_root(root: Path, latest: bool) -> Path:
     return sorted(dirs, key=lambda p: p.stat().st_mtime, reverse=True)[0]
 
 
+def require_finite(value, where: str):
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValidationError(f"nonfinite number in {where}")
+    if isinstance(value, dict):
+        for key, child in value.items():
+            require_finite(child, f"{where}.{key}")
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            require_finite(child, f"{where}[{index}]")
+
+
 def require_keys(obj: dict, keys: Iterable[str], where: str):
+    if not isinstance(obj, dict):
+        raise ValidationError(f"expected object in {where}")
     missing = [k for k in keys if k not in obj]
     if missing:
         raise ValidationError(f"missing keys in {where}: {', '.join(missing)}")
+
+
+def require_sample_size(value, where: str):
+    # bool is an int subclass, but is not a JSON integer sample count.
+    if type(value) is not int or value <= 0:
+        raise ValidationError(f"{where}: sample_size must be a positive integer")
 
 
 def validate_module4(run_root: Path):
@@ -101,8 +123,7 @@ def validate_module4(run_root: Path):
         raise ValidationError("summary.json: git_hash is empty")
 
     uncertainty = load_json(run_root / "uncertainty.json")
-    if int(uncertainty.get("sample_size", 0)) <= 0:
-        raise ValidationError("uncertainty.json: sample_size must be > 0")
+    require_sample_size(uncertainty["sample_size"], "uncertainty.json")
 
 
 
@@ -117,16 +138,11 @@ def validate_module1(root: Path):
     checked = 0
     for p in files:
         data = load_json(p)
-        if not isinstance(data, dict):
-            raise ValidationError(f"artifact not object: {p}")
         require_keys(data, MODULE1_REQUIRED_KEYS, str(p))
 
-        uncertainty = data.get("uncertainty", {})
-        if not isinstance(uncertainty, dict):
-            raise ValidationError(f"uncertainty not object: {p}")
+        uncertainty = data["uncertainty"]
         require_keys(uncertainty, ["method", "confidence", "sample_size"], f"{p}:uncertainty")
-        if int(uncertainty.get("sample_size", 0)) <= 0:
-            raise ValidationError(f"sample_size must be > 0: {p}")
+        require_sample_size(uncertainty["sample_size"], f"{p}:uncertainty")
 
         checked += 1
 

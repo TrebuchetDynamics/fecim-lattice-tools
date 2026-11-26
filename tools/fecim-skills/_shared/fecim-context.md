@@ -12,7 +12,7 @@ Shared context referenced by FeCIM skills. Do not duplicate this content in indi
 | Guo 2018 | Guo et al., Nano Lett. 18, 1727 (2018) | Crossbar device characterization |
 | HZO FTJ 2025 | J. Alloys Compd. (2025) | 98.24% MNIST reservoir computing — NOT a FeCIM device claim |
 
-## Honesty-audit policy (`docs/4-research/honesty-audit.md`)
+## Honesty-audit policy (`docs/research/honesty-audit.md`)
 
 **Verified claims (peer-reviewed):** 98.24% MNIST in HZO FTJ reservoir computing — must be attributed to HZO FTJ 2025 paper, NOT this simulator.
 

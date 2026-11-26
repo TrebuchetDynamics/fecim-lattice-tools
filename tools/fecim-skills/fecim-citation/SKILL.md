@@ -1,6 +1,6 @@
 ---
 name: fecim-citation
-description: Verifies and formats FeCIM physics/measurement claims against the project's published-source list and docs/4-research/honesty-audit.md. Use when adding a numeric claim, accuracy figure, or device-parameter assertion to code, docs, PR descriptions, or commit messages.
+description: Verifies and formats FeCIM physics/measurement claims against the project's published-source list and docs/research/honesty-audit.md. Use when adding a numeric claim, accuracy figure, or device-parameter assertion to code, docs, PR descriptions, or commit messages.
 ---
 
 # fecim-citation
@@ -11,7 +11,7 @@ Validate any quantitative or device-physics claim before it lands in code, docs,
 
 1. **Parse the claim.** Extract: subject (e.g., HZO coercive field), value (e.g., 1.0 MV/cm), context (educational vs validated).
 
-2. **Match to canonical sources** (`tools/fecim-skills/_shared/fecim-context.md` table) and the current source/audit files (`docs/4-research/honesty-audit.md`, `references/`, and `citations/` if present). If the claim corresponds to a published source, format as:
+2. **Match to canonical sources** (`tools/fecim-skills/_shared/fecim-context.md` table) and the current source/audit files (`docs/research/honesty-audit.md`, `references/`, and `citations/` if present). If the claim corresponds to a published source, format as:
    ```
    <claim text> (Materlik 2015)
    ```

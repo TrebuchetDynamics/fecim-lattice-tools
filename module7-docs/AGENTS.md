@@ -19,14 +19,12 @@ Key features:
 ## Key Files
 
 ### Core GUI
-- `pkg/gui/embedded.go` - EmbeddedDocsApp, main UI builder, file tree navigation
-- `pkg/gui/app.go` - Application lifecycle (BuildContent, Start, Stop)
+- `pkg/gui/embedded.go` - EmbeddedDocsApp, main UI builder, file tree navigation, and application lifecycle (BuildContent, Start, Stop)
 
 ### Navigation & Search
 - `pkg/gui/navigation.go` - Navigation logic and state management
-- `pkg/gui/search.go` - Search index and query matching
+- `pkg/gui/search.go` - Search index, query matching, and keyboard shortcuts/input handling
 - `pkg/gui/persistence.go` - History tracking and navigation state persistence
-- `pkg/gui/keyboard.go` - Keyboard shortcuts and input handling
 
 ### Layout & Widgets
 - `pkg/gui/layout.go` - Custom layout managers for doc viewer
@@ -163,7 +161,7 @@ go test -v ./module7-docs/pkg/gui -run Integrity  # Integrity checks
 
 2. **Search Index Updates Automatically** on app restart
 
-3. **Glossary Terms** are extracted from `docs/GLOSSARY.md` (if it exists):
+3. **Glossary Terms** are extracted from `docs/guides/glossary.md` (if it exists):
    ```markdown
    ## Term Name
    Definition of the term...

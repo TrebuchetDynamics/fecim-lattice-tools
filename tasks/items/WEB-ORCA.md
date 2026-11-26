@@ -5,8 +5,8 @@ title = "Qualify shared research and six new web modules with real Orca"
 short = "Actual shared and six-module Orca proof"
 status = "open"
 goal = "WEB-ALL"
-section = "Needs decision"
-rank = 2000
+section = "Now"
+rank = 3000
 depends_on = ["WEB-AUTOMATION", "WEB-MANUAL-FIXTURES", "WEB-RECHECK"]
 touches = ["docs/internals/testing/all-modules-web-orca.md"]
 resources = ["orca-firefox-desktop"]
@@ -29,3 +29,4 @@ exclusions = ["Preserve Go science/defaults/units/speech/identities, exact origi
 
 - Builder disposition: Manual gate Future fixture requirements and task 8 require an expected-value manifest and human-operable checkpoint/release plus controlled systemic/report failure. Existing workbench.spec.ts:185,200 only delays transport; server/workflow_test.go:145–150,318–330 injects private test runner hooks, not a reusable human runner; production server.go:78,131 and study/root.go:67–70 use actual RunBundleRoot/evaluator. At least controlled task 7–9 portions are NOT RUN pending fixture production; name other unavailable synthetic inputs as observed. This is an engineering input, not a new owner question. Execute independent manual steps when possible; never substitute a slow workload or implement hooks here. WEB-FINAL-PLAN retains the exact remaining fixture producer/proof without inventing it.
 - Final round reconciliation: docs/tasks/WEB-FINAL-PLAN.md maps actual failed combined proof to WEB-HYS-STATUS/WEB-MNIST-WAIT and fresh WEB-RECHECK; WEB-MANUAL-FIXTURES produces the human-operable local tasks-7–9 expected.json/checkpoint/release and actual writer-failure setup. Consume its exact README commands and candidate-bound record only after produced, not as existing inputs now. Controlled tasks stay NOT RUN until then. Other unavailable presentation/edit/conflict/restart/multipage/hosted-Worker/import fixtures remain separately NOT RUN; independently executable manual steps can proceed, but no complete qualification until every required step has actual matching tester evidence. Preserve all original Acceptance/Question/ownership/resources. Round 2 of 2 stops at Q-WEB-FINAL-PLAN in BLOCKERS.md, no successor or retirement/default authority.
+- Owner decision: 2026-11-07: approved

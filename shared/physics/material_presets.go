@@ -151,7 +151,7 @@ func LiteratureSuperlattice() *HZOMaterial {
 // are retained as simulation assumptions, not peer-reviewed device facts.
 // TARGET (not achieved): 10^12 endurance, 100y retention.
 // ESTIMATED (not disclosed): Pr, Ps, Ec, most other params use HZO literature values.
-// See: docs/4-research/honesty-audit.md
+// See: docs/research/honesty-audit.md
 func FeCIMMaterial() *HZOMaterial {
 	return &HZOMaterial{
 		Name:                "FeCIM HZO",

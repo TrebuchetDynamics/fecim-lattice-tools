@@ -1,0 +1,25 @@
+schema = 1
+task = "QA-REPORT-FAILURE-DOMINANCE"
+candidate = "f71744b4cc81641408367f2ea8fa80db8d630360"
+integration = "ef24461142b0dbdac45d112da0cc1aa2517bef01"
+tree = "dd293526b9652b8e35add417b7ac2c1d05a05800"
+contract_hash = "416dac373ed2195bdbaf304bf8dccea475b297c8add3b3dd860d5e8bddd583b5"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-REPORT-FAILURE-DOMINANCE"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Given temporary accepted artifacts for the same material/model with one all_pass=false and one all_pass=true, when runReleaseReport writes JSON and Markdown with either lexical order and either same-suite duplicates or distinct suite names, then by_model for that combination and all_models_pass are false in both outputs. Rename/reorder the input files without changing verdicts and assert the verdict remains false. Record the focused expected RED before production edits and GREEN after the minimal fix."
+result = "met"
+evidence = "RED before production edits: focused command failed in mixed_same_suite and mixed_distinct_suites because later passing artifacts made JSON by_model/all_models_pass and Markdown true. GREEN after replacing last-write-wins with conjunction: both verdicts remain false in JSON and Markdown, including after actual swaps of filenames between the root and nested input directory. Reused the existing map and CLI runner; no new helper API or dependencies."
+
+[[acceptance]]
+item = "Given single-file pass/fail, duplicate all-pass, duplicate all-fail, multiple materials/models and a missing expected model, when reports are generated, then passing combinations remain true only when every accepted artifact passes, failed combinations never affect unrelated combinations, and missing expected models still prevent AllModelsPass. Both observed files and suite provenance remain retained and deterministically ordered under existing behavior. Checks execute the actual CLI runner with temporary input/output paths, not only a detached helper."
+result = "met"
+evidence = "TestRunReleaseReportAggregation passes six cases: single pass/fail, duplicate all-pass/all-fail, mixed same-suite and distinct-suite. Every case also checks an independently passing material, another passing model, a missing expected model, retained ordered files and suites, and unchanged file/combination counts. Each generation uses runReleaseReport with explicit temporary input/output paths and returns zero even with failed scientific verdicts."
+
+[[acceptance]]
+item = "Given all existing flag, artifact-filtering, output-directory-error and rendering behaviors, when the full release-report package and repository checks run, then those contracts remain intact. Do not change coverage denominator/count policy, input schema admission, model/physics thresholds or generator exit code based on scientific failures; a successfully generated report may truthfully contain failed verdicts. No archive, DOI, real-tool, human accessibility or qualified-release claim follows."
+result = "met"
+evidence = "Full release-report package passes on final commit. Production diff only changes ByModel assignment using the existing map lookup and conjunction; flags, input admission/filtering, rendering, coverage denominator/count policy, directory errors, and exit semantics are untouched. No physics, thresholds, shell wiring, release metadata, launch behavior, or qualification claims changed. Full repository invocation intentionally omitted as instructed; full check: runner gate"

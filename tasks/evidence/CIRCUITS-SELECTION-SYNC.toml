@@ -1,0 +1,25 @@
+schema = 1
+task = "CIRCUITS-SELECTION-SYNC"
+candidate = "b6dba123fd00f0e7c4327d0f4b2fe63e6cfee013"
+integration = "454dc60a06ac569f1c14cfbb18d04c76a1f6d4a0"
+tree = "d06be1970381d7c2810f74c0cfe5577c6bb3631e"
+contract_hash = "634b83b5bee17d65159e13b3f0d1eaf4cb350cbb6c444a286a2db255c95101bb"
+checks = ["<path>", "<path>", "--verify", "<path>", "CIRCUITS-SELECTION-SYNC"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "Before production edits add a focused deterministic browser RED regression using the existing real Circuits transport in both hosted and authenticated local profiles: configure a small 2x2 array with isolated-cell architecture, select [1,1], reset, and assert both address inputs match the Go selection table [0,0]. The original code must fail because the inputs remain [1,1], not due to fixture setup. Record RED/GREEN. Follow with an explicit selected-cell read or write and verify its Go-reported selected-cell context agrees with the displayed addresses; retain existing physics/oracle assertions."
+result = "met"
+evidence = "Before production edits, real-transport hosted and authenticated local Chromium RED runs (--project=desktop-chromium -g \"cell address drafts\") both failed at reset: Go table [0,0], Cell row expected 0 but remained 1 (<path> and red-local.log). GREEN: both complete profile suites passed 15/15, including the new 2x2 2T1R case, reset inputs [0,0], then real READ evidence selected cell [0,0]. Existing physics/oracle, WRITE level, READ/COMPUTE, masks, undo and accessibility assertions unchanged."
+
+[[acceptance]]
+item = "Use acknowledged-draft retirement rather than resetting all drafts on every publish. After successful select, reset/randomize, selection-restoring undo, resizing/material-reset configuration and explicit session discard/retry, address inputs reflect the authoritative Go selection. Add representative browser coverage for nonzero selection through reset, randomize/undo and resize; include failed out-of-range Select cell preserving the typed address and prior selected-cell table. Do not discard configuration or write-target drafts, change selected-cell command semantics, silently auto-select typed addresses, or erase newly edited address input on unrelated timing/read/compute updates. Normal keyboard Select and WRITE/READ continue to work."
+result = "met"
+evidence = "Browser coverage verifies acknowledged Select normalization (01 to 1), nonzero reset, randomize/selection-restoring undo, resize and material reset, failed out-of-range selection preserving drafts/table, unrelated timing/READ/COMPUTE and nonreset configuration preserving address drafts, and configuration/write-target draft retention. Screen.tsx retires matching captured drafts only after action success (or successful explicit discard/retry); configure compares authoritative rows/cols/material before retiring. No retirement in publish/poll/read/compute; no changes to selected-cell commands. Existing keyboard Select/WRITE and READ tests pass in both profiles. Discard/retry boundary verified by code inspection."
+
+[[acceptance]]
+item = "Both-profile circuits.spec.ts, typecheck and existing web unit tests pass with locked build assets. Recheck actual worktree ownership before implementation. This is ordinary offline interaction maintenance, not a new WEB/HYS planning round, real Orca/installed-tool acceptance, numerical qualification, default switch or release qualification."
+result = "met"
+evidence = "Ownership rechecked before implementation: assigned worktree/branch, baseline 0514dd5fbbcb, only new test dirty. Both-profile circuits.spec.ts passed 15/15 each across all five browser projects; typecheck, 18 unit tests and both locked profile builds passed with Node 24.19.0/npm 11.17.0. Only the two permitted files changed. No numerical, Orca, installed-tool, launch-default or release qualification claimed. full check: runner gate"

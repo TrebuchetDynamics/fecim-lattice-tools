@@ -1,0 +1,9 @@
+schema = 1
+task = "AGENTS-PKG-PATHS"
+candidate = "de98494e75a67cbbb510aa62146808c798d821f5"
+integration = "7cf1e26c222792fbea61c41c1f044a12e1e8eb53"
+tree = "6dbfd8392d4f73dd8e2753e34c56a7a3d5161d28"
+contract_hash = "bc756874496b1f03892d98ae5dd088784e82f137ccee225c7af2621083cdac76"
+checks = ["<path>", "<path>", "--verify", "<path>", "AGENTS-PKG-PATHS"]
+result = "pass"
+review = "passed"

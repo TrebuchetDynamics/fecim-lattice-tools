@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -91,7 +92,11 @@ func run() error {
 		return x
 	}(), entries})
 	// Refuse stale/unknown public output rather than accidentally ship old content.
-	if items, e := os.ReadDir(filepath.Join(*rootPath, "web/public/docs-content")); e == nil {
+	items, err := fs.ReadDir(root.FS(), "web/public/docs-content")
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	if err == nil {
 		for _, item := range items {
 			if _, ok := outputs["web/public/docs-content/"+item.Name()]; !ok {
 				return fmt.Errorf("unknown public output: %s", item.Name())
@@ -106,7 +111,7 @@ func run() error {
 			}
 			continue
 		}
-		if err := os.MkdirAll(filepath.Join(*rootPath, filepath.Dir(name)), 0755); err != nil {
+		if err := root.MkdirAll(filepath.Dir(name), 0755); err != nil {
 			return err
 		}
 		if err := root.WriteFile(name, data, 0644); err != nil {

@@ -6,24 +6,28 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
+	"strings"
 )
 
 // go test -json emits one JSON object per line (TestEvent).
 // We aggregate package-level final status deterministically.
 //
 // Counting rule (per spec):
-// - We only consider Action in {"pass","fail","skip"} AND non-empty Package.
-// - Final status per package is the last observed among pass/skip,
-//   BUT if any fail is observed for that package, final status is fail.
+// - Every observed non-empty Package must have a pass/fail/skip with empty Test.
+// - Final status per package is the last package-level pass/skip,
+//   BUT any fail (including a test/subtest failure) dominates.
 
 type TestEvent struct {
 	Action  string `json:"Action"`
 	Package string `json:"Package"`
+	Test    string `json:"Test"`
 }
 
 type pkgState struct {
-	seenFail bool
-	last     string // last of pass/skip
+	completed bool
+	seenFail  bool
+	last      string // last package-level pass/skip
 }
 
 func main() {
@@ -60,21 +64,21 @@ func runPkgSum(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if ev.Package == "" {
 			continue
 		}
-		sw := ev.Action
-		if sw != "pass" && sw != "fail" && sw != "skip" {
-			continue
-		}
 		st := states[ev.Package]
 		if st == nil {
 			st = &pkgState{}
 			states[ev.Package] = st
 		}
-		if sw == "fail" {
+		if ev.Action == "fail" {
 			st.seenFail = true
+		}
+		if ev.Test != "" || (ev.Action != "pass" && ev.Action != "fail" && ev.Action != "skip") {
 			continue
 		}
-		// pass or skip
-		st.last = sw
+		st.completed = true
+		if ev.Action != "fail" {
+			st.last = ev.Action
+		}
 	}
 	if err := s.Err(); err != nil {
 		fmt.Fprintf(stderr, "scan: %v\n", err)
@@ -86,7 +90,12 @@ func runPkgSum(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	skip := 0
 	total := 0
 
-	for _, st := range states {
+	var incomplete []string
+	for pkg, st := range states {
+		if !st.completed {
+			incomplete = append(incomplete, pkg)
+			continue
+		}
 		total++
 		if st.seenFail {
 			fail++
@@ -96,12 +105,16 @@ func runPkgSum(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			skip++
 			continue
 		}
-		// Default to pass when last is pass or empty.
 		pass++
 	}
 
 	if invalidLines > 0 {
 		fmt.Fprintf(stderr, "WARN: skipped %d non-JSON line(s) while aggregating go test -json output\n", invalidLines)
+	}
+	if len(incomplete) > 0 {
+		sort.Strings(incomplete)
+		fmt.Fprintf(stderr, "ERROR: incomplete go test -json stream: packages without terminal summaries: %s\n", strings.Join(incomplete, ", "))
+		return 2
 	}
 	if total == 0 {
 		fmt.Fprintf(stderr, "ERROR: no package summaries parsed from go test -json stream\n")

@@ -12,4 +12,36 @@ No successor planning task is saved. Existing Needs decision records WEB-ORCA an
 
 <!-- pi-autowork:questions:start -->
 
+### Q-HYS-ORCA — USER_INPUT — effort input — unblocks 1
+
+- Task: HYS-ORCA — Qualify React Hysteresis with real Orca in both deployment profiles
+- Needs: HYS-ORCA requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-10: approved. Another approval is not requested.
+- Since: 2026-11-07T21:52:39Z
+- Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
+- Kind: owner_action
+
+### Q-T-013-a31914c8 — USER_INPUT — effort input — unblocks 1
+
+- Task: T-013-a31914c8 — Qualify and archive v0.1.0 with a verified version DOI
+- Needs: T-013-a31914c8 requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-07: approved. Another approval is not requested.
+- Since: 2026-11-07T21:52:53Z
+- Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
+- Kind: owner_action
+
+### Q-WEB-ORCA — USER_INPUT — effort input — unblocks 1
+
+- Task: WEB-ORCA — Qualify shared research and six new web modules with real Orca
+- Needs: WEB-ORCA requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-07: approved. Another approval is not requested.
+- Since: 2026-11-07T21:53:04Z
+- Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
+- Kind: owner_action
+
+### Q-WEB-TOOLS — USER_INPUT — effort input — unblocks 1
+
+- Task: WEB-TOOLS — Record actual installed Icarus and Yosys web EDA structural qualification
+- Needs: WEB-TOOLS requires owner-performed action, not unattended execution. Saved owner answer: 2026-11-07: approved. Another approval is not requested.
+- Since: 2026-11-07T21:53:14Z
+- Answer: Perform the task outside this runner and record the actual completion evidence, or explicitly defer or cancel it. Saved direction is not completion evidence; another approval or live grant does not transfer an owner-owned task to the runner.
+- Kind: owner_action
+
 <!-- pi-autowork:questions:end -->

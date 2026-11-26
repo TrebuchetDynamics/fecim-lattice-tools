@@ -1,0 +1,9 @@
+schema = 1
+task = "QA-PACKAGE-TERMINALS"
+candidate = "c9db475b66d201bb98e4a14853a3bb1b54a6c4f6"
+integration = "663fb058e571d0f14dcd584737b56b7634f3b895"
+tree = "e03f221ca99ee2c2765ce9866fa4e8634a6c4325"
+contract_hash = "763ce191d70cd415bd0ed85c3bf4c5e848bf294558dab3f274d5539edc69f3bf"
+checks = ["<path>", "<path>", "--verify", "<path>", "QA-PACKAGE-TERMINALS"]
+result = "pass"
+review = "passed"

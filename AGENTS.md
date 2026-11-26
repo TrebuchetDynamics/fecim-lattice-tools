@@ -42,23 +42,23 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 | `examples/` | Example projects and use cases |
 | `references/` | Academic papers, simulation benchmarks, comparison harnesses |
 | `artifacts/` | Build outputs, logs (gitignored) |
-| `docs/assets/reference-screenshots/` | UI screenshots and graphics |
+| `docs/guides/assets/` | UI screenshots and graphics |
 
 ## For AI Agents
 
 ### Quick Reference
 
-**Full detailed API reference:** `docs/3-develop/api-reference.md`
+**Full detailed API reference:** `docs/internals/api-reference.md`
 
 | I need to... | Look in |
 |--------------|---------|
-| Find a function signature | `docs/3-develop/api-reference.md` |
-| Understand an error | `docs/3-develop/testing/TESTING.md` |
-| Implement a new feature | `docs/3-develop/api-reference.md` |
-| Run tests | `docs/3-develop/testing/TESTING.md` |
-| Review UI analysis | `docs/3-develop/HYPER_ANALYSIS_REPORT.md` |
-| Use EDA pipeline | `docs/eda/README.md` and `docs/eda/guides/integration.md` |
-| Access EDA CLI | `docs/eda/references/cli-reference.md` |
+| Find a function signature | `docs/internals/api-reference.md` |
+| Understand an error | `docs/internals/testing/TESTING.md` |
+| Implement a new feature | `docs/internals/api-reference.md` |
+| Run tests | `docs/internals/testing/TESTING.md` |
+| Review UI analysis | `docs/internals/audits/HYPER_ANALYSIS_REPORT.md` |
+| Use EDA pipeline | `docs/modules/eda/README.md` and `docs/modules/eda/tools.md` |
+| Access EDA CLI | `docs/guides/cli-reference.md` |
 | Use a FeCIM skill (researcher, builder, etc.) | `tools/fecim-skills/README.md` |
 
 If `qmd` emits CUDA build output or starts model downloads, stop using it for that cycle and fall back to `rg`/direct doc reads. Do not stall active validation on local-search bootstrap.
@@ -85,7 +85,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 **Key Patterns:**
 - **Primary UI target:** React web is the primary target for new UI work; Fyne is deprecated compatibility, not a required path for new demos/features. A source-built React candidate provides all seven module views and the shared Projects/Configuration/Experiment/Results workflow; it is not a qualified release. Hosted provides Hysteresis, bounded studies, Crossbar, Circuits, Comparison and Documentation. MNIST inference and EDA generation require the authenticated local application; hosted MNIST/EDA are read-only help/imports. Real installed EDA tool qualification remains NOT RUN. Real Orca + Firefox/Linux acceptance is **NOT RUN**. Follow the [accepted browser architecture](docs/internals/adr/0005-unified-react-hosted-and-local.md#decision): React owns presentation and interaction; Go retains scientific computation, values, evidence and identities through Go/WASM and the authenticated same-origin local API. Keep the Go core/CLI intact.
 - **Current launch availability:** The existing executable and `launch.sh` still open legacy Fyne by default. Keep entry points and regression guards working until replacements pass the approved behavioral and accessibility gates. GUI packages still build by default; do not reintroduce `legacy_fyne` gates or change launch defaults as part of this policy.
-- **Fyne thread safety:** widget mutations from goroutines must use `fyne.Do(func() { ... })`; see `docs/3-develop/gui/FYNE_NOTES.md`.
+- **Fyne thread safety:** widget mutations from goroutines must use `fyne.Do(func() { ... })`; see `docs/internals/gui/FYNE_NOTES.md`.
 - **Conductance quantization:** Call `crossbar.QuantizeTo30Levels(value)` for simulation baseline (30 discrete levels, configurable)
 - **Physics simulation:** Material presets in `module1-hysteresis/pkg/ferroelectric/material.go`; crossbar defaults in `module2-crossbar/pkg/crossbar/array.go`
 - **Write control:** Module 1 and 4 both provide ISPP (In-Situ Pulse Programming) engines; see `MEMORY.md` for architecture
@@ -94,7 +94,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 
 **From CLAUDE.md:**
 - **Simulation baseline, not hardware claim:** The 30-level quantization and all material presets are for education and visualization. Not validated device measurements.
-- **Accuracy-first policy:** See `docs/4-research/honesty-audit.md` for verified claims and removed/unverified claims.
+- **Accuracy-first policy:** See `docs/research/honesty-audit.md` for verified claims and removed/unverified claims.
 - **TDD hard rule:** Any behavior change, bug fix, refactor, public API change, physics model change, GUI workflow change, or validation logic change must start with a failing automated test. Record the RED failure, make the minimum change to pass, then record GREEN verification.
 - **Commit before pushing:** `go test ./...` must pass.
 
@@ -266,7 +266,7 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 ## Common Tasks
 
 ### Add a New Feature
-1. **Plan:** Read `docs/3-develop/api-reference.md` and the target module docs; direct new UI work to the approved React/Go boundary above, without requiring a new Fyne feature path
+1. **Plan:** Read `docs/internals/api-reference.md` and the target module docs; direct new UI work to the approved React/Go boundary above, without requiring a new Fyne feature path
 2. **RED:** Add or update the focused failing test first and record the expected failure
 3. **GREEN:** Implement the smallest change needed; when maintaining legacy Fyne, keep widget updates on the Fyne UI thread with `fyne.Do` when needed
 4. **REFACTOR:** Clean up only while targeted tests stay green
@@ -276,7 +276,7 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 ### Debug a GUI Freeze
 1. Check Fyne module render paths and long-running module work for blocking operations on the Fyne UI thread
 2. Verify goroutine-driven widget updates use `fyne.Do(func() { ... })`
-3. Review `docs/3-develop/HYPER_ANALYSIS_REPORT.md` for UI critique
+3. Review `docs/internals/audits/HYPER_ANALYSIS_REPORT.md` for UI critique
 
 ### Fix a Physics Test Failure
 1. Read the test output — identify which material/level failed
@@ -285,9 +285,9 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 4. Otherwise, debug the solver in `module1-hysteresis/pkg/ferroelectric/`
 
 ### Export to EDA Tools
-1. See `module6-eda/` and `docs/eda/guides/integration.md`
+1. See `module6-eda/` and `docs/modules/eda/tools.md`
 2. Module 6 generates SPICE (circuit), Verilog (logic), Liberty (timing), DEF/LEF (physical)
-3. Integration with OpenLane via CLI in `docs/eda/references/cli-reference.md`
+3. Integration with OpenLane via CLI in `docs/guides/cli-reference.md`
 
 ## CI/CD
 
@@ -315,7 +315,7 @@ go fmt ./...
 - 87% MNIST accuracy (conference-only reference)
 - Energy multipliers vs NAND/GPUs without published measurement evidence
 
-**Full audit:** `docs/4-research/honesty-audit.md`
+**Full audit:** `docs/research/honesty-audit.md`
 
 ## License
 

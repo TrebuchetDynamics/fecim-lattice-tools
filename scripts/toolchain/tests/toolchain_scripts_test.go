@@ -35,17 +35,33 @@ func TestDriftDetectorAcceptsPinFileOverride(t *testing.T) {
 	writeExecutable(t, filepath.Join(bin, "iverilog"), "#!/usr/bin/env bash\necho 'Icarus Verilog version 12.0'\n")
 	writeExecutable(t, filepath.Join(bin, "verilator"), "#!/usr/bin/env bash\necho 'Verilator 5.028'\n")
 	writeExecutable(t, filepath.Join(bin, "go"), "#!/usr/bin/env bash\necho 'go version go1.24.7 linux/amd64'\n")
-	writeExecutable(t, filepath.Join(bin, "python3"), "#!/usr/bin/env bash\necho 'Python 2.1.3'\n")
+	writeExecutable(t, filepath.Join(bin, "python3"), "#!/usr/bin/env bash\nif [[ \"$1\" == \"-c\" ]]; then echo '2.1.3'; else echo 'Python 3.12.3'; fi\n")
 
-	cmd := exec.Command("bash", "../drift_detector.sh")
-	cmd.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "PIN_FILE="+pinFile)
-	out, err := cmd.CombinedOutput()
+	out, err := runDriftDetector(t, bin, pinFile)
 	if err != nil {
 		t.Fatalf("drift_detector.sh failed: %v\n%s", err, out)
 	}
-	if strings.Contains(string(out), "drift") || strings.Contains(string(out), "missing") {
+	if strings.Contains(out, "drift") || strings.Contains(out, "missing") {
 		t.Fatalf("expected all tools to match pins, got:\n%s", out)
 	}
+
+	// The scientific-stack row compares installed numpy with the documented pin.
+	writeExecutable(t, filepath.Join(bin, "python3"), "#!/usr/bin/env bash\nif [[ \"$1\" == \"-c\" ]]; then echo '2.3.5'; else echo 'Python 3.12.3'; fi\n")
+	out, err = runDriftDetector(t, bin, pinFile)
+	if err == nil {
+		t.Fatalf("expected nonzero exit for numpy pin drift, got:\n%s", out)
+	}
+	if !strings.Contains(out, "drift") {
+		t.Fatalf("expected numpy pin drift, got:\n%s", out)
+	}
+}
+
+func runDriftDetector(t *testing.T, bin, pinFile string) (string, error) {
+	t.Helper()
+	cmd := exec.Command("bash", "../drift_detector.sh")
+	cmd.Env = append(os.Environ(), "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "PIN_FILE="+pinFile)
+	out, err := cmd.CombinedOutput()
+	return string(out), err
 }
 
 func writeExecutable(t *testing.T, path, content string) {

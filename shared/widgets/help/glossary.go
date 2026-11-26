@@ -372,7 +372,7 @@ var ReferencesData = []ReferenceEntry{
 		Title:    "Scientific Honesty Audit",
 		Citation: "Local Documentation",
 		DOI:      "",
-		URL:      "/docs/comparison/HONESTY_AUDIT.md",
+		URL:      "docs/research/honesty-audit.md",
 	},
 	{
 		Title:    "FeCIM Lattice Tools Repository",

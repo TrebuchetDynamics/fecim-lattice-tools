@@ -1,0 +1,9 @@
+schema = 1
+task = "INSTR-DOC-LINKS"
+candidate = "84d35bce9a454373062055404c428bb55de7a391"
+integration = "5da0f7298007f258f1b805df722a6e02828e4307"
+tree = "b1eea5caaf1cc08d0d9aec8b50addbda8e3072ff"
+contract_hash = "375db753a84aa5b275fccd950e6bdfb1bd7a524d9e111857d41e1776cd68ea5e"
+checks = ["<path>", "<path>", "--verify", "<path>", "INSTR-DOC-LINKS"]
+result = "pass"
+review = "passed"

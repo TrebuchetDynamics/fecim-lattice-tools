@@ -143,8 +143,9 @@ export default function Screen() {
     }
   }
   async function reconnect() {
-    if (!adapter) return;
+    if (!adapter || busy) return;
     setError("");
+    setBusy(true);
     try {
       if (job) {
         const j = await adapter.job(job);
@@ -154,6 +155,8 @@ export default function Screen() {
       setSnapshot(await adapter.refresh());
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setBusy(false);
     }
   }
   async function readImport(file: File | undefined) {
@@ -402,7 +405,7 @@ export default function Screen() {
             </fieldset>
           </form>
           <div className="eda-actions">
-            <button onClick={() => void reconnect()} disabled={!adapter}>
+            <button onClick={() => void reconnect()} disabled={!adapter || busy}>
               Reconnect authoritative state
             </button>
             <button

@@ -1,6 +1,6 @@
 ---
 name: fecim-researcher
-description: Surveys FeCIM domain knowledge by searching references/, citations/, docs/4-research/, and the local Cognee KG, then synthesizes a cited research note. Use when investigating a physics topic, evaluating a paper, or grounding a design decision in literature.
+description: Surveys FeCIM domain knowledge by searching references/, citations/, docs/research/, and the local Cognee KG, then synthesizes a cited research note. Use when investigating a physics topic, evaluating a paper, or grounding a design decision in literature.
 ---
 
 # fecim-researcher
@@ -12,12 +12,12 @@ Survey FeCIM literature and project knowledge to ground a design decision or ans
 1. **Define the question.** Write it in one sentence. If it has multiple sub-questions, split them and run the workflow per sub-question.
 
 2. **Search local sources** in this order:
-   - `docs/4-research/` (audits, validation notes, error propagation)
+   - `docs/research/` (audits, validation notes, error propagation)
    - `references/` (academic papers, simulation benchmarks)
    - `citations/` (project's citation registry, if present)
    - `experimental-data/` (HZO, HfO2, crossbar characterization)
 
-   Use `rg` with focused patterns when available (e.g., `rg -i "preisach" docs/4-research/ references/`). If `rg` is missing, use `grep -RIn` or the file-search tool and state the fallback.
+   Use `rg` with focused patterns when available (e.g., `rg -i "preisach" docs/research/ references/`). If `rg` is missing, use `grep -RIn` or the file-search tool and state the fallback.
 
 3. **If Cognee is configured locally** (`.env` has `LLM_API_KEY`, `.cognee_system/` exists), query the KG:
    ```bash

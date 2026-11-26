@@ -1,0 +1,25 @@
+schema = 1
+task = "LOCAL-STAGE-FAILURE"
+candidate = "3962c8f499f476a6212542b91299a2e5d7c9788e"
+integration = "4acbc7e2c8e60d97c335b390472f01907796c5f7"
+tree = "45b1e6245b39d5d45c872acc5d1e6424d3402457"
+contract_hash = "f970dea7e09f2875f5d54c6a5982cc1e2a22e569b0b5358c12bd1be5b4e2a991"
+checks = ["<path>", "<path>", "--verify", "<path>", "LOCAL-STAGE-FAILURE"]
+result = "pass"
+review = "passed"
+model_review = "passed"
+
+[[acceptance]]
+item = "RED first: add web/test/local-stage.test.mjs using node:test and isolated temporary repository-shaped fixtures containing a copy of the real stage script at web/src/local/stage.mjs. Seed a prior target with README.txt, index.html, local-manifest.json and nested engine bytes. Run the script as a real Node subprocess with missing dist-local and with replacement engine/manifest.json containing malformed JSON. Both must exit nonzero without success output and preserve the complete prior target byte-for-byte. Confirm the original code fails those preservation assertions, then record GREEN after the minimum repair. Add a deterministic copy/read failure fixture where practical without permissions/root-dependent assumptions. No writes to actual generated repository assets."
+result = "met"
+evidence = "RED before production changes: node --test test/local-stage.test.mjs failed all 8 preparation fixtures on the original script; missing-source and malformed-engine cases lost prior bytes or created partial fresh targets. Original success fixture passed. RED log: <path> GREEN: 12/12 focused tests pass. Fixtures copy the real script and seed README.txt, index.html, local-manifest.json and nested binary engine bytes. Subprocesses fail without stdout and preserve prior bytes. Dangling symlink deterministically exercises read failure without permission assumptions. All fixture writes are beneath TMPDIR; actual generated assets untouched."
+
+[[acceptance]]
+item = "Prepare and hash a private replacement before replacing target contents; failure in copy, manifest parse, enumeration/hash or manifest write must leave the previous target intact and remove temporary preparation owned by this invocation. A fresh target failure must not publish a success-shaped partial stage. Keep README.txt sentinel bytes intact, do not touch dist-local or unrelated sibling directories, and do not swallow errors. Publication must not knowingly discard the previous bundle before a complete replacement is ready; handle ordinary replacement errors with rollback when a backup is used. No crash-durability, concurrent-build locking or general staging framework is required."
+result = "met"
+evidence = "stage.mjs uses Node stdlib mkdtempSync for owned sibling preparation, copies/parses/enumerates/hashes/writes there before target changes, and retains sentinel bytes. Preparation failure cleanup runs in finally. Rename retains backup until publication succeeds; injected publication-failure fixtures prove rollback and cleanup for existing/fresh targets. Failed rollback explicitly retains backup and throws both errors rather than deleting the previous bundle. Tests verify sibling bytes, unchanged successful-source snapshots and absence of leftover private directories. Reused existing hash traversal, manifest fields, CLI paths and success message; omitted frameworks, dependencies, concurrency and crash guarantees."
+
+[[acceptance]]
+item = "Success fixture: stage a valid small replacement, assert obsolete target files disappear, nested files match source, README.txt survives, and local-manifest.json retains profile=local, exact UI/API/identity and SHA-256 entries for every source asset (not the generated manifest itself). Verify a subsequent successful restage and a failure followed by retry work without leftover private staging/backup directories. Existing script CLI/path conventions and success message remain. Run focused and complete Node tests plus native server asset-gate regression and final repository checks. This is build reliability only, not scientific, Orca, installed-tool or release qualification."
+result = "met"
+evidence = "Success/restage fixtures assert exact nested source bytes, obsolete-file removal, unchanged README sentinel, exact profile/UI/API/identity and SHA-256 map for every source asset excluding generated manifest. Every failure case retries successfully; parent-directory assertions check no leftover preparation/backup directories. Complete Node tests (18/18), focused tests (12/12), native asset-gate regression and diff checks pass. Build reliability only: no scientific, Orca, installed-tool or release qualification claimed; full check: runner gate"

@@ -11,9 +11,9 @@ Ferroelectric crossbar array simulation module. Implements matrix-vector multipl
 
 | File | Purpose |
 |------|---------|
-| `pkg/crossbar/array.go` | Main crossbar array data structure and MVM engine |
-| `pkg/crossbar/enhanced.go` | Non-ideality models (IR drop, sneak paths, drift) |
-| `pkg/crossbar/gpu_mvm.go` | GPU-accelerated MVM via Vulkan compute |
+| `shared/crossbar/array.go` | Main crossbar array data structure and MVM engine |
+| `shared/crossbar/enhanced.go` | Non-ideality models (IR drop, sneak paths, drift) |
+| `shared/crossbar/gpu_mvm.go` | GPU-accelerated MVM via Vulkan compute |
 | `pkg/network/network.go` | Network layer for chaining crossbars |
 
 ## Subdirectories
@@ -21,7 +21,7 @@ Ferroelectric crossbar array simulation module. Implements matrix-vector multipl
 | Directory | Purpose | Key Files |
 |-----------|---------|-----------|
 | `cmd/crossbar/` | Standalone CLI entry point | `main.go` |
-| `pkg/crossbar/` | Core array simulation and non-idealities | `array.go` (46 files, extensive testing) |
+| `shared/crossbar/` | Core array simulation and non-idealities (repo root) | `array.go` (46 files, extensive testing) |
 | `pkg/gui/tabs/` | Individual tab implementations | `ideal_tab.go`, `irdrop_tab.go`, `sneak_tab.go`, `drift_tab.go` |
 | `pkg/network/` | Multi-layer network simulation | `network.go` (connects multiple arrays) |
 | `pkg/training/` | Weight training utilities | `trainer.go` |
@@ -44,11 +44,11 @@ Ferroelectric crossbar array simulation module. Implements matrix-vector multipl
 
 ```bash
 go test ./module2-crossbar/...
-go test ./module2-crossbar/pkg/crossbar/...
+go test ./shared/crossbar/...
 go test ./module2-crossbar/pkg/gui/...
 ```
 
-Key test files (46 tests in pkg/crossbar/):
+Key test files (46 tests in shared/crossbar/):
 - `array_test.go` - Basic array operations and MVM
 - `boundary_test.go` - Edge cases (0V, MaxV, noise saturation)
 - `coupled_nonidealities_test.go` - Interaction of IR drop + sneak + drift
@@ -93,7 +93,7 @@ Key test files (46 tests in pkg/crossbar/):
 
 ## Configuration
 
-Crossbar settings in `pkg/crossbar/Config`:
+Crossbar settings in the `shared/crossbar` package (`Config`):
 - `Rows`, `Cols` - Array dimensions
 - `NoiseLevel` - Device-to-device σ/μ (typical: 0.01-0.05)
 - `ADCBits`, `DACBits` - Peripheral resolution (typical: 6-8 bits)
