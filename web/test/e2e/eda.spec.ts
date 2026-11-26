@@ -9,11 +9,11 @@ let root = "",
   child: ReturnType<typeof spawn> | undefined;
 test.beforeAll(async () => {
   if (!local) return;
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "eda-native-"));
   const binary = join(root, "fecim");
   execFileSync("node", ["src/local/build-native.mjs", binary], {
-    timeout: 120_000,
+    timeout: 360_000,
   });
   const bin = join(root, "private-tools");
   mkdirSync(bin);
@@ -48,7 +48,9 @@ test.afterAll(async () => {
 
 test("EDA real profile: typed builder/artifacts locally, escaped unverified Learn imports hosted", async ({
   page,
-}) => {
+}, testInfo) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
   const scientificRequests: string[] = [];
   page.on("request", (r) => {
     if (r.url().includes("/api/")) scientificRequests.push(r.url());
@@ -92,33 +94,81 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
   await expect(
     page.getByRole("heading", { name: "Learn and qualification", exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  const regions = page.getByRole("main").getByRole("region");
   if (!local) {
-    await expect(
-      page.getByRole("button", { name: "Generate all formats", exact: true }),
-    ).toHaveCount(0);
-    await page
-      .getByLabel("Import artifact for read-only inspection", { exact: true })
-      .setInputFiles({
-        name: "unverified.spice",
-        mimeType: "text/plain",
-        buffer: Buffer.from(
-          "<script>window.edaInjected=true</script>\n* imported",
-        ),
-      });
+    const imports = page.getByRole("region", {
+      name: "Hosted read-only inspection",
+    });
+    await expect(regions.first()).toHaveAccessibleName(
+      "Hosted read-only inspection",
+    );
+    await expect(page.getByRole("button", { name: /generate/i })).toHaveCount(
+      0,
+    );
+    const importInput = imports.getByLabel(
+      "Import artifact for read-only inspection",
+      { exact: true },
+    );
+    await importInput.setInputFiles({
+      name: "oversized.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.alloc(8 * 1024 * 1024 + 1),
+    });
+    await expect(page.getByRole("alert")).toHaveText(
+      "Read-only import exceeds 8 MiB. Choose a file no larger than 8 MiB.",
+    );
+    await expect(page.getByRole("alert")).toBeFocused();
+    await expect(imports.getByTestId("eda-import")).toHaveCount(0);
+    await importInput.setInputFiles({
+      name: "unverified.spice",
+      mimeType: "text/plain",
+      buffer: Buffer.from(
+        "<script>window.edaInjected=true</script>\n* imported",
+      ),
+    });
     await expect(page.getByTestId("eda-import")).toContainText(
       "<script>window.edaInjected=true</script>",
     );
     await expect(
-      page.getByText("Imported/unverified — no generation or tool validation"),
+      imports.getByRole("heading", { name: "unverified.spice", exact: true }),
     ).toBeVisible();
+    await expect(
+      imports.getByText(
+        /Imported\/unverified — no generation or tool validation.*not foundry-ready/i,
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    await imports.screenshot({
+      path: testInfo.outputPath("hosted-import.png"),
+    });
     expect(await page.evaluate(() => "edaInjected" in window)).toBe(false);
     expect(scientificRequests).toEqual([]);
+    expect(pageErrors).toEqual([]);
     return;
   }
+  const source = page.getByRole("region", {
+    name: "Source design",
+    exact: true,
+  });
+  const generation = page.getByRole("region", {
+    name: "Generation",
+    exact: true,
+  });
+  const inspection = page.getByRole("region", {
+    name: "Artifact inspection",
+    exact: true,
+  });
+  await expect(regions.nth(0)).toHaveAccessibleName("Source design");
+  await expect(regions.nth(1)).toHaveAccessibleName("Generation");
+  await expect(regions.nth(2)).toHaveAccessibleName("Artifact inspection");
   await expect(
-    page.getByLabel("Typed builder config (JSON)", { exact: true }),
+    source.getByText("Opened project: HZO Device-Array-Circuit Study"),
+  ).toBeVisible();
+  await expect(
+    source.getByLabel("Typed builder config (JSON)", { exact: true }),
   ).toContainText('"array_rows": 8');
-  await page
+  await generation
     .getByRole("button", { name: "Generate all formats", exact: true })
     .focus();
   await page.keyboard.press("Enter");
@@ -130,15 +180,64 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
   await expect(page.getByTestId("eda-origin")).toContainText(
     "ESTIMATED_SCALAR",
   );
-  await page
-    .getByRole("button", { name: "Inspect design.spice", exact: true })
-    .click();
-  await expect(page.getByTestId("eda-preview")).toContainText(
-    "* Array: 64 cells",
+  const inspect = (name: string) =>
+    inspection.getByRole("button", { name: `Inspect ${name}`, exact: true });
+  const selection = inspection.getByRole("region", {
+    name: "Selected artifact",
+    exact: true,
+  });
+  const displayedPreview = selection.getByTestId("eda-preview");
+  await inspect("manifest.json").click();
+  await expect(displayedPreview).toContainText('"files_sha256"');
+  const manifest = JSON.parse((await displayedPreview.textContent())!);
+  const bundleIdentity = await inspection
+    .getByTestId("eda-origin")
+    .textContent();
+  await inspect("design.spice").press("Enter");
+  await expect(displayedPreview).toContainText("* Array: 64 cells");
+  await expect(selection.getByText(/^design\.spice bytes 0\.\./)).toBeVisible();
+  await expect(
+    selection.getByText(manifest.files_sha256["design.spice"], { exact: true }),
+  ).toBeVisible();
+
+  // A failed switch must not pair the previous text with a new artifact identity.
+  await page.route(`${snapshotURL}/actions`, (route) => route.abort(), {
+    times: 1,
+  });
+  await inspect("design.v").press("Enter");
+  await expect(page.getByRole("alert")).toBeFocused();
+  await expect(page.getByRole("alert")).toHaveText(
+    /^Could not preview design\.v: .+ Reconnect authoritative state before retrying\.$/,
   );
-  const reconnect = page.getByRole("button", {
+  await expect(inspect("design.spice")).toHaveAttribute("aria-pressed", "true");
+  await expect(selection.getByText(/^design\.spice bytes 0\.\./)).toBeVisible();
+  await expect(displayedPreview).toContainText("* Array: 64 cells");
+
+  const reconnect = generation.getByRole("button", {
     name: "Reconnect authoritative state",
     exact: true,
+  });
+  await reconnect.press("Enter");
+  await expect(inspect("design.v")).toBeEnabled();
+  await inspect("design.v").press("Enter");
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(inspect("design.v")).toHaveAttribute("aria-pressed", "true");
+  await expect(inspect("design.spice")).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await expect(displayedPreview).toContainText("parameter ROWS = 8;");
+  await expect(displayedPreview).not.toContainText("* Array: 64 cells");
+  await expect(selection.getByText(/^design\.v bytes 0\.\./)).toBeVisible();
+  await expect(
+    selection.getByText(manifest.files_sha256["design.v"], { exact: true }),
+  ).toBeVisible();
+  await expect(selection.getByTestId("eda-origin")).toHaveText(bundleIdentity!);
+  await expect(selection.getByTestId("eda-origin")).toContainText(
+    "Structural checks only",
+  );
+  await selection.screenshot({
+    path: testInfo.outputPath("local-selection.png"),
   });
   const defaults = page.getByRole("button", {
     name: "Load Go defaults",
@@ -308,4 +407,5 @@ test("EDA real profile: typed builder/artifacts locally, escaped unverified Lear
   await expect(page.getByTestId("eda-preview")).toContainText(
     "not mapped to a foundry PDK",
   );
+  expect(pageErrors).toEqual([]);
 });

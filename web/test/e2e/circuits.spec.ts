@@ -14,11 +14,11 @@ let cookies: Awaited<
 > = [];
 test.beforeAll(async () => {
   if (!local) return;
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "circuits-local-"));
   const binary = join(root, "fecim");
   execFileSync("node", ["src/local/build-native.mjs", binary], {
-    timeout: 120_000,
+    timeout: 360_000,
   });
   child = spawn(binary, ["serve", "--root", root, "--port", String(port)]);
   let output = "";
@@ -44,7 +44,9 @@ test.afterAll(async () => {
 
 test("persistent circuit WRITE READ COMPUTE, masks, keyboard tables, undo and rooted capability", async ({
   page,
-}) => {
+}, testInfo) => {
+  const errors: Error[] = [];
+  page.on("pageerror", (error) => errors.push(error));
   const requests: { url: string; method: string }[] = [];
   page.on("request", (r) =>
     requests.push({ url: r.url(), method: r.method() }),
@@ -82,31 +84,67 @@ test("persistent circuit WRITE READ COMPUTE, masks, keyboard tables, undo and ro
     .getByRole("button", { name: "Apply configuration", exact: true })
     .click();
   await expect(page.locator("#circuits-cells tbody tr")).toHaveCount(4);
-  await page.getByLabel("Cell row", { exact: true }).fill("0");
-  await page.getByLabel("Cell column", { exact: true }).fill("0");
-  await page.getByRole("button", { name: "Select cell", exact: true }).focus();
+  const operations = page.getByRole("region", {
+    name: "Cell operations",
+    exact: true,
+  });
+  await expect(operations).toBeVisible();
+  const context = operations.getByRole("region", {
+    name: "Selected cell",
+    exact: true,
+  });
+  const selected = context.locator("#circuits-selection tbody");
+  const write = operations.getByRole("group", { name: "WRITE", exact: true });
+  const read = operations.getByRole("group", { name: "READ", exact: true });
+  const compute = operations.getByRole("group", { name: "COMPUTE", exact: true });
+  const result = operations
+    .getByRole("region", { name: "Last operation result", exact: true })
+    .getByTestId("circuits-status");
+  const showAddress = async (coordinate: string) => {
+    await expect(selected.locator("th")).toContainText(`${coordinate} count`);
+    await expect(selected.locator("td").first()).toContainText(
+      `${coordinate} count`,
+    );
+  };
+  await context.getByLabel("Cell row", { exact: true }).fill("01");
+  await context.getByLabel("Cell column", { exact: true }).fill("01");
+  await showAddress("0");
+  await context
+    .getByRole("button", { name: "Select cell", exact: true })
+    .press("Enter");
+  await showAddress("1");
+  await write.getByLabel("Write target level", { exact: true }).fill("20");
+  const writeButton = write.getByRole("button", {
+    name: "WRITE selected cell",
+    exact: true,
+  });
+  const readButton = read.getByRole("button", {
+    name: "READ selected cell",
+    exact: true,
+  });
+  const computeButton = compute.getByRole("button", {
+    name: "COMPUTE vector",
+    exact: true,
+  });
+  await expect(writeButton).toBeEnabled();
+  await writeButton.press("Enter");
+  await expect(result).toContainText(/verified|pulse limit/);
+  const programmed = await selected.textContent();
+  await expect(selected.locator("td").nth(1)).toContainText("20 count");
+  await page.keyboard.press("Tab");
+  await expect(readButton).toBeFocused();
+  await expect(readButton).toBeEnabled();
   await page.keyboard.press("Enter");
-  await page.getByLabel("Write target level", { exact: true }).fill("20");
-  await page
-    .getByRole("button", { name: "WRITE selected cell", exact: true })
-    .focus();
-  await page.keyboard.press("Enter");
-  await expect(page.getByTestId("circuits-status")).toContainText(
-    /verified|pulse limit/,
-  );
-  const programmed = await page
-    .locator("#circuits-selection tbody")
-    .textContent();
-  await expect(
-    page.locator("#circuits-selection tbody td").nth(1),
-  ).toContainText("20 count");
-  await page
-    .getByRole("button", { name: "READ selected cell", exact: true })
-    .click();
-  await expect(page.getByTestId("circuits-status")).toContainText(
-    "read completed",
-  );
+  await expect(result).toContainText("read completed");
   await expect(page.locator("#circuits-sense tbody tr")).toHaveCount(2);
+  await page.keyboard.press("Tab");
+  await expect(computeButton).toBeFocused();
+  await expect(computeButton).toBeEnabled();
+  await page.keyboard.press("Enter");
+  await expect(result).toContainText("compute completed");
+  await operations.screenshot({
+    path: testInfo.outputPath("circuit-operations.png"),
+  });
   await page
     .getByLabel("Sense preset", { exact: true })
     .selectOption("High Sensitivity");
@@ -146,15 +184,20 @@ test("persistent circuit WRITE READ COMPUTE, masks, keyboard tables, undo and ro
   await expect(page.getByTestId("circuits-status")).toContainText(
     "compute completed",
   );
-  await page
+  const undo = operations.getByRole("button", {
+    name: "Undo device change",
+    exact: true,
+  });
+  await operations
     .getByRole("button", { name: "Randomize array", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Undo device change", exact: true })
-    .click();
-  await expect(page.locator("#circuits-selection tbody")).toHaveText(
-    programmed!,
-  );
+  await showAddress("0");
+  await expect(undo).toBeEnabled();
+  await undo.press("Enter");
+  await showAddress("1");
+  await expect(selected).toHaveText(programmed!);
+  await expect(undo).toBeDisabled();
+  await expect(undo).toBeFocused();
   await page.getByRole("button", { name: "Step timing", exact: true }).click();
   await expect(page.locator("#circuits-timing")).toContainText("seconds");
   const retained = await page.locator("#circuits-cells tbody").textContent();
@@ -228,6 +271,7 @@ test("persistent circuit WRITE READ COMPUTE, masks, keyboard tables, undo and ro
       () => document.documentElement.scrollWidth <= innerWidth + 1,
     ),
   ).toBe(true);
+  expect(errors).toEqual([]);
 });
 
 test("cell address drafts follow acknowledged selection changes, not unrelated publications", async ({
@@ -291,7 +335,12 @@ test("cell address drafts follow acknowledged selection changes, not unrelated p
   await expect(col).toHaveValue("1");
   await row.fill("2");
   await button("Select cell").click();
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText(
+    local
+      ? "Module command rejected; check action, input and revision"
+      : "selected cell outside array",
+  );
+  await expect(page.getByRole("alert")).toBeFocused();
   await expect(row).toHaveValue("2");
   await expect(col).toHaveValue("1");
   await expect(selection.locator("th")).toContainText("0 count");

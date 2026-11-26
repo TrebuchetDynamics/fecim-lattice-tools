@@ -94,3 +94,18 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.mnist-workbench .mnist-prediction {
+  min-inline-size: 0;
+  border-inline-start: 3px solid var(--accent);
+  padding-inline-start: 1rem;
+  margin-block-start: 1.5rem;
+}
+.mnist-workbench .mnist-identity {
+  overflow-wrap: anywhere;
+}
+.mnist-workbench .mnist-identity dt {
+  font-weight: 700;
+}
+.mnist-workbench .mnist-identity dd {
+  margin: 0 0 0.5rem;
+}
