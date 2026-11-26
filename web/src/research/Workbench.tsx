@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { researchOwner as owner } from "../api/owner";
-import { initialQuery, type Query, type Schema } from "../api/types";
+import type { Query, Schema } from "../api/types";
 import { ErrorSummary, FieldInput, Metric } from "./Shared";
+import "./workbench.css";
 
-export type ResearchView = "projects"|"configuration"|"experiment"|"results";
+const steps = ["projects", "configuration", "experiment", "results"] as const;
+export type ResearchView = typeof steps[number];
+const titles = { projects: "Projects", configuration: "Configuration", experiment: "Experiment", results: "Results" };
 const local = __FECIM_PROFILE__ === "local";
 export default function Workbench({ view }: {view:ResearchView}) {
  useSyncExternalStore(owner.subscribe,owner.getSnapshot);
@@ -14,18 +17,45 @@ export default function Workbench({ view }: {view:ResearchView}) {
  if(currentView.current!==view){currentView.current=view;generation.current++;}
  useEffect(()=>{alive.current=true;return()=>{alive.current=false;generation.current++;};},[]);
  const act=async<T,>(fn:()=>Promise<T>)=>{const request=++generation.current,project=owner.projectToken;try{setError(undefined);const value=await fn();return alive.current&&request===generation.current?value:undefined;}catch(e){if(alive.current&&request===generation.current&&(project===owner.projectToken||view==="projects"))setError(e instanceof Error?e:new Error(String(e)));return undefined;}};
- return <section className="section research"><p className="eyebrow">Research workbench · {__FECIM_PROFILE__}</p><h1>{view[0].toUpperCase()+view.slice(1)}</h1>
+ return <section className="section research"><p className="eyebrow">Research workbench · {__FECIM_PROFILE__}</p><h1>{titles[view]}</h1>
+ <nav aria-label="Study steps">
+  <p>Step {steps.indexOf(view) + 1} of {steps.length}: {titles[view]}</p>
+  <ol className="study-steps">{steps.map(step => <li key={step}>
+   {step === view ? <strong aria-current="step">{titles[step]}</strong>
+    : owner.config ? <a href={`/${step}`}>{titles[step]}</a> : titles[step]}
+  </li>)}</ol>
+ </nav>
  <aside className="notice" aria-label="Research capabilities and privacy"><p>Simulation only — not validated device measurements. {local?"Project operations use this authenticated same-origin server and launch-granted roots. Writes are explicit; browser navigation does not cancel experiments.":"Computations run in your browser using the Go model. Project and result data is not uploaded. On-disk projects and edits, large sweeps, run reuse, stored-run verification, EDA and file writes require the local application: run fecim-lattice-tools serve --root DIRECTORY. This hosted build does not contact localhost."}</p>{!local&&<p>Refreshing discards in-memory studies and selection. No scientific downloads or persistence. Ordinary static asset requests still expose HTTP metadata to the host.</p>}</aside>
- <nav className="actions" aria-label="Research views">{(["projects","configuration","experiment","results"] as const).map(v=><a className="button" key={v} href={"/"+v} aria-current={view===v?"page":undefined}>{v[0].toUpperCase()+v.slice(1)}</a>)}</nav>
  {error&&<ErrorSummary error={error} clear={()=>setError(undefined)} document={document} reload={()=>void act(()=>owner.reload())} reapply={revision=>void act(()=>owner.save(document!,revision))}/>}
  <p data-testid="research-status" role="status" aria-live="polite">{owner.status}</p>
- {view==="projects"?<Projects act={act}/>:!owner.config?<p>Open or create a study in <a href="/projects">Projects</a>. {local?"After a server restart, reopen the project to inspect integrity-checked stored runs.":"Hosted state is ephemeral."}</p>:<>
- <p>Opened study: {owner.config.name||owner.config.id}. Evidence: {owner.config.evidence}</p>
+ {owner.config && view !== "projects" && <p>Opened study: {owner.config.name||owner.config.id}. Evidence: {owner.config.evidence}</p>}
+ {!owner.config && view !== "projects" && <><p>No study is open.</p><p>{local
+  ? "Create or open a study from a granted root. After a server restart, reopen the project to inspect integrity-checked stored runs."
+  : "Open the small example or import a study. Hosted state is ephemeral."}</p></>}
+ {view !== "projects" && <NextStudyAction view={view}/>}
+ {view==="projects"?<Projects act={act}/>:owner.config&&<>
  {view==="configuration"&&<Configuration act={act} setDocument={setDocument}/>}
  {view==="experiment"&&<Experiment act={act}/>}
  {view==="results"&&<Results act={act}/>}
  </>}
  </section>;
+}
+function NextStudyAction({view}: {view: ResearchView}) {
+ if (!owner.config) return view === "projects" ? null : <a className="button primary" href="/projects">Go to Projects</a>;
+ if (view === "projects") return <a className="button primary" href="/configuration">Continue to Configuration</a>;
+ if (view === "configuration") return <a className="button primary" href="/experiment">Continue to Experiment</a>;
+ const runCount = owner.analysis?.results.dataset_total;
+ if (view === "experiment" && ((!owner.expired && owner.job?.analysis_available) || runCount)) {
+  return <a className="button primary" href="/results">View study results</a>;
+ }
+ if (view === "results") {
+  if (runCount) return <a className="button primary" href="#run-results">Browse runs</a>;
+  // A reopened local project can have stored runs without a job in this session.
+  if (runCount === 0 || (!local && !owner.job?.analysis_available)) {
+   return <a className="button primary" href="/experiment">Go to Experiment</a>;
+  }
+ }
+ return null;
 }
 type Act=<T>(fn:()=>Promise<T>)=>Promise<T|undefined>;
 function Projects({act}:{act:Act}) {
@@ -54,7 +84,7 @@ function Projects({act}:{act:Act}) {
  });}}/></label><p>Select project.yaml, design.yaml, sweep.yaml and any named inputs, or a JSON byte bundle with a documents map of base64 bytes. Imported provenance is unverified.</p></>}
  {!local&&!owner.config&&<button disabled={busy} onClick={()=>void act(()=>owner.close())}>Reset research Worker</button>}
  {owner.expired&&!local&&<p>Worker execution is unknown. Previous results are retained until you explicitly discard this study.</p>}
- {owner.config&&<><h2>Current project</h2><p>{owner.config.name||owner.config.id}</p><button disabled={busy} onClick={()=>void act(()=>owner.close())}>{owner.expired&&!local?"Discard interrupted study":"Close project"}</button></>}
+ {owner.config&&<><h2>Current project</h2><p>{owner.config.name||owner.config.id}. Evidence: {owner.config.evidence}</p><NextStudyAction view="projects"/><button disabled={busy} onClick={()=>void act(()=>owner.close())}>{owner.expired&&!local?"Discard interrupted study":"Close project"}</button></>}
  </>;
 }
 function Configuration({act,setDocument}:{act:Act;setDocument:(doc:string)=>void}) {
@@ -87,12 +117,14 @@ function Results({act}:{act:Act}) {
  const load=(q:Query)=>void act(async()=>{if(await owner.results(q)&&alive.current){setComparison(false);caption.current?.focus();}});
  useEffect(()=>{if(comparison)heading.current?.focus();},[comparison]);
  const page=owner.analysis?.results;
- return <><form onSubmit={e=>{e.preventDefault();load({...draft,page:1,revision:owner.query.revision});}}><label>Filter runs<select aria-label="Filter runs" value={draft.filter} onChange={e=>setDraft({...draft,filter:e.target.value})}>{["all","success","failed","feasible","pareto"].map(f=><option key={f}>{f}</option>)}</select></label><label>Sort runs<select aria-label="Sort runs" value={draft.sort} onChange={e=>setDraft({...draft,sort:e.target.value})}>{["run_id",...(page?.metric_names||[])].map(n=><option key={n}>{n}</option>)}</select></label><label><input type="checkbox" checked={draft.descending} onChange={e=>setDraft({...draft,descending:e.target.checked})}/>Descending</label><label>Page size<select aria-label="Page size" value={draft.page_size} onChange={e=>setDraft({...draft,page_size:Number(e.target.value)})}>{[2,32,100].map(n=><option key={n}>{n}</option>)}</select></label><button>Apply query</button></form>
+ return <>
+ <section aria-label="Selected runs"><h2>Selected runs</h2><p>Select two to four distinct runs. Selection survives navigation, sorting, filters and pages; a fifth selection is refused.</p><p data-testid="selection-status" role="status">{selectionStatus}</p><ul id="selected-runs">{owner.selected.map(id=><li key={id}><code>{id}</code> <button onClick={()=>owner.select(id,false)}>Remove {id}</button></li>)}</ul><button onClick={()=>void act(async()=>{if(await owner.results(owner.query,owner.selected)&&alive.current){setComparison(true);}})}>Compare metrics</button></section>
+ {comparison&&owner.analysis?.comparison&&<section><h2 tabIndex={-1} ref={heading}>Compare metrics</h2><div className="table-scroll"><table id="comparison"><caption>Stored metrics by immutable run identity. No models rerun.</caption><thead><tr><th scope="col">Metric and unit</th>{owner.analysis.comparison.run_ids?.map(id=><th className="run-id" key={id} scope="col">{id}</th>)}</tr></thead><tbody>{owner.analysis.comparison.metrics?.map(m=><tr key={m.name}><th scope="row">{m.name} {m.values?.[0]?.metric?.unit}{m.reason&&<> — {m.reason}</>}</th>{m.values?.map((c,i)=><td key={i}><Metric cell={c}/></td>)}</tr>)}</tbody></table></div></section>}
+ <h2 id="run-results" tabIndex={-1}>Run results</h2>
+ <form onSubmit={e=>{e.preventDefault();load({...draft,page:1,revision:owner.query.revision});}}><label>Filter runs<select aria-label="Filter runs" value={draft.filter} onChange={e=>setDraft({...draft,filter:e.target.value})}>{["all","success","failed","feasible","pareto"].map(f=><option key={f}>{f}</option>)}</select></label><label>Sort runs<select aria-label="Sort runs" value={draft.sort} onChange={e=>setDraft({...draft,sort:e.target.value})}>{["run_id",...(page?.metric_names||[])].map(n=><option key={n}>{n}</option>)}</select></label><label><input type="checkbox" checked={draft.descending} onChange={e=>setDraft({...draft,descending:e.target.checked})}/>Descending</label><label>Page size<select aria-label="Page size" value={draft.page_size} onChange={e=>setDraft({...draft,page_size:Number(e.target.value)})}>{[2,32,100].map(n=><option key={n}>{n}</option>)}</select></label><button>Apply query</button></form>
  {owner.analysis?.plot&&<ResultPlot plot={owner.analysis.plot}/>}
  {page&&<>{page.reset&&<p role="status">{page.reset_reason}</p>}<div className="table-scroll"><table id="runs"><caption tabIndex={-1} ref={caption}>{page.caption}</caption><thead><tr><th scope="col">Select</th><th scope="col">Run ID / inspect</th><th scope="col">Status</th><th scope="col">Feasible</th><th scope="col">Pareto</th>{page.metric_names?.map(n=><th key={n} scope="col">{n}</th>)}</tr></thead><tbody>{page.rows?.map(row=><tr key={row.run_id}><td><input type="checkbox" aria-label={"Select run "+row.run_id} checked={owner.selected.includes(row.run_id)} onChange={e=>{try{owner.select(row.run_id,e.target.checked);setSelectionStatus("");}catch(error){setSelectionStatus((error as Error).message);}}}/></td><th scope="row"><button className="run-id" onClick={()=>void act(async()=>{setDetail(await(await owner.connect()).inspect(owner.config!.id,row.run_id));})}>{row.run_id}</button></th><td>{row.status}{row.unusable_reason&&<> — {row.unusable_reason}</>}</td><td>{row.feasible?"Yes":"No"}</td><td>{row.pareto?"Yes":"No"}</td>{row.metrics?.map(cell=><td key={cell.name}><Metric cell={cell}/></td>)}</tr>)}</tbody></table></div><button disabled={page.page<=1} onClick={()=>load({...owner.query,page:page.page-1})}>Previous runs</button><button disabled={page.page>=page.page_count} onClick={()=>load({...owner.query,page:page.page+1})}>Next runs</button></>}
  {owner.job&&["running","cancelling","queued"].includes(owner.job.state)&&<p>Previous collected result snapshot. The active execution has not settled; prior immutable result revisions are retained.</p>}
- <section aria-label="Selected runs"><h2>Selected runs</h2><p>Select two to four distinct runs. Selection survives sorting, filters and pages; a fifth selection is refused.</p><p data-testid="selection-status" role="status">{selectionStatus}</p><ul id="selected-runs">{owner.selected.map(id=><li key={id}><code>{id}</code> <button onClick={()=>owner.select(id,false)}>Remove {id}</button></li>)}</ul><button onClick={()=>void act(async()=>{if(await owner.results(owner.query,owner.selected)&&alive.current){setComparison(true);}})}>Compare metrics</button></section>
- {comparison&&owner.analysis?.comparison&&<section><h2 tabIndex={-1} ref={heading}>Compare metrics</h2><div className="table-scroll"><table id="comparison"><caption>Stored metrics by immutable run identity. No models rerun.</caption><thead><tr><th scope="col">Metric and unit</th>{owner.analysis.comparison.run_ids?.map(id=><th className="run-id" key={id} scope="col">{id}</th>)}</tr></thead><tbody>{owner.analysis.comparison.metrics?.map(m=><tr key={m.name}><th scope="row">{m.name} {m.values?.[0]?.metric?.unit}{m.reason&&<> — {m.reason}</>}</th>{m.values?.map((c,i)=><td key={i}><Metric cell={c}/></td>)}</tr>)}</tbody></table></div></section>}
  {detail&&<section><h2>Run details and provenance</h2><pre>{detail}</pre><button onClick={()=>setDetail("")}>Close details</button></section>}
  <section><h2>Explicit local operations</h2>{!local&&<p>Stored-run verification, report generation, export and downloads require the local application. No localhost request is made.</p>}
  <button onClick={()=>void act(async()=>{await(await owner.connect()).verify(owner.config!.id);setAction("Verified stored runs using Go integrity review; not device validation");})}>Verify stored runs</button><button onClick={()=>void act(async()=>{const files=await(await owner.connect()).reports(owner.config!.id);setReports(files.files||[]);setAction("Reports generated from stored results; no simulations rerun");})}>Generate reports</button><button onClick={()=>void act(async()=>{if(owner.selected.length!==1)throw new Error("Select exactly one eligible run for export");setArtifacts(await(await owner.connect()).export(owner.config!.id,owner.selected[0]));setAction("Export generated from the verified selected run; no simulations rerun");})}>Export selected run</button><p data-testid="result-action" role="status">{action}</p>
