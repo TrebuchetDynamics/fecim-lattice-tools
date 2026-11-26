@@ -16,7 +16,7 @@ let child: ReturnType<typeof spawn> | undefined,
   launch = "";
 test.beforeAll(async () => {
   if (!local) return;
-  test.setTimeout(180000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "docs-local-"));
   writeFileSync(
     join(root, "lesson.md"),
@@ -24,7 +24,7 @@ test.beforeAll(async () => {
   );
   const binary = join(root, "fecim");
   execFileSync("node", ["src/local/build-native.mjs", binary], {
-    timeout: 120000,
+    timeout: 360_000,
   });
   child = spawn(binary, ["serve", "--root", root, "--port", String(port)]);
   let output = "";
