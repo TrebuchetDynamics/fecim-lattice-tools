@@ -1,63 +1,88 @@
-const modules = [
-  [
-    "Hysteresis Lab",
-    "Explore Preisach and Landau-Khalatnikov ferroelectric switching with material presets for HZO, BTO, and PZT.",
-  ],
-  [
-    "Crossbar Array",
-    "Simulate matrix-vector multiply with quantized conductance levels, IR drop, sneak paths, and drift.",
-  ],
-  [
-    "MNIST Pipeline",
-    "Follow the full CIM inference path from input quantization through array computation and accuracy reporting.",
-  ],
-  [
-    "Peripheral Circuits",
-    "Inspect DAC, ADC, TIA, read-path, and ISPP write-control behavior around ferroelectric memory cells.",
-  ],
-  [
-    "Technology Comparison",
-    "Compare assumptions, operating points, and metrics across memory and compute-in-memory technologies.",
-  ],
-  [
-    "EDA Export",
-    "Generate SPICE, Verilog, Liberty, DEF, and LEF artifacts for education-stage OpenLane experiments.",
-  ],
-  [
-    "Integrated Docs",
-    "Keep physics explanations, references, module guides, and honesty notes connected to the simulator.",
-  ],
-];
+import "./Home.css";
+
+const labGroups = [
+  {
+    title: "Model devices and circuits",
+    modules: [
+      ["hysteresis", "Hysteresis Lab", "Explore ferroelectric switching with HZO, BTO, and PZT presets."],
+      ["circuits", "Peripheral Circuits", "Inspect DAC, ADC, TIA, read paths, and ISPP write control."],
+    ],
+  },
+  {
+    title: "Study arrays and systems",
+    modules: [
+      ["crossbar", "Crossbar Array", "Simulate matrix-vector multiply with quantized conductance, IR drop, sneak paths, and drift."],
+      ["comparison", "Technology Comparison", "Compare assumptions, operating points, and metrics across memory technologies."],
+      ["mnist", "MNIST Pipeline", "Inspect the CIM inference path from input quantization to accuracy reporting."],
+    ],
+  },
+  {
+    title: "Export designs and read references",
+    modules: [
+      ["eda", "EDA Export", "Explore SPICE, Verilog, Liberty, DEF, and LEF artifacts for education-stage experiments."],
+      ["docs", "Integrated Docs", "Find physics explanations, references, module guides, and honesty notes."],
+    ],
+  },
+] as const;
+
+const local = __FECIM_PROFILE__ === "local";
+
 export function Home() {
   return (
     <>
-      <section className="hero">
-        <div className="hero__content">
-          <p className="eyebrow">Ferroelectric compute-in-memory</p>
-          <h1>A lattice-scale playground for device-to-system ideas.</h1>
+      <header className="home-intro">
+        <p className="eyebrow">FeCIM Lattice Tools · Ferroelectric compute-in-memory</p>
+        <h1>Research workbench</h1>
+      </header>
+      <div className="home-overview">
+        <nav className="home-panel" aria-labelledby="home-study-title">
+          <h2 id="home-study-title">Start a study</h2>
           <p>
-            FeCIM Lattice Tools connects the physics of switching, the behavior
-            of arrays, and the path from a material model to a computing
-            experiment.
+            {local
+              ? "Local application: open a project from your granted directory in an authenticated session."
+              : "Hosted browser: open a small example and run a bounded study in memory."}
           </p>
+          <div className="actions">
+            <a className="button primary" href="/projects">Open Projects</a>
+            <a className="button" href="/#start">Run locally</a>
+          </div>
           <p className="honesty">
             Education-phase simulation — material presets and 30 default
             conductance levels are educational assumptions, not validated device
             measurements.
           </p>
-          <div className="actions">
-            <a className="button primary" href="/hysteresis">
-              Open Hysteresis lab
-            </a>
-            <a className="button" href="#modules">
-              Explore the modules
-            </a>
-            <a className="button" href="#start">
-              Run locally
-            </a>
+        </nav>
+        <nav className="home-panel" aria-labelledby="home-labs-title">
+          {/* Keep the fragment focus on the introduction, not the full list. */}
+          <header id="modules">
+            <h2 id="home-labs-title">Explore a lab</h2>
+            <p>
+              MNIST inference and EDA generation require the authenticated local application;
+              their hosted views provide read-only help and imports. Real Orca qualification remains NOT RUN.
+            </p>
+          </header>
+          <div className="module-grid home-lab-groups">
+            {labGroups.map(({ title, modules }) => (
+              <div className="home-lab-group" key={title}>
+                <h3>{title}</h3>
+                <ul>
+                  {modules.map(([id, name, description]) => (
+                    <li className="module-card" key={id}>
+                      <a href={`/modules/${id}`}>Explore {name}</a>
+                      <p>{description}</p>
+                      {(id === "mnist" || id === "eda") && (
+                        <p className="home-capability">
+                          Hosted: help and imports only. Local: {id === "mnist" ? "run inference" : "generate artifacts"} with authentication.
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </nav>
+      </div>
       <section className="stats" aria-label="Project highlights">
         {[
           ["7", "integrated modules"],
@@ -69,28 +94,6 @@ export function Home() {
             <span>{label}</span>
           </article>
         ))}
-      </section>
-      <section className="section">
-        {/* Focus the introduction, not the viewport-tall grid, on fragment navigation. */}
-        <header id="modules">
-          <p className="eyebrow">Integrated workflow</p>
-          <h2>Seven modules, one simulation story.</h2>
-          <p>
-            Browser candidates provide Hysteresis, bounded research studies,
-            Crossbar, Circuits, Comparison and Documentation. MNIST inference and EDA generation require the authenticated local application;
-            their hosted views are read-only help/imports. Real Orca qualification remains NOT RUN.
-          </p>
-        </header>
-        <div className="module-grid">
-          {modules.map(([title, text], i) => (
-            <article className="module-card" key={title}>
-              <span className="eyebrow">0{i + 1}</span>
-              <h3>{title}</h3>
-              <p>{text}</p>
-              <a href={"/modules/" + ["hysteresis", "crossbar", "mnist", "circuits", "comparison", "eda", "docs"][i]}>Explore {title}</a>
-            </article>
-          ))}
-        </div>
       </section>
       <section id="science" className="section">
         <p className="eyebrow">Accuracy first</p>

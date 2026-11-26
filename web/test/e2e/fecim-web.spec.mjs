@@ -58,18 +58,64 @@ async function expectTouchSized(locator, label) {
   return box;
 }
 
-test("landing page presents the shared React product story", async ({
-  page,
-}) => {
+test("home workbench links open every destination by keyboard", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  const study = page.getByRole("navigation", { name: "Start a study" });
+  const labs = page.getByRole("navigation", { name: "Explore a lab" });
+  const moduleIds = ["hysteresis", "circuits", "crossbar", "comparison", "mnist", "eda", "docs"];
+  const destinations = [
+    [study, "/projects"],
+    ...moduleIds.map((id) => [labs, `/modules/${id}`]),
+  ];
+
+  for (const [region, href] of destinations) {
+    await page.goto("/");
+    const heading = page.getByRole("main").getByRole("heading", { level: 1 });
+    await expect(study).toBeVisible();
+    await expect(labs).toBeVisible();
+    await expect(heading).toBeFocused();
+    const link = region.locator(`a[href="${href}"]`);
+    await expect(link).toBeVisible();
+    for (let i = 0; i < 9; i++) {
+      await page.keyboard.press("Tab");
+      if (await link.evaluate((el) => el === document.activeElement)) break;
+    }
+    await expect(link).toBeFocused();
+    await expectLocatorInsideViewport(page, link, href);
+    const metrics = await viewportMetrics(page);
+    expect(metrics.scrollWidth).toBeLessThanOrEqual(page.viewportSize().width);
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(heading).toBeVisible();
+    if (href === "/projects" && process.env.FECIM_WEB_PROFILE === "local") {
+      // The static local preview has no authenticated grant. Projects owns
+      // focus for this error and tells the user how to open a real session.
+      const alert = page.getByRole("alert");
+      await expect(alert).toContainText("Authentication required. Open the one-time launch link from the terminal.");
+      await expect(alert).toBeFocused();
+    } else {
+      await expect(heading).toBeFocused();
+    }
+  }
+  expect(errors).toEqual([]);
+});
+
+test("home presents the workbench, profile, and simulation caveat", async ({ page }) => {
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: /lattice-scale playground/i }),
+    page.getByRole("heading", { name: "Research workbench", level: 1 }),
   ).toBeVisible();
   await expect(page.getByText(/Education-phase simulation/i)).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /Explore the modules/i }),
-  ).toBeVisible();
+  const study = page.getByRole("navigation", { name: "Start a study" });
+  await expect(study).toContainText(
+    process.env.FECIM_WEB_PROFILE === "local" ? "Local application:" : "Hosted browser:",
+  );
+  const labs = page.getByRole("navigation", { name: "Explore a lab" });
+  await expect(labs.getByRole("link")).toHaveCount(7);
+  await expect(labs).toContainText("MNIST inference and EDA generation require the authenticated local application");
+  await expect(labs).toContainText("their hosted views provide read-only help and imports");
   await expect(page.getByRole("link", { name: /Run locally/i })).toBeVisible();
   await expect(page.getByText(/Fyne browser demo/i)).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
@@ -85,23 +131,23 @@ test("desktop landing keeps primary content above the fold", async ({
 
   await page.goto("/");
 
-  const hero = page.locator(".hero__content");
-  const modules = page.getByRole("link", { name: /Explore the modules/i });
+  const title = page.getByRole("heading", { name: "Research workbench", level: 1 });
+  const modules = page.getByRole("navigation", { name: "Explore a lab" });
   const runLocal = page.getByRole("link", { name: /Run locally/i });
 
-  await expect(hero).toBeVisible();
+  await expect(title).toBeVisible();
   await expect(modules).toBeVisible();
   await expect(runLocal).toBeVisible();
 
-  const heroBox = await hero.boundingBox();
+  const titleBox = await title.boundingBox();
   const runLocalBox = await runLocal.boundingBox();
   const metrics = await expectNoHorizontalOverflow(page);
-  expect(heroBox, "hero content should render on desktop").not.toBeNull();
+  expect(titleBox, "workbench title should render on desktop").not.toBeNull();
   expect(
     runLocalBox,
     "run-local button should render on desktop",
   ).not.toBeNull();
-  expect(heroBox.y).toBeLessThan(metrics.innerHeight * 0.22);
+  expect(titleBox.y).toBeLessThan(metrics.innerHeight * 0.22);
   expect(runLocalBox.y + runLocalBox.height).toBeLessThanOrEqual(
     Math.min(metrics.innerHeight - 12, 760),
   );
@@ -117,7 +163,7 @@ test("mobile landing keeps CTA and honesty content usable", async ({
   const runLocal = page.getByRole("link", { name: /Run locally/i });
   const honesty = page.getByText(/Education-phase simulation/i);
   await expect(
-    page.getByRole("heading", { name: /lattice-scale playground/i }),
+    page.getByRole("heading", { name: "Research workbench", level: 1 }),
   ).toBeVisible();
   await expect(runLocal).toBeVisible();
   await expect(honesty).toBeVisible();
@@ -145,7 +191,7 @@ test("landing navigation anchors work on every viewport project", async ({
     {
       href: "/#modules",
       id: "modules",
-      heading: /Seven modules, one simulation story/i,
+      heading: "Explore a lab",
     },
     {
       href: "/#science",
@@ -162,6 +208,7 @@ test("landing navigation anchors work on every viewport project", async ({
     await expect(
       page.getByRole("heading", { name: anchor.heading }),
     ).toBeVisible();
+    await expect(page.locator(`#${anchor.id}`)).toBeFocused();
     await page.waitForFunction((id) => {
       const section = document.getElementById(id);
       if (!section) return false;
@@ -181,7 +228,7 @@ test("landing sections stay readable across viewport projects", async ({
   await expect(stats).toHaveCount(3);
   await page.locator("#modules").scrollIntoViewIfNeeded();
   await expect(
-    page.getByRole("heading", { name: /Seven modules, one simulation story/i }),
+    page.getByRole("heading", { name: "Explore a lab" }),
   ).toBeVisible();
 
   const moduleCards = page.locator(".module-card");
