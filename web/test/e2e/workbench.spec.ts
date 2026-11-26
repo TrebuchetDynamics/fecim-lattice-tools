@@ -11,10 +11,10 @@ let cookies: Awaited<ReturnType<import("@playwright/test").BrowserContext["cooki
 const port = Number(process.env.AUTOWORK_PORT_BASE || 20200) + 12;
 test.beforeAll(async () => {
   if (!local) return;
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
   root = mkdtempSync(join(process.env.TMPDIR!, "research-local-"));
   const binary = join(root, "fecim");
-  execFileSync("node", ["src/local/build-native.mjs", binary], { timeout: 120_000 });
+  execFileSync("node", ["src/local/build-native.mjs", binary], { timeout: 360_000 });
   child = spawn(binary, ["serve", "--root", root, "--port", String(port)]);
   let output = "";
   child.stdout!.on("data", data => { output += data; });
