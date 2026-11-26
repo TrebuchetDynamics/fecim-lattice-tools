@@ -3,7 +3,7 @@
 **Explore ferroelectric compute-in-memory systems. Keep every assumption inspectable.**
 
 [![CI status](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
-[![Go 1.26.10 or newer](https://img.shields.io/badge/Go-1.26.10%2B-00ADD8?logo=go)](https://go.dev)
+[![Go 1.26.11 or newer](https://img.shields.io/badge/Go-1.26.11%2B-00ADD8?logo=go)](https://go.dev)
 [![MIT license](https://img.shields.io/badge/license-MIT-3F8C78)](./LICENSE)
 
 A **simulation-only research and design workbench** for device, array and circuit studies. Go models keep results deterministic, with explicit units, assumptions and provenance.
@@ -53,7 +53,7 @@ The [workbench guide](./docs/guides/research-design-workbench.md) explains the b
 
 ### Prerequisites
 
-- **Go 1.26.10 or newer**, as required by [`go.mod`](./go.mod).
+- **Go 1.26.11 or newer**, as required by [`go.mod`](./go.mod).
 - A POSIX shell for the Linux/macOS examples below. See [installation](./docs/guides/installation.md) for platform setup.
 - No API keys, cloud service, database or daemon for CLI studies.
 - The CLI examples use `CGO_ENABLED=0`. Desktop and embedded local browser builds require CGO and [native desktop dependencies](./docs/guides/installation.md#desktop-build-dependencies).
@@ -116,7 +116,7 @@ These commands open **legacy Fyne**, not React. The desktop **Configure starter 
 
 ### Optional React research candidate
 
-Build tools: Node **24.19.0**, npm **11.17.0**, and exact Go **1.26.10** for matching WASM/runtime/native assets.
+Build tools: Node **24.19.0**, npm **11.17.0**, and exact Go **1.26.11** for matching WASM/runtime/native assets.
 
 ```bash
 make build-browser
