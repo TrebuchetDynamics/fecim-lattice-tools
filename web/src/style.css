@@ -365,22 +365,6 @@ svg {
   border: 1px solid var(--line);
   background: #fffef8;
 }
-.loop-figure {
-  margin: 0;
-}
-.loop-plot {
-  display: block;
-  width: 100%;
-  min-height: 240px;
-}
-.loop-axis-label {
-  fill: #263d34;
-  font: 19px system-ui, sans-serif;
-}
-.loop-figure figcaption {
-  margin-block: 0.6rem 1.25rem;
-  color: #52645c;
-}
 .status-line {
   min-height: 1.6em;
 }
