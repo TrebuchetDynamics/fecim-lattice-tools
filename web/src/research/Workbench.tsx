@@ -28,11 +28,11 @@ export default function Workbench({ view }: {view:ResearchView}) {
  <aside className="notice" aria-label="Research capabilities and privacy"><p>Simulation only — not validated device measurements. {local?"Project operations use this authenticated same-origin server and launch-granted roots. Writes are explicit; browser navigation does not cancel experiments.":"Computations run in your browser using the Go model. Project and result data is not uploaded. On-disk projects and edits, large sweeps, run reuse, stored-run verification, EDA and file writes require the local application: run fecim-lattice-tools serve --root DIRECTORY. This hosted build does not contact localhost."}</p>{!local&&<p>Refreshing discards in-memory studies and selection. No scientific downloads or persistence. Ordinary static asset requests still expose HTTP metadata to the host.</p>}</aside>
  {error&&<ErrorSummary error={error} clear={()=>setError(undefined)} document={document} reload={()=>void act(()=>owner.reload())} reapply={revision=>void act(()=>owner.save(document!,revision))}/>}
  <p data-testid="research-status" role="status" aria-live="polite">{owner.status}</p>
- {owner.config && <p>Opened study: {owner.config.name||owner.config.id}. Evidence: {owner.config.evidence}</p>}
+ {owner.config && view !== "projects" && <p>Opened study: {owner.config.name||owner.config.id}. Evidence: {owner.config.evidence}</p>}
  {!owner.config && view !== "projects" && <><p>No study is open.</p><p>{local
   ? "Create or open a study from a granted root. After a server restart, reopen the project to inspect integrity-checked stored runs."
   : "Open the small example or import a study. Hosted state is ephemeral."}</p></>}
- <NextStudyAction view={view}/>
+ {view !== "projects" && <NextStudyAction view={view}/>}
  {view==="projects"?<Projects act={act}/>:owner.config&&<>
  {view==="configuration"&&<Configuration act={act} setDocument={setDocument}/>}
  {view==="experiment"&&<Experiment act={act}/>}
@@ -44,10 +44,17 @@ function NextStudyAction({view}: {view: ResearchView}) {
  if (!owner.config) return view === "projects" ? null : <a className="button primary" href="/projects">Go to Projects</a>;
  if (view === "projects") return <a className="button primary" href="/configuration">Continue to Configuration</a>;
  if (view === "configuration") return <a className="button primary" href="/experiment">Continue to Experiment</a>;
- if (view === "experiment" && ((!owner.expired && owner.job?.analysis_available) || owner.analysis?.results.rows?.length)) {
+ const runCount = owner.analysis?.results.dataset_total;
+ if (view === "experiment" && ((!owner.expired && owner.job?.analysis_available) || runCount)) {
   return <a className="button primary" href="/results">View study results</a>;
  }
- if (view === "results" && owner.analysis?.results.rows?.length) return <a className="button primary" href="#run-results">Browse runs</a>;
+ if (view === "results") {
+  if (runCount) return <a className="button primary" href="#run-results">Browse runs</a>;
+  // A reopened local project can have stored runs without a job in this session.
+  if (runCount === 0 || (!local && !owner.job?.analysis_available)) {
+   return <a className="button primary" href="/experiment">Go to Experiment</a>;
+  }
+ }
  return null;
 }
 type Act=<T>(fn:()=>Promise<T>)=>Promise<T|undefined>;
@@ -77,7 +84,7 @@ function Projects({act}:{act:Act}) {
  });}}/></label><p>Select project.yaml, design.yaml, sweep.yaml and any named inputs, or a JSON byte bundle with a documents map of base64 bytes. Imported provenance is unverified.</p></>}
  {!local&&!owner.config&&<button disabled={busy} onClick={()=>void act(()=>owner.close())}>Reset research Worker</button>}
  {owner.expired&&!local&&<p>Worker execution is unknown. Previous results are retained until you explicitly discard this study.</p>}
- {owner.config&&<><h2>Current project</h2><p>{owner.config.name||owner.config.id}</p><button disabled={busy} onClick={()=>void act(()=>owner.close())}>{owner.expired&&!local?"Discard interrupted study":"Close project"}</button></>}
+ {owner.config&&<><h2>Current project</h2><p>{owner.config.name||owner.config.id}. Evidence: {owner.config.evidence}</p><NextStudyAction view="projects"/><button disabled={busy} onClick={()=>void act(()=>owner.close())}>{owner.expired&&!local?"Discard interrupted study":"Close project"}</button></>}
  </>;
 }
 function Configuration({act,setDocument}:{act:Act;setDocument:(doc:string)=>void}) {

@@ -86,7 +86,17 @@ test("four-view real Go study, fields, validation, stable selection and comparis
   await repair.press("Enter");
   await expectStep(page, 1);
   await openStudy(page);
-  await main.getByRole("link", { name: "Continue to Configuration", exact: true }).click();
+  const continueToConfig = main.getByRole("link", { name: "Continue to Configuration", exact: true });
+  await expect(continueToConfig).toBeVisible();
+  await expect(main.getByText("HZO Device-Array-Circuit Study")).toHaveCount(1);
+  const studySteps = main.getByRole("navigation", { name: "Study steps" });
+  await studySteps.getByRole("link", { name: "Results", exact: true }).click();
+  await main.getByRole("link", { name: "Go to Experiment", exact: true }).click();
+  await expectStep(page, 3);
+  await expect(page.getByTestId("experiment-state")).toHaveText("No execution started");
+  await studySteps.getByRole("link", { name: "Projects", exact: true }).click();
+  await expectStep(page, 1);
+  await continueToConfig.click();
   await expectStep(page, 2);
   const rows = page.getByLabel("Array rows", { exact: true });
   await expect(rows).toBeVisible();
