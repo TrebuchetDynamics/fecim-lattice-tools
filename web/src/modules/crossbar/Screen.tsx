@@ -28,8 +28,14 @@ const modes = [
   "solver",
 ];
 function Table({ table }: { table: Schema<"TablePage"> }) {
+  const isMatrix = table.id === "matrix";
   return (
-    <div className="table-scroll">
+    <div
+      className={isMatrix ? "table-scroll crossbar-matrix-scroll" : "table-scroll"}
+      role={isMatrix ? "region" : undefined}
+      aria-label={isMatrix ? "Programmed matrix" : undefined}
+      tabIndex={isMatrix ? 0 : undefined}
+    >
       <table id={"crossbar-" + table.id}>
         <caption>{table.caption} · Simulation only</caption>
         <thead>
@@ -53,12 +59,10 @@ function Table({ table }: { table: Schema<"TablePage"> }) {
                   <td
                     key={j}
                     className={
-                      table.id === "matrix" && j === 2
-                        ? "state-cell"
-                        : undefined
+                      isMatrix && j === 2 ? "state-cell" : undefined
                     }
                     style={
-                      table.id === "matrix" && j === 2
+                      isMatrix && j === 2
                         ? ({
                             "--cell-state": c.value,
                           } as import("react").CSSProperties)
@@ -230,9 +234,9 @@ export default function Screen() {
         ),
       );
   };
-  const mode =
-      data?.snapshot.fields?.find((f) => f.id === "mode")?.input || "matrix",
-    matrix = data?.snapshot.tables?.find(
+  const tables = data?.snapshot.tables;
+  const mode = value("mode") || "matrix",
+    pagedTable = tables?.find(
       (t) =>
         t.id ===
         (mode === "ir"
@@ -243,22 +247,47 @@ export default function Screen() {
               ? "stack-cells"
               : "matrix"),
     );
-  const shown = (id: string) =>
-    id === "selection" ||
-    (mode === "matrix" && id === "matrix") ||
-    (mode === "vectors" && ["input", "output"].includes(id)) ||
+  const showMatrix = mode === "matrix" || mode === "fecap";
+  const showOutputTable = (id: string) =>
+    (["matrix", "vectors", "fecap"].includes(mode) && id === "output") ||
     (mode === "accuracy" && ["output", "accuracy"].includes(id)) ||
     (mode === "ir" && ["ir", "ir_solver"].includes(id)) ||
     (mode === "sneak" && ["sneak", "sneak-trace"].includes(id)) ||
-    (mode === "fecap" && ["matrix", "output"].includes(id)) ||
     (mode === "stack" && id === "stack-cells") ||
     (mode === "solver" && ["solver", "solver-cells"].includes(id));
+  const selection = tables?.find((t) => t.id === "selection"),
+    vector = mode === "vectors" && tables?.find((t) => t.id === "input");
+  // The address fields are drafts; programming targets Go's committed selection.
+  const selectedRow = value("selected_row"),
+    selectedCol = value("selected_col"),
+    hasSelection = selectedRow !== "" && selectedCol !== "";
+  const paging =
+    pagedTable && (showMatrix || ["ir", "solver", "stack"].includes(mode)) ? (
+      <div className="actions">
+        <button
+          disabled={busy || pagedTable.page <= 1}
+          onClick={() =>
+            void act("view", { mode, page: String(pagedTable.page - 1) })
+          }
+        >
+          Previous cells
+        </button>
+        <button
+          disabled={busy || pagedTable.page >= pagedTable.total}
+          onClick={() =>
+            void act("view", { mode, page: String(pagedTable.page + 1) })
+          }
+        >
+          Next cells
+        </button>
+      </div>
+    ) : null;
   return (
     <section className={"section crossbar-lab palette-" + palette}>
       <p className="eyebrow">M2 / CPU ARRAY LAB</p>
       <h1>Crossbar</h1>
       <p>
-        Program a cell, choose a model, inspect the Go-owned matrix and vectors.
+        Select and program a cell, then run MVM to inspect the Go-owned output.
         Heatmaps are not required to select or read any cell.
       </p>
       <p className="boundary">
@@ -266,11 +295,6 @@ export default function Screen() {
         {__FECIM_PROFILE__ === "hosted"
           ? "Go runs in a dedicated browser Worker; science is ephemeral and is not uploaded or persisted. File writes require fecim-lattice-tools serve. Ordinary same-origin static asset requests still occur."
           : "Authenticated same-origin Go service; file actions require an explicitly opened, rooted project. No automatic downloads."}
-      </p>
-      <p data-testid="crossbar-status">
-        {loading
-          ? "Loading Go crossbar…"
-          : data?.snapshot.status || "Crossbar unavailable"}
       </p>
       <span
         className="sr-only"
@@ -348,7 +372,8 @@ export default function Screen() {
         </p>
       )}
       <div className="crossbar-layout">
-        <div>
+        <section aria-labelledby="crossbar-array-inputs">
+          <h2 id="crossbar-array-inputs">Array inputs</h2>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -356,7 +381,7 @@ export default function Screen() {
             }}
           >
             <fieldset disabled={busy}>
-              <legend>Execution profile</legend>
+              <legend>Execution profile and vector</legend>
               {data?.snapshot.fields
                 ?.filter(
                   (f) =>
@@ -417,9 +442,82 @@ export default function Screen() {
               Unapplied settings. Retained results do not describe these drafts.
             </p>
           )}
+          <fieldset disabled={busy}>
+            <legend>Cell addressing / zero-based</legend>
+            <label>
+              Cell row
+              <input value={row} onChange={(e) => setRow(e.target.value)} />
+            </label>
+            <label>
+              Cell column
+              <input value={col} onChange={(e) => setCol(e.target.value)} />
+            </label>
+            <button onClick={() => void act("select", { row, col })}>
+              Select cell
+            </button>
+            {hasSelection && (
+              <p id="crossbar-selected-cell">
+                Selected cell: row {selectedRow}, column {selectedCol}
+              </p>
+            )}
+            <label>
+              Cell state
+              <input
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                aria-describedby={
+                  hasSelection
+                    ? "crossbar-selected-cell cell-state-help"
+                    : "cell-state-help"
+                }
+              />
+            </label>
+            <small id="cell-state-help">
+              Normalized state from 0 to 1. Go applies the selected model's
+              programming rules.
+            </small>
+            <button
+              disabled={!hasSelection}
+              onClick={() =>
+                void act("program", {
+                  row: selectedRow,
+                  col: selectedCol,
+                  weight,
+                })
+              }
+            >
+              Program selected cell
+            </button>
+          </fieldset>
+          {selection && <Table table={selection} />}
+          <label htmlFor="crossbar-palette">Matrix palette</label>
+          <select
+            id="crossbar-palette"
+            value={palette}
+            onChange={(e) => setPalette(e.target.value)}
+          >
+            <option value="blue">Blue</option>
+            <option value="amber">Amber</option>
+            <option value="plain">Plain</option>
+          </select>
+          {showMatrix && pagedTable && <Table table={pagedTable} />}
+          {showMatrix && paging}
+          {vector && <Table table={vector} />}
+          <button disabled={busy} onClick={() => void act("reset")}>
+            Reset seeded array
+          </button>
+        </section>
+        <section aria-labelledby="crossbar-mvm-output">
+          <h2 id="crossbar-mvm-output">MVM output</h2>
+          <p data-testid="crossbar-status">
+            {loading
+              ? "Loading Go crossbar…"
+              : data?.snapshot.status || "Crossbar unavailable"}
+          </p>
           <div className="actions">
             <button
-              disabled={busy || Object.keys(drafts).length > 0}
+              className="primary"
+              disabled={busy || !data || Object.keys(drafts).length > 0}
               onClick={() => void act("run")}
             >
               Run MVM
@@ -442,9 +540,6 @@ export default function Screen() {
             >
               Cancel MVM
             </button>
-            <button disabled={busy} onClick={() => void act("reset")}>
-              Reset seeded array
-            </button>
           </div>
           {active && (
             <p>
@@ -453,37 +548,6 @@ export default function Screen() {
               confirmed until Go settles.
             </p>
           )}
-          <fieldset disabled={busy}>
-            <legend>Cell addressing / zero-based</legend>
-            <label>
-              Cell row
-              <input value={row} onChange={(e) => setRow(e.target.value)} />
-            </label>
-            <label>
-              Cell column
-              <input value={col} onChange={(e) => setCol(e.target.value)} />
-            </label>
-            <button onClick={() => void act("select", { row, col })}>
-              Select cell
-            </button>
-            <label>
-              Cell state
-              <input
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                aria-describedby="cell-state-help"
-              />
-            </label>
-            <small id="cell-state-help">
-              Normalized state from 0 to 1. Go applies the selected model's
-              programming rules.
-            </small>
-            <button onClick={() => void act("program", { row, col, weight })}>
-              Program selected cell
-            </button>
-          </fieldset>
-        </div>
-        <div>
           <label htmlFor="crossbar-mode">Analysis mode</label>
           <select
             id="crossbar-mode"
@@ -495,23 +559,13 @@ export default function Screen() {
               <option key={m}>{m}</option>
             ))}
           </select>
-          <label htmlFor="crossbar-palette">Matrix palette</label>
-          <select
-            id="crossbar-palette"
-            value={palette}
-            onChange={(e) => setPalette(e.target.value)}
-          >
-            <option value="blue">Blue</option>
-            <option value="amber">Amber</option>
-            <option value="plain">Plain</option>
-          </select>
           {data?.snapshot.evidence?.map((text, i) => (
             <p className="crossbar-evidence" key={i}>
               {text}
             </p>
           ))}
-          {data?.snapshot.tables
-            ?.filter((t) => shown(t.id))
+          {tables
+            ?.filter((t) => showOutputTable(t.id))
             .map((t) => (
               <Table key={t.id} table={t} />
             ))}
@@ -525,31 +579,7 @@ export default function Screen() {
                 computed zero.
               </p>
             )}
-          {(mode === "matrix" ||
-            mode === "ir" ||
-            mode === "solver" ||
-            mode === "fecap" ||
-            mode === "stack") &&
-            matrix && (
-              <div className="actions">
-                <button
-                  disabled={busy || matrix.page <= 1}
-                  onClick={() =>
-                    void act("view", { mode, page: String(matrix.page - 1) })
-                  }
-                >
-                  Previous cells
-                </button>
-                <button
-                  disabled={busy || matrix.page >= matrix.total}
-                  onClick={() =>
-                    void act("view", { mode, page: String(matrix.page + 1) })
-                  }
-                >
-                  Next cells
-                </button>
-              </div>
-            )}
+          {!showMatrix && paging}
           {mode === "stack" && (
             <fieldset disabled={busy}>
               <legend>Illustrative stack layers</legend>
@@ -606,7 +636,7 @@ export default function Screen() {
               </p>
             </div>
           )}
-        </div>
+        </section>
       </div>
       <details open>
         <summary>Explicit crossbar files</summary>
